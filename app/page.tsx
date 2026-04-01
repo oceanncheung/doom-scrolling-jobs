@@ -15,7 +15,10 @@ export default function HomePage() {
           <h1>{site.heroTitle}</h1>
           <p className="hero-lede">{site.description}</p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/dashboard">
+            <Link className="button button-primary" href="/profile">
+              Edit operator profile
+            </Link>
+            <Link className="button button-secondary" href="/dashboard">
               Open dashboard shell
             </Link>
             <a className="button button-secondary" href="#foundation-map">

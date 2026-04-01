@@ -1,9 +1,9 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-import { getSupabaseEnv } from '@/lib/env'
+import { getSupabasePublicEnv } from '@/lib/env'
 
 export function createClient() {
-  const { url, publishableKey } = getSupabaseEnv()
+  const { publishableKey, url } = getSupabasePublicEnv()
 
   return createSupabaseClient(url, publishableKey, {
     auth: {

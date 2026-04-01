@@ -1,11 +1,11 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-import { getSupabaseEnv } from '@/lib/env'
+import { getSupabaseServerEnv } from '@/lib/env'
 
 export function createClient() {
-  const { url, publishableKey } = getSupabaseEnv()
+  const { serviceRoleKey, url } = getSupabaseServerEnv()
 
-  return createSupabaseClient(url, publishableKey, {
+  return createSupabaseClient(url, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,

@@ -90,3 +90,28 @@ export interface ApplicationPacketSummary {
   portfolioRecommendation?: string
   checklistItems: string[]
 }
+
+export interface OperatorProfileRecord {
+  userId: string
+  profileId: string
+  displayName: string
+  email: string
+  headline: string
+  locationLabel: string
+  timezone: string
+  remoteRequired: boolean
+  salaryFloorCurrency: string
+  salaryFloorAmount: string
+  salaryTargetMin: string
+  salaryTargetMax: string
+  seniorityLevel: string
+  targetRoles: string[]
+  allowedAdjacentRoles: string[]
+  skills: string[]
+  tools: string[]
+  portfolioPrimaryUrl: string
+  linkedinUrl: string
+  personalSiteUrl: string
+  bioSummary: string
+  preferencesNotes: string
+}

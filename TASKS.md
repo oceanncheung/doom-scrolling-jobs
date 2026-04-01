@@ -23,14 +23,14 @@ _Date: April 1, 2026_
 - [x] Seed one deterministic internal user/profile for the single-user setup.
 - [ ] Defer row-level security until the product leaves internal single-user mode.
 - [ ] Define storage buckets and access rules for resume exports and packet assets.
-- [ ] Wire the app to the seeded internal profile instead of a login gate.
+- [x] Wire the app to the seeded internal profile instead of a login gate.
 - [x] Create shared types for profile, job, score, packet, and event records.
 - [ ] Implement a repository-wide validation and formatting baseline.
 - [ ] Set up GitHub Actions for lint, typecheck, and migration checks.
 
 ## Phase C Core Product
 
-- [ ] Build the canonical profile setup flow.
+- [ ] Expand the canonical profile setup flow to cover experience history, education, portfolio library, and resume source content.
 - [ ] Implement CRUD for portfolio items and the master resume source.
 - [ ] Design the raw intake contract for imported job data.
 - [ ] Build the normalization pipeline for title, company, location, remote status, salary, and extracted skills.

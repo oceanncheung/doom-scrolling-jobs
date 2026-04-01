@@ -1,11 +1,14 @@
-const requiredEnvKeys = [
+const publicEnvKeys = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
 ] as const
 
-type RequiredEnvKey = (typeof requiredEnvKeys)[number]
+const serverEnvKeys = [...publicEnvKeys, 'SUPABASE_SERVICE_ROLE_KEY'] as const
 
-function getRequiredEnv(key: RequiredEnvKey) {
+type PublicEnvKey = (typeof publicEnvKeys)[number]
+type ServerEnvKey = (typeof serverEnvKeys)[number]
+
+function getRequiredEnv(key: PublicEnvKey | ServerEnvKey) {
   const value = process.env[key]
 
   if (!value) {
@@ -15,13 +18,24 @@ function getRequiredEnv(key: RequiredEnvKey) {
   return value
 }
 
-export function hasSupabaseEnv() {
-  return requiredEnvKeys.every((key) => Boolean(process.env[key]))
+export function hasSupabasePublicEnv() {
+  return publicEnvKeys.every((key) => Boolean(process.env[key]))
 }
 
-export function getSupabaseEnv() {
+export function hasSupabaseServerEnv() {
+  return serverEnvKeys.every((key) => Boolean(process.env[key]))
+}
+
+export function getSupabasePublicEnv() {
   return {
-    url: getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
     publishableKey: getRequiredEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'),
+    url: getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+  }
+}
+
+export function getSupabaseServerEnv() {
+  return {
+    serviceRoleKey: getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+    url: getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
   }
 }

@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { modelRouting } from '@/lib/ai/model-routing'
 import { applicationPacketOutputs } from '@/lib/config/product'
 import { recommendationLevels, workflowStatuses } from '@/lib/domain/types'
@@ -15,6 +17,11 @@ export default function DashboardPage() {
             internal product. It already reflects the actual scoring priorities,
             packet outputs, and status pipeline described in the docs.
           </p>
+          <div className="hero-actions">
+            <Link className="button button-primary" href="/profile">
+              Open profile settings
+            </Link>
+          </div>
         </div>
         <div className="hero-summary">
           <p className="panel-label">Recommendation bands</p>

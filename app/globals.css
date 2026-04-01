@@ -367,10 +367,113 @@ code {
   margin-top: 1rem;
 }
 
+.profile-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.field-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.field-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.field:first-child {
+  margin-top: 0;
+}
+
+.field span {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.field small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  background: rgba(4, 9, 16, 0.48);
+  color: var(--text);
+  font: inherit;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: 2px solid rgba(79, 209, 197, 0.3);
+  outline-offset: 1px;
+  border-color: rgba(79, 209, 197, 0.35);
+}
+
+.field textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.field input[disabled] {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.checkbox-field {
+  align-content: start;
+}
+
+.checkbox-field input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+}
+
+.profile-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0 0.35rem;
+}
+
+.form-message {
+  flex: 1 1 auto;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.form-message-success {
+  border-color: rgba(79, 209, 197, 0.22);
+  background: rgba(79, 209, 197, 0.1);
+  color: #c5f7f2;
+}
+
+.form-message-error {
+  border-color: rgba(255, 122, 69, 0.28);
+  background: rgba(255, 122, 69, 0.1);
+  color: #ffd3c2;
+}
+
 @media (max-width: 980px) {
   .hero-card,
   .panel-grid-2,
-  .panel-grid-3 {
+  .panel-grid-3,
+  .field-grid-2 {
     grid-template-columns: 1fr;
   }
 
@@ -409,5 +512,10 @@ code {
   .score-list li,
   .routing-list li {
     grid-template-columns: 1fr;
+  }
+
+  .profile-form-footer {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

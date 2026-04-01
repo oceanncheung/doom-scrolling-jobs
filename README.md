@@ -73,9 +73,10 @@ The repo now includes an initial Next.js + Supabase-ready foundation in addition
 The product is currently set up as a **single-user internal tool**, so there is no login flow in Phase 1.
 
 - `app/` -> App Router layout, homepage, dashboard shell, and health endpoint
+- `app/profile/` -> single-user operator settings flow backed by the seeded internal profile
 - `lib/` -> shared product constants, scoring weights, model routing, domain types, and Supabase helpers
 - `supabase/` -> migrations, seed data, and local project config
-- `.env.example` -> required public Supabase environment variables
+- `.env.example` -> required Supabase public URL plus the server-only service role key for internal writes
 - `README.md` / `PRD.md` / `SCHEMA.md` / `SCORING.md` / `TASKS.md` / `DECISIONS.md` -> durable product context
 
 ## 7. Local Setup
@@ -88,14 +89,15 @@ Requirements:
 Commands:
 
 1. `cp .env.example .env.local`
-2. fill in the Supabase URL and publishable key
+2. fill in the Supabase URL, publishable key, and service role key
 3. `npm install`
 4. `npm run dev`
 
 Notes:
 
 - No app login is required right now.
-- The app is intended to read and write against one seeded internal operator profile.
+- The app reads and writes against one seeded internal operator profile.
+- Server-side profile reads and writes should use the service role key, not the public publishable key.
 
 Useful scripts:
 
@@ -113,16 +115,16 @@ Current structure and intended ownership:
 - `lib/domain/` -> typed product entities and workflow enums
 - `lib/scoring/` -> ranking weights and future evaluator logic
 - `lib/ai/` -> task-based model routing and prompt orchestration
-- `lib/supabase/` -> browser and server data clients for the internal operator setup
+- `lib/supabase/` -> public and server-only Supabase clients for the internal operator setup
 - `supabase/` -> SQL schema, policies, seeds, and local config
 - `docs/` -> later home for long-form docs if the root gets too crowded
 
 ## 9. Next Steps
 
-1. Convert `SCHEMA.md` into the first Supabase migration and seed the internal operator profile.
-2. Build a profile settings flow around the single seeded user/profile instead of a login gate.
-3. Define ingestion contracts for raw jobs, normalized jobs, and deduplication.
-4. Build the scoring service around the hard-filter plus weighted-score model in `SCORING.md`.
+1. Expand the canonical profile flow to cover experience history, education, portfolio inventory, and resume source content.
+2. Define ingestion contracts for raw jobs, normalized jobs, and deduplication.
+3. Build the scoring service around the hard-filter plus weighted-score model in `SCORING.md`.
+4. Add the first database-backed jobs list and job detail routes.
 5. Add generation services incrementally:
    - job parsing
    - scoring explanations
