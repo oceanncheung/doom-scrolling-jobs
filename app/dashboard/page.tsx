@@ -11,9 +11,9 @@ export default function DashboardPage() {
           <p className="eyebrow">Dashboard shell</p>
           <h1>One profile in. Ranked remote jobs and prep-ready packets out.</h1>
           <p className="hero-lede">
-            This route is the foundation workspace for the eventual authenticated
-            product. It already reflects the actual scoring priorities, packet
-            outputs, and status pipeline described in the docs.
+            This route is the foundation workspace for the current single-user
+            internal product. It already reflects the actual scoring priorities,
+            packet outputs, and status pipeline described in the docs.
           </p>
         </div>
         <div className="hero-summary">

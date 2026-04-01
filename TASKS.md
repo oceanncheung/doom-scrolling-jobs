@@ -19,10 +19,11 @@ _Date: April 1, 2026_
 
 - [x] Scaffold the Next.js app with TypeScript, App Router, and Supabase integration.
 - [x] Set up environment variable strategy and commit an `.env.example`.
-- [ ] Create the first Supabase migration for core tables and enums.
-- [ ] Add row-level security policies for all user-owned data.
+- [x] Create the first Supabase migration for core tables and enums.
+- [x] Seed one deterministic internal user/profile for the single-user setup.
+- [ ] Defer row-level security until the product leaves internal single-user mode.
 - [ ] Define storage buckets and access rules for resume exports and packet assets.
-- [ ] Set up auth flow and initial onboarding gate.
+- [ ] Wire the app to the seeded internal profile instead of a login gate.
 - [x] Create shared types for profile, job, score, packet, and event records.
 - [ ] Implement a repository-wide validation and formatting baseline.
 - [ ] Set up GitHub Actions for lint, typecheck, and migration checks.

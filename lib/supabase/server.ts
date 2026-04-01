@@ -1,26 +1,15 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 import { getSupabaseEnv } from '@/lib/env'
 
-export async function createClient() {
-  const cookieStore = await cookies()
+export function createClient() {
   const { url, publishableKey } = getSupabaseEnv()
 
-  return createServerClient(url, publishableKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll()
-      },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options)
-          })
-        } catch {
-          // Server Components cannot always set cookies directly.
-        }
-      },
+  return createSupabaseClient(url, publishableKey, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
     },
   })
 }

@@ -9,6 +9,7 @@ _Date: April 1, 2026_
 - Job normalization and scoring are separate concerns.
 - Application prep outputs are stored as structured artifacts, not just blobs of AI text.
 - The schema should support multi-user operation later, even if the initial product is effectively single-user.
+- The initial Supabase seed can safely create one deterministic internal user/profile without changing the long-term model.
 
 ## 2. Shared Conventions
 
@@ -22,7 +23,7 @@ _Date: April 1, 2026_
 
 | Entity | Purpose | Phase 1 |
 | --- | --- | --- |
-| `users` | Auth identity and account container | Core |
+| `users` | Internal account container and future auth anchor | Core |
 | `user_profiles` | Canonical professional profile and preferences | Core |
 | `portfolio_items` | Structured portfolio library | Core |
 | `resume_master` | Source resume content owned by the user | Core |
@@ -39,16 +40,16 @@ _Date: April 1, 2026_
 
 ### 4.1 `users`
 
-Purpose: account-level identity, usually aligned to Supabase Auth.
+Purpose: account-level identity. In Phase 1 this is a manually seeded internal operator record rather than a Supabase Auth user.
 
 Key fields:
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `id` | `uuid` | Primary key; same as auth user ID |
-| `email` | `text` | Unique login email |
+| `id` | `uuid` | Primary key; deterministic internal user ID in Phase 1 |
+| `email` | `text` | Unique account email or internal operator identifier |
 | `display_name` | `text` | Optional account display name |
-| `auth_provider` | `text` | Google, email, GitHub, etc. |
+| `auth_provider` | `text` | `internal` in Phase 1; can later map to real auth providers |
 | `account_status` | `text` | `active`, `paused`, `disabled` |
 | `created_at` | `timestamptz` | Audit |
 | `updated_at` | `timestamptz` | Audit |

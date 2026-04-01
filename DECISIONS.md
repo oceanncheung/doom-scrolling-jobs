@@ -87,6 +87,17 @@ _Date initialized: April 1, 2026_
 - Rationale: This stack is practical for rapid product iteration, secure user data, and clear ownership of schema and app code.
 - Consequences:
   - The repo can stay single-app and docs-first initially, then scaffold into a Next.js codebase.
-  - Supabase should own auth, Postgres, storage, and row-level security early.
+  - Supabase should own Postgres and storage early; auth and row-level security can wait while the product stays internal.
   - AI services should stay modular by task instead of being collapsed into one opaque agent.
   - Playwright, PostHog, and Sentry are later-phase additions once the core workflow is working.
+
+## ADR-009: Phase 1 runs as a single-user internal tool
+
+- Status: Accepted
+- Date: April 1, 2026
+- Decision: The app should operate with one seeded internal user/profile instead of a login flow while usage is limited to Ocean / Alvis.
+- Rationale: Product value right now comes from schema, ranking, and application-prep workflows, not account management.
+- Consequences:
+  - The first data layer should seed a deterministic internal operator record.
+  - App routes can read and write against one default user/profile until true multi-user usage is needed.
+  - Auth, login UX, and row-level security are intentionally deferred rather than half-built.

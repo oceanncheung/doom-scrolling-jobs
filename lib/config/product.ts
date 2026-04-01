@@ -56,9 +56,9 @@ export const foundationTracks = [
     paths: ['lib/domain', 'lib/scoring', 'lib/ai'],
   },
   {
-    title: 'Supabase SSR edge',
+    title: 'Supabase data edge',
     description:
-      'Browser, server, and proxy utilities ready for auth, cookies, and future row-level security work.',
-    paths: ['lib/supabase', 'proxy.ts', '.env.example'],
+      'Browser and server clients ready for the seeded internal operator setup and future auth only when it is truly needed.',
+    paths: ['lib/supabase', '.env.example', 'supabase/migrations'],
   },
 ] as const

@@ -59,8 +59,8 @@ Phase 1 does **not** include direct application submission automation.
 
 ## 5. Recommended Stack
 
-- **Next.js** for the web app and authenticated dashboard
-- **Supabase** for auth, Postgres, storage, and row-level security
+- **Next.js** for the internal dashboard and application-prep workspace
+- **Supabase** for Postgres, storage, and future auth if the product expands beyond internal use
 - **GitHub** for source control, issue tracking, and CI/CD
 - **OpenAI / Anthropic / Google models** routed by task for parsing, scoring, and generation
 - **Playwright** later for browser-assisted workflows, once manual apply prep is working
@@ -70,11 +70,11 @@ Phase 1 does **not** include direct application submission automation.
 ## 6. Current Foundation
 
 The repo now includes an initial Next.js + Supabase-ready foundation in addition to the planning docs.
+The product is currently set up as a **single-user internal tool**, so there is no login flow in Phase 1.
 
 - `app/` -> App Router layout, homepage, dashboard shell, and health endpoint
 - `lib/` -> shared product constants, scoring weights, model routing, domain types, and Supabase helpers
-- `supabase/` -> reserved workspace for migrations, policies, and local project config
-- `proxy.ts` -> session refresh boundary for Supabase SSR auth
+- `supabase/` -> migrations, seed data, and local project config
 - `.env.example` -> required public Supabase environment variables
 - `README.md` / `PRD.md` / `SCHEMA.md` / `SCORING.md` / `TASKS.md` / `DECISIONS.md` -> durable product context
 
@@ -92,6 +92,11 @@ Commands:
 3. `npm install`
 4. `npm run dev`
 
+Notes:
+
+- No app login is required right now.
+- The app is intended to read and write against one seeded internal operator profile.
+
 Useful scripts:
 
 - `npm run lint`
@@ -108,14 +113,14 @@ Current structure and intended ownership:
 - `lib/domain/` -> typed product entities and workflow enums
 - `lib/scoring/` -> ranking weights and future evaluator logic
 - `lib/ai/` -> task-based model routing and prompt orchestration
-- `lib/supabase/` -> browser, server, and proxy auth utilities
+- `lib/supabase/` -> browser and server data clients for the internal operator setup
 - `supabase/` -> SQL schema, policies, seeds, and local config
 - `docs/` -> later home for long-form docs if the root gets too crowded
 
 ## 9. Next Steps
 
-1. Convert `SCHEMA.md` into the first Supabase migration and row-level security plan.
-2. Add authenticated profile onboarding for the one-profile-per-user model.
+1. Convert `SCHEMA.md` into the first Supabase migration and seed the internal operator profile.
+2. Build a profile settings flow around the single seeded user/profile instead of a login gate.
 3. Define ingestion contracts for raw jobs, normalized jobs, and deduplication.
 4. Build the scoring service around the hard-filter plus weighted-score model in `SCORING.md`.
 5. Add generation services incrementally:

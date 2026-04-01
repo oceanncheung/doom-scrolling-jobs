@@ -107,10 +107,10 @@ Every AI output should be reviewable, traceable, and usable in the application w
 
 ### 7.1 Onboarding and profile setup
 
-1. User signs in.
-2. User creates one canonical profile with role targets, salary preferences, skills, work history, links, and portfolio items.
-3. User sets adjacent roles they are willing to consider.
-4. User confirms remote-only preference and compensation expectations.
+1. Internal operator opens the app without a login gate.
+2. Internal operator edits one canonical profile with role targets, salary preferences, skills, work history, links, and portfolio items.
+3. Internal operator sets adjacent roles they are willing to consider.
+4. Internal operator confirms remote-only preference and compensation expectations.
 
 Success criteria:
 
