@@ -67,38 +67,57 @@ Phase 1 does **not** include direct application submission automation.
 - **PostHog** later for product analytics and funnel instrumentation
 - **Sentry** later for production error monitoring
 
-## 6. Repo Contents
+## 6. Current Foundation
 
-This initial commit is intentionally docs-first. It establishes the product, data, and scoring foundation before app scaffolding begins.
+The repo now includes an initial Next.js + Supabase-ready foundation in addition to the planning docs.
 
-- `README.md` -> project overview and implementation direction
-- `PRD.md` -> Phase 1 product requirements
-- `SCHEMA.md` -> initial data model
-- `SCORING.md` -> job ranking framework
-- `TASKS.md` -> practical execution checklist
-- `DECISIONS.md` -> accepted product and architecture decisions
-- `.gitignore` -> baseline ignore rules for a modern Next.js/Node repo
+- `app/` -> App Router layout, homepage, dashboard shell, and health endpoint
+- `lib/` -> shared product constants, scoring weights, model routing, domain types, and Supabase helpers
+- `supabase/` -> reserved workspace for migrations, policies, and local project config
+- `proxy.ts` -> session refresh boundary for Supabase SSR auth
+- `.env.example` -> required public Supabase environment variables
+- `README.md` / `PRD.md` / `SCHEMA.md` / `SCORING.md` / `TASKS.md` / `DECISIONS.md` -> durable product context
 
-## 7. Recommended Future Project Structure
+## 7. Local Setup
 
-Planned structure once the app is scaffolded:
+Requirements:
+
+- Node.js `20.9+`
+- npm `10+`
+
+Commands:
+
+1. `cp .env.example .env.local`
+2. fill in the Supabase URL and publishable key
+3. `npm install`
+4. `npm run dev`
+
+Useful scripts:
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm run check`
+
+## 8. Project Structure
+
+Current structure and intended ownership:
 
 - `app/` -> Next.js routes, layouts, and server actions
-- `components/` -> UI components for dashboard, detail views, and packet review
-- `lib/` -> shared utilities for parsing, scoring, prompt orchestration, and exports
+- `lib/config/` -> site metadata and product rails
+- `lib/domain/` -> typed product entities and workflow enums
+- `lib/scoring/` -> ranking weights and future evaluator logic
+- `lib/ai/` -> task-based model routing and prompt orchestration
+- `lib/supabase/` -> browser, server, and proxy auth utilities
 - `supabase/` -> SQL schema, policies, seeds, and local config
-- `docs/` -> later home for long-form documentation if repo docs expand
+- `docs/` -> later home for long-form docs if the root gets too crowded
 
-## 8. Next Steps
+## 9. Next Steps
 
-1. Convert `SCHEMA.md` into the first Supabase schema and row-level security plan.
-2. Define ingestion contracts for raw jobs, normalized jobs, and deduplication.
-3. Build the scoring service around the hard-filter plus weighted-score model in `SCORING.md`.
-4. Scaffold the Next.js app and first authenticated flows:
-   - profile setup
-   - jobs dashboard
-   - job detail view
-   - application packet review
+1. Convert `SCHEMA.md` into the first Supabase migration and row-level security plan.
+2. Add authenticated profile onboarding for the one-profile-per-user model.
+3. Define ingestion contracts for raw jobs, normalized jobs, and deduplication.
+4. Build the scoring service around the hard-filter plus weighted-score model in `SCORING.md`.
 5. Add generation services incrementally:
    - job parsing
    - scoring explanations

@@ -28,6 +28,7 @@ coverage/
 .cache/
 .eslintcache
 *.tsbuildinfo
+.vercel/
 
 # Supabase local state
 supabase/.temp/
