@@ -5,7 +5,8 @@ import { getOperatorProfile } from '@/lib/data/operator-profile'
 export const dynamic = 'force-dynamic'
 
 export default async function ProfilePage() {
-  const { issue, profile, source } = await getOperatorProfile()
+  const { issue, source, workspace } = await getOperatorProfile()
+  const { portfolioItems, profile, resumeMaster } = workspace
 
   return (
     <main className="page-stack">
@@ -47,22 +48,22 @@ export default async function ProfilePage() {
           </div>
         </article>
         <article className="panel">
-          <p className="panel-label">Seed wiring</p>
-          <h2>The page is anchored to the deterministic internal IDs from runtime config.</h2>
+          <p className="panel-label">Workspace coverage</p>
+          <h2>The page now owns profile preferences, resume source content, and the portfolio library.</h2>
           <ul className="compact-list">
             <li>
-              <strong>User ID</strong>
-              <span>{profile.userId}</span>
+              <strong>{resumeMaster.experienceEntries.length} experience entries</strong>
+              <span>Canonical work history for truthful resume tailoring.</span>
             </li>
             <li>
-              <strong>Profile ID</strong>
-              <span>{profile.profileId}</span>
+              <strong>{portfolioItems.length} portfolio items</strong>
+              <span>Structured project inventory for role-specific recommendations.</span>
             </li>
           </ul>
         </article>
       </section>
 
-      <ProfileForm profile={profile} />
+      <ProfileForm workspace={workspace} />
     </main>
   )
 }

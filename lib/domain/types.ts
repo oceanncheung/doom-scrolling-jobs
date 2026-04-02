@@ -107,11 +107,70 @@ export interface OperatorProfileRecord {
   seniorityLevel: string
   targetRoles: string[]
   allowedAdjacentRoles: string[]
+  industriesPreferred: string[]
+  industriesAvoid: string[]
   skills: string[]
   tools: string[]
+  workAuthorizationNotes: string
   portfolioPrimaryUrl: string
   linkedinUrl: string
   personalSiteUrl: string
   bioSummary: string
   preferencesNotes: string
+}
+
+export interface ResumeExperienceRecord {
+  companyName: string
+  roleTitle: string
+  locationLabel: string
+  startDate: string
+  endDate: string
+  summary: string
+  highlights: string[]
+}
+
+export interface ResumeAchievementRecord {
+  category: string
+  title: string
+  detail: string
+}
+
+export interface ResumeEducationRecord {
+  schoolName: string
+  credential: string
+  fieldOfStudy: string
+  startDate: string
+  endDate: string
+  notes: string
+}
+
+export interface ResumeMasterRecord {
+  baseTitle: string
+  summaryText: string
+  experienceEntries: ResumeExperienceRecord[]
+  achievementBank: ResumeAchievementRecord[]
+  skillsSection: string[]
+  educationEntries: ResumeEducationRecord[]
+  certifications: string[]
+}
+
+export interface OperatorPortfolioItemRecord {
+  id: string
+  title: string
+  url: string
+  projectType: string
+  roleLabel: string
+  summary: string
+  skillsTags: string[]
+  industryTags: string[]
+  outcomeMetrics: string[]
+  visualStrengthRating: string
+  isPrimary: boolean
+  isActive: boolean
+}
+
+export interface OperatorWorkspaceRecord {
+  portfolioItems: OperatorPortfolioItemRecord[]
+  profile: OperatorProfileRecord
+  resumeMaster: ResumeMasterRecord
 }

@@ -30,8 +30,8 @@ _Date: April 1, 2026_
 
 ## Phase C Core Product
 
-- [ ] Expand the canonical profile setup flow to cover experience history, education, portfolio library, and resume source content.
-- [ ] Implement CRUD for portfolio items and the master resume source.
+- [x] Expand the canonical profile setup flow to cover experience history, education, portfolio library, and resume source content.
+- [x] Implement CRUD for portfolio items and the master resume source.
 - [ ] Design the raw intake contract for imported job data.
 - [ ] Build the normalization pipeline for title, company, location, remote status, salary, and extracted skills.
 - [ ] Add duplicate detection and source selection logic.

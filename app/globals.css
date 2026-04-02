@@ -255,6 +255,16 @@ code {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.button-small {
+  padding: 0.68rem 0.95rem;
+  font-size: 0.92rem;
+}
+
+.button-ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
 .panel-grid {
   display: grid;
   gap: 1.25rem;
@@ -402,7 +412,8 @@ code {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   padding: 0.9rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -413,7 +424,8 @@ code {
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   outline: 2px solid rgba(79, 209, 197, 0.3);
   outline-offset: 1px;
   border-color: rgba(79, 209, 197, 0.35);
@@ -469,6 +481,41 @@ code {
   color: #ffd3c2;
 }
 
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-header h2 {
+  margin-bottom: 0;
+}
+
+.repeat-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.2rem;
+}
+
+.repeat-card {
+  padding: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.repeat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.repeat-card-header strong {
+  font-size: 1rem;
+}
+
 @media (max-width: 980px) {
   .hero-card,
   .panel-grid-2,
@@ -515,6 +562,12 @@ code {
   }
 
   .profile-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .section-header,
+  .repeat-card-header {
     align-items: stretch;
     flex-direction: column;
   }

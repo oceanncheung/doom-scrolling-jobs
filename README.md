@@ -73,7 +73,7 @@ The repo now includes an initial Next.js + Supabase-ready foundation in addition
 The product is currently set up as a **single-user internal tool**, so there is no login flow in Phase 1.
 
 - `app/` -> App Router layout, homepage, dashboard shell, and health endpoint
-- `app/profile/` -> single-user operator settings flow backed by the seeded internal profile
+- `app/profile/` -> single-user operator workspace for profile preferences, resume source content, and portfolio inventory
 - `lib/` -> shared product constants, scoring weights, model routing, domain types, and Supabase helpers
 - `supabase/` -> migrations, seed data, and local project config
 - `.env.example` -> required Supabase public URL plus the server-only service role key for internal writes
@@ -121,10 +121,10 @@ Current structure and intended ownership:
 
 ## 9. Next Steps
 
-1. Expand the canonical profile flow to cover experience history, education, portfolio inventory, and resume source content.
-2. Define ingestion contracts for raw jobs, normalized jobs, and deduplication.
-3. Build the scoring service around the hard-filter plus weighted-score model in `SCORING.md`.
-4. Add the first database-backed jobs list and job detail routes.
+1. Define ingestion contracts for raw jobs, normalized jobs, and deduplication.
+2. Build the scoring service around the hard-filter plus weighted-score model in `SCORING.md`.
+3. Add the first database-backed jobs list and job detail routes.
+4. Build the first packet review screen so profile -> jobs -> packet becomes a real flow.
 5. Add generation services incrementally:
    - job parsing
    - scoring explanations
