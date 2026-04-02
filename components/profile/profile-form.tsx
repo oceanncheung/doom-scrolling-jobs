@@ -122,6 +122,24 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
   return (
     <form action={formAction} className="profile-form">
       <section className="panel">
+        <p className="panel-label">Search brief</p>
+        <h2>Start with one field, not a 50-question intake.</h2>
+        <label className="field">
+          <span>What kinds of jobs should the dashboard prioritize for you?</span>
+          <textarea
+            defaultValue={workspace.profile.searchBrief}
+            name="searchBrief"
+            rows={7}
+          />
+          <small>
+            Write this like a direct note to the tool. Include the roles you want, salary shape,
+            remote rules, industries you like or avoid, and anything you do not want to waste time
+            on. The dashboard can ask targeted follow-ups later instead of forcing a long setup.
+          </small>
+        </label>
+      </section>
+
+      <section className="panel">
         <p className="panel-label">Operator identity</p>
         <h2>Canonical profile anchor</h2>
         <div className="field-grid field-grid-2">

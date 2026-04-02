@@ -72,8 +72,9 @@ Phase 1 does **not** include direct application submission automation.
 The repo now includes an initial Next.js + Supabase-ready foundation in addition to the planning docs.
 The product is currently set up as a **single-user internal tool**, so there is no login flow in Phase 1.
 
-- `app/` -> App Router layout, homepage, dashboard shell, and health endpoint
-- `app/profile/` -> single-user operator workspace for profile preferences, resume source content, and portfolio inventory
+- `app/` -> App Router layout, homepage, ranked jobs dashboard, job detail route, and health endpoint
+- `app/profile/` -> single-user operator workspace with one freeform search brief plus structured profile, resume, and portfolio data
+- `app/jobs/[jobId]` -> first job detail route with score breakdown, reasons, and risks
 - `lib/` -> shared product constants, scoring weights, model routing, domain types, and Supabase helpers
 - `supabase/` -> migrations, seed data, and local project config
 - `.env.example` -> required Supabase public URL plus the server-only service role key for internal writes
@@ -97,6 +98,7 @@ Notes:
 
 - No app login is required right now.
 - The app reads and writes against one seeded internal operator profile.
+- The first preference input should be one freeform search brief, not a long questionnaire.
 - Server-side profile reads and writes should use the service role key, not the public publishable key.
 
 Useful scripts:
@@ -121,9 +123,9 @@ Current structure and intended ownership:
 
 ## 9. Next Steps
 
-1. Define ingestion contracts for raw jobs, normalized jobs, and deduplication.
-2. Build the scoring service around the hard-filter plus weighted-score model in `SCORING.md`.
-3. Add the first database-backed jobs list and job detail routes.
+1. Build the normalization pipeline and source-selection logic behind the new job intake contracts.
+2. Replace seeded `job_scores` with the first real scoring service using the model in `SCORING.md`.
+3. Add shortlist, dismiss, and workflow mutation actions on the jobs dashboard.
 4. Build the first packet review screen so profile -> jobs -> packet becomes a real flow.
 5. Add generation services incrementally:
    - job parsing

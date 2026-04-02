@@ -96,6 +96,7 @@ export interface OperatorProfileRecord {
   profileId: string
   displayName: string
   email: string
+  searchBrief: string
   headline: string
   locationLabel: string
   timezone: string

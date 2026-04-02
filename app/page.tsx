@@ -19,7 +19,7 @@ export default function HomePage() {
               Edit operator profile
             </Link>
             <Link className="button button-secondary" href="/dashboard">
-              Open dashboard shell
+              Open ranked jobs
             </Link>
             <a className="button button-secondary" href="#foundation-map">
               Inspect foundation map

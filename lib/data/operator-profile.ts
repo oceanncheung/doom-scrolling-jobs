@@ -26,6 +26,8 @@ const seededProfile: OperatorProfileRecord = {
   profileId: defaultOperator.profileId,
   displayName: 'Internal Operator',
   email: 'internal@doomscrollingjobs.local',
+  searchBrief:
+    'Find remote-first design roles that prioritize quality, strong salary, and thoughtful brand, presentation, or campaign work. Designers first, but adjacent creative roles are okay if the fit is genuinely high.',
   headline: 'Graphic Designer',
   locationLabel: 'Toronto, Canada',
   timezone: 'America/Toronto',
@@ -356,6 +358,7 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
         profileId: profile.id ?? seededProfile.profileId,
         displayName: asString(user?.display_name) || seededProfile.displayName,
         email: asString(user?.email) || seededProfile.email,
+        searchBrief: asString(profile.search_brief) || seededProfile.searchBrief,
         headline: asString(profile.headline) || seededProfile.headline,
         locationLabel: asString(profile.location_label),
         timezone: asString(profile.timezone) || seededProfile.timezone,

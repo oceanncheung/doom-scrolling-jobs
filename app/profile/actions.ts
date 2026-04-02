@@ -355,6 +355,7 @@ export async function saveOperatorProfile(
     portfolioItems.find((item) => item.isPrimary && item.isActive)?.url ??
     portfolioItems.find((item) => item.isActive)?.url ??
     null
+  const searchBrief = asOptionalText(formData.get('searchBrief')) ?? ''
 
   const supabase = createClient()
   const displayName = asOptionalText(formData.get('displayName'))
@@ -371,6 +372,7 @@ export async function saveOperatorProfile(
   const profilePayload = {
     id: defaultOperator.profileId,
     user_id: defaultOperator.userId,
+    search_brief: searchBrief,
     headline,
     location_label: asOptionalText(formData.get('locationLabel')) ?? '',
     timezone: asOptionalText(formData.get('timezone')) ?? 'America/Toronto',
@@ -417,6 +419,7 @@ export async function saveOperatorProfile(
       educationCount: educationEntries.length,
       experienceCount: experienceEntries.length,
       portfolioItemCount: portfolioItems.length,
+      searchBrief,
       updatedFrom: 'profile-workspace',
     },
   }

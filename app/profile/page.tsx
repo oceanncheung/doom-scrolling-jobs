@@ -15,8 +15,9 @@ export default async function ProfilePage() {
           <p className="eyebrow">Profile settings</p>
           <h1>One seeded operator profile that drives scoring, prep, and workflow decisions.</h1>
           <p className="hero-lede">
-            This screen is the single-user control room for the real profile behind job ranking,
-            resume tailoring, and packet generation.
+            Start with one freeform search brief, then refine the structured profile only when the
+            dashboard actually needs more signal for ranking, resume tailoring, and packet
+            generation.
           </p>
         </div>
         <div className="hero-summary">

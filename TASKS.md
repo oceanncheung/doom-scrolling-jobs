@@ -30,15 +30,17 @@ _Date: April 1, 2026_
 
 ## Phase C Core Product
 
+- [x] Add one-field search brief capture before any structured follow-up intake.
 - [x] Expand the canonical profile setup flow to cover experience history, education, portfolio library, and resume source content.
 - [x] Implement CRUD for portfolio items and the master resume source.
-- [ ] Design the raw intake contract for imported job data.
+- [x] Design the raw intake contract for imported job data.
 - [ ] Build the normalization pipeline for title, company, location, remote status, salary, and extracted skills.
 - [ ] Add duplicate detection and source selection logic.
 - [ ] Implement the first scoring engine using the model in `SCORING.md`.
 - [ ] Persist per-user `job_scores` with explanation payloads.
-- [ ] Build the main jobs dashboard with ranking, filtering, and shortlist actions.
-- [ ] Build the job detail view with score breakdown, reasons, and red flags.
+- [x] Build the main jobs dashboard with ranking and filtering.
+- [ ] Add shortlist, dismiss, and workflow mutation actions to the jobs dashboard.
+- [x] Build the job detail view with score breakdown, reasons, and red flags.
 - [ ] Add saved searches and reusable filter presets.
 
 ## Phase D Application Prep

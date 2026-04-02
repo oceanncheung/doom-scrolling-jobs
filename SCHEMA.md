@@ -84,6 +84,7 @@ Key fields:
 | --- | --- | --- |
 | `id` | `uuid` | Primary key |
 | `user_id` | `uuid` | Unique FK to `users.id` |
+| `search_brief` | `text` | One-field freeform preference brief used before structured follow-ups |
 | `headline` | `text` | Primary professional label |
 | `location_label` | `text` | Current location string |
 | `timezone` | `text` | For reminders and follow-up cadence |
@@ -117,6 +118,7 @@ Relationships:
 
 Phase 1 core:
 
+- one freeform `search_brief` field as the lowest-friction way to start the preference model
 - all profile and preference fields needed for ranking and generation
 
 Later:
