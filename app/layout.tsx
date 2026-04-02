@@ -15,36 +15,40 @@ export const metadata: Metadata = {
 }
 
 const navItems = [
-  { href: '/', label: 'Foundation' },
-  { href: '/profile', label: 'Profile' },
   { href: '/dashboard', label: 'Jobs' },
-  { href: '/api/health', label: 'Health' },
+  { href: '/profile', label: 'Profile' },
 ]
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <div className="page-glow page-glow-left" />
-        <div className="page-glow page-glow-right" />
-        <div className="site-shell">
-          <header className="site-header">
-            <Link className="brand" href="/">
-              <span className="brand-mark">DSJ</span>
-              <span className="brand-copy">
+        <div className="workspace-shell">
+          <aside className="workspace-sidebar">
+            <Link className="workspace-brand" href="/dashboard">
+              <span className="workspace-brand-mark">DSJ</span>
+              <span className="workspace-brand-copy">
                 <strong>{site.name}</strong>
                 <span>{site.tagline}</span>
               </span>
             </Link>
-            <nav className="site-nav" aria-label="Primary">
+
+            <nav className="workspace-nav" aria-label="Primary">
               {navItems.map((item) => (
                 <Link key={item.href} href={item.href}>
                   {item.label}
                 </Link>
               ))}
             </nav>
-          </header>
-          {children}
+
+            <div className="workspace-meta">
+              <p>internal workspace</p>
+              <p>remote-only queue</p>
+              <p>manual apply flow</p>
+            </div>
+          </aside>
+
+          <div className="workspace-main">{children}</div>
         </div>
       </body>
     </html>

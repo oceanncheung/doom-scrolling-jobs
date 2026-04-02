@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useActionState, useState } from 'react'
 
 import type {
@@ -100,6 +101,31 @@ function AddRowButton({
   )
 }
 
+function DisclosureSection({
+  children,
+  label,
+  meta,
+  title,
+}: {
+  children: ReactNode
+  label: string
+  meta?: string
+  title: string
+}) {
+  return (
+    <details className="panel disclosure">
+      <summary className="disclosure-summary">
+        <div>
+          <p className="panel-label">{label}</p>
+          <h2>{title}</h2>
+        </div>
+        {meta ? <span className="disclosure-meta">{meta}</span> : null}
+      </summary>
+      <div className="disclosure-body">{children}</div>
+    </details>
+  )
+}
+
 export function ProfileForm({ workspace }: ProfileFormProps) {
   const [state, formAction, isPending] = useActionState(saveOperatorProfile, initialState)
   const [experienceEntries, setExperienceEntries] = useState(
@@ -123,25 +149,24 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
     <form action={formAction} className="profile-form">
       <section className="panel">
         <p className="panel-label">Search brief</p>
-        <h2>Start with one field, not a 50-question intake.</h2>
+        <h2>Search brief</h2>
         <label className="field">
-          <span>What kinds of jobs should the dashboard prioritize for you?</span>
+          <span>What should the queue prioritize?</span>
           <textarea
             defaultValue={workspace.profile.searchBrief}
             name="searchBrief"
             rows={7}
           />
           <small>
-            Write this like a direct note to the tool. Include the roles you want, salary shape,
-            remote rules, industries you like or avoid, and anything you do not want to waste time
-            on. The dashboard can ask targeted follow-ups later instead of forcing a long setup.
+            Write this like a direct note: target roles, salary, remote rules, industries, and
+            hard no&apos;s.
           </small>
         </label>
       </section>
 
       <section className="panel">
         <p className="panel-label">Operator identity</p>
-        <h2>Canonical profile anchor</h2>
+        <h2>Identity</h2>
         <div className="field-grid field-grid-2">
           <label className="field">
             <span>Display name</span>
@@ -180,7 +205,7 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
 
       <section className="panel">
         <p className="panel-label">Ranking preferences</p>
-        <h2>Keep the scoring engine aligned to the real operator.</h2>
+        <h2>Queue rules</h2>
         <div className="field-grid field-grid-2">
           <label className="field checkbox-field">
             <span>Remote required</span>
@@ -188,6 +213,46 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
               defaultChecked={workspace.profile.remoteRequired}
               name="remoteRequired"
               type="checkbox"
+            />
+          </label>
+          <label className="field checkbox-field">
+            <span>Open to relocation</span>
+            <input
+              defaultChecked={workspace.profile.relocationOpen}
+              name="relocationOpen"
+              type="checkbox"
+            />
+          </label>
+          <label className="field">
+            <span>Primary market</span>
+            <input
+              defaultValue={workspace.profile.primaryMarket}
+              name="primaryMarket"
+              type="text"
+            />
+          </label>
+          <label className="field">
+            <span>Secondary markets</span>
+            <textarea
+              defaultValue={toTextAreaValue(workspace.profile.secondaryMarkets)}
+              name="secondaryMarkets"
+              rows={4}
+            />
+          </label>
+          <label className="field">
+            <span>Allowed remote regions</span>
+            <textarea
+              defaultValue={toTextAreaValue(workspace.profile.allowedRemoteRegions)}
+              name="allowedRemoteRegions"
+              rows={4}
+            />
+          </label>
+          <label className="field">
+            <span>Timezone tolerance (hours)</span>
+            <input
+              defaultValue={workspace.profile.timezoneToleranceHours}
+              name="timezoneToleranceHours"
+              type="number"
             />
           </label>
           <label className="field">
@@ -231,7 +296,6 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
               name="targetRoles"
               rows={6}
             />
-            <small>One role per line or comma-separated.</small>
           </label>
           <label className="field">
             <span>Allowed adjacent roles</span>
@@ -240,7 +304,6 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
               name="allowedAdjacentRoles"
               rows={6}
             />
-            <small>These roles can pass if the fit is genuinely strong.</small>
           </label>
         </div>
         <div className="field-grid field-grid-2">
@@ -271,9 +334,11 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
         </label>
       </section>
 
-      <section className="panel">
-        <p className="panel-label">Skills and links</p>
-        <h2>Give the prep system a truthful source to work from.</h2>
+      <DisclosureSection
+        label="Skills and links"
+        meta="collapsed"
+        title="Supporting info"
+      >
         <div className="field-grid field-grid-2">
           <label className="field">
             <span>Profile skills</span>
@@ -282,7 +347,6 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
               name="skills"
               rows={6}
             />
-            <small>Used for fit scoring and profile-level recommendations.</small>
           </label>
           <label className="field">
             <span>Tools</span>
@@ -325,15 +389,13 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
             rows={5}
           />
         </label>
-      </section>
+      </DisclosureSection>
 
-      <section className="panel">
-        <div className="section-header">
-          <div>
-            <p className="panel-label">Resume master</p>
-            <h2>Structured resume source content</h2>
-          </div>
-        </div>
+      <DisclosureSection
+        label="Resume master"
+        meta={`${workspace.resumeMaster.skillsSection.length} skills`}
+        title="Resume source"
+      >
         <label className="field">
           <span>Resume summary</span>
           <textarea
@@ -360,14 +422,14 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
             />
           </label>
         </div>
-      </section>
+      </DisclosureSection>
 
-      <section className="panel">
+      <DisclosureSection
+        label="Experience history"
+        meta={`${experienceEntries.length} entries`}
+        title="Experience"
+      >
         <div className="section-header">
-          <div>
-            <p className="panel-label">Experience history</p>
-            <h2>These entries should hold the canonical work story for future tailoring.</h2>
-          </div>
           <AddRowButton
             label="Add experience"
             onClick={() => {
@@ -515,14 +577,14 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
             </article>
           ))}
         </div>
-      </section>
+      </DisclosureSection>
 
-      <section className="panel">
+      <DisclosureSection
+        label="Achievement bank"
+        meta={`${achievementBank.length} entries`}
+        title="Achievements"
+      >
         <div className="section-header">
-          <div>
-            <p className="panel-label">Achievement bank</p>
-            <h2>Reusable proof points that can be pulled into tailored resumes and answers.</h2>
-          </div>
           <AddRowButton
             label="Add achievement"
             onClick={() => {
@@ -599,14 +661,14 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
             </article>
           ))}
         </div>
-      </section>
+      </DisclosureSection>
 
-      <section className="panel">
+      <DisclosureSection
+        label="Education"
+        meta={`${educationEntries.length} entries`}
+        title="Education"
+      >
         <div className="section-header">
-          <div>
-            <p className="panel-label">Education</p>
-            <h2>Keep the canonical education history in structured form for resume generation.</h2>
-          </div>
           <AddRowButton
             label="Add education"
             onClick={() => {
@@ -730,14 +792,14 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
             </article>
           ))}
         </div>
-      </section>
+      </DisclosureSection>
 
-      <section className="panel">
+      <DisclosureSection
+        label="Portfolio library"
+        meta={`${portfolioItems.length} items`}
+        title="Portfolio"
+      >
         <div className="section-header">
-          <div>
-            <p className="panel-label">Portfolio library</p>
-            <h2>Maintain the project inventory that the system can recommend per job.</h2>
-          </div>
           <AddRowButton
             label="Add portfolio item"
             onClick={() => {
@@ -995,7 +1057,7 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
             job-specific recommendations.
           </div>
         ) : null}
-      </section>
+      </DisclosureSection>
 
       <div className="profile-form-footer">
         <div

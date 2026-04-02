@@ -32,6 +32,11 @@ const seededProfile: OperatorProfileRecord = {
   locationLabel: 'Toronto, Canada',
   timezone: 'America/Toronto',
   remoteRequired: true,
+  primaryMarket: 'Canada',
+  secondaryMarkets: ['United States'],
+  allowedRemoteRegions: ['Canada', 'United States', 'North America'],
+  timezoneToleranceHours: '3',
+  relocationOpen: false,
   salaryFloorCurrency: 'USD',
   salaryFloorAmount: '',
   salaryTargetMin: '',
@@ -327,6 +332,8 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
   const user = userResult.data
   const profile = profileResult.data
   const issues: string[] = []
+  const secondaryMarkets = asStringArray(profile.secondary_markets)
+  const allowedRemoteRegions = asStringArray(profile.allowed_remote_regions)
 
   const resumeMaster =
     resumeResult.error || !resumeResult.data
@@ -366,6 +373,19 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
           typeof profile.remote_required === 'boolean'
             ? profile.remote_required
             : seededProfile.remoteRequired,
+        primaryMarket: asString(profile.primary_market) || seededProfile.primaryMarket,
+        secondaryMarkets:
+          secondaryMarkets.length > 0 ? secondaryMarkets : seededProfile.secondaryMarkets,
+        allowedRemoteRegions:
+          allowedRemoteRegions.length > 0
+            ? allowedRemoteRegions
+            : seededProfile.allowedRemoteRegions,
+        timezoneToleranceHours:
+          asNumericString(profile.timezone_tolerance_hours) || seededProfile.timezoneToleranceHours,
+        relocationOpen:
+          typeof profile.relocation_open === 'boolean'
+            ? profile.relocation_open
+            : seededProfile.relocationOpen,
         salaryFloorCurrency:
           asString(profile.salary_floor_currency) || seededProfile.salaryFloorCurrency,
         salaryFloorAmount: asNumericString(profile.salary_floor_amount),

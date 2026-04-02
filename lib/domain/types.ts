@@ -13,6 +13,18 @@ export const workflowStatuses = [
 
 export type WorkflowStatus = (typeof workflowStatuses)[number]
 
+export const packetStatuses = ['draft', 'ready', 'applied', 'archived'] as const
+
+export type PacketStatus = (typeof packetStatuses)[number]
+
+export const answerReviewStatuses = ['draft', 'edited', 'approved'] as const
+
+export type AnswerReviewStatus = (typeof answerReviewStatuses)[number]
+
+export const resumeExportStatuses = ['draft', 'ready', 'exported'] as const
+
+export type ResumeExportStatus = (typeof resumeExportStatuses)[number]
+
 export const recommendationLevels = [
   'strong_apply',
   'apply_if_interested',
@@ -84,11 +96,64 @@ export interface JobScore {
 export interface ApplicationPacketSummary {
   id: string
   jobId: string
-  packetStatus: 'draft' | 'ready' | 'applied' | 'archived'
+  packetStatus: PacketStatus
   professionalSummary?: string
   coverLetterDraft?: string
   portfolioRecommendation?: string
   checklistItems: string[]
+}
+
+export interface ResumeVersionPacketRecord {
+  id: string
+  versionLabel: string
+  summaryText: string
+  experienceEntries: ResumeExperienceRecord[]
+  highlightedRequirements: string[]
+  skillsSection: string[]
+  tailoringNotes: string
+  exportStatus: ResumeExportStatus
+}
+
+export interface PacketPortfolioRecommendationRecord {
+  primaryLabel: string
+  primaryUrl: string
+  rationale: string
+}
+
+export interface PacketCaseStudyRecord {
+  displayOrder: number
+  portfolioItemId: string
+  reason: string
+  title: string
+  url: string
+}
+
+export interface ApplicationAnswerRecord {
+  id: string
+  answerText: string
+  answerVariantShort: string
+  characterLimit?: number
+  fieldType: string
+  questionKey: string
+  questionText: string
+  reviewStatus: AnswerReviewStatus
+}
+
+export interface ApplicationPacketRecord {
+  answers: ApplicationAnswerRecord[]
+  caseStudySelection: PacketCaseStudyRecord[]
+  checklistItems: string[]
+  coverLetterDraft: string
+  generatedAt?: string
+  id: string
+  jobId: string
+  jobScoreId: string
+  lastReviewedAt?: string
+  manualNotes: string
+  packetStatus: PacketStatus
+  portfolioRecommendation: PacketPortfolioRecommendationRecord
+  professionalSummary: string
+  resumeVersion: ResumeVersionPacketRecord
 }
 
 export interface OperatorProfileRecord {
@@ -101,6 +166,11 @@ export interface OperatorProfileRecord {
   locationLabel: string
   timezone: string
   remoteRequired: boolean
+  primaryMarket: string
+  secondaryMarkets: string[]
+  allowedRemoteRegions: string[]
+  timezoneToleranceHours: string
+  relocationOpen: boolean
   salaryFloorCurrency: string
   salaryFloorAmount: string
   salaryTargetMin: string

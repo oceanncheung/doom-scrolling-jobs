@@ -1,15 +1,20 @@
 import 'server-only'
 
 import { defaultOperator } from '@/lib/config/runtime'
+import { getOperatorProfile } from '@/lib/data/operator-profile'
 import { hasSupabaseServerEnv } from '@/lib/env'
-import type { RankedJobRecord } from '@/lib/jobs/contracts'
+import type { QualifiedJobRecord, RankedJobRecord } from '@/lib/jobs/contracts'
+import { applyWorkflowLearning } from '@/lib/jobs/learning'
+import { applyQualificationEngine } from '@/lib/jobs/qualification'
+import { ensurePrimaryImportedJobs } from '@/lib/jobs/real-feed'
+import { isImportedSourceName, summarizeSourceDiagnostics } from '@/lib/jobs/source-registry'
 import { createClient } from '@/lib/supabase/server'
 
 type JobsSource = 'seed' | 'database' | 'database-fallback'
 
 export interface RankedJobsResult {
   issue?: string
-  jobs: RankedJobRecord[]
+  jobs: QualifiedJobRecord[]
   source: JobsSource
 }
 
@@ -321,6 +326,25 @@ function asStringArray(value: unknown) {
   return value.filter((item): item is string => typeof item === 'string' && item.length > 0)
 }
 
+function dedupeRankedJobs(jobs: RankedJobRecord[]) {
+  const seenKeys = new Set<string>()
+
+  return jobs.filter((job) => {
+    const dedupeKey = job.duplicateGroupKey || job.sourceUrl
+
+    if (!dedupeKey || !isImportedSourceName(job.sourceName)) {
+      return true
+    }
+
+    if (seenKeys.has(dedupeKey)) {
+      return false
+    }
+
+    seenKeys.add(dedupeKey)
+    return true
+  })
+}
+
 function normalizeRankedJob(value: unknown): RankedJobRecord | null {
   const score = asRecord(value)
   const job = asRecord(score?.jobs)
@@ -380,15 +404,21 @@ function normalizeRankedJob(value: unknown): RankedJobRecord | null {
 }
 
 export async function getRankedJobs(): Promise<RankedJobsResult> {
+  const { workspace } = await getOperatorProfile()
+
   if (!hasSupabaseServerEnv()) {
     return {
       issue:
         'Supabase server environment variables are not configured yet, so the jobs dashboard is showing seeded fallback listings.',
-      jobs: seededJobs,
+      jobs: applyQualificationEngine(
+        dedupeRankedJobs(applyWorkflowLearning(seededJobs)),
+        workspace.profile,
+      ),
       source: 'seed',
     }
   }
 
+  const importResult = await ensurePrimaryImportedJobs()
   const supabase = createClient()
   const { data, error } = await supabase
     .from('job_scores')
@@ -451,28 +481,62 @@ export async function getRankedJobs(): Promise<RankedJobsResult> {
   if (error || !data || data.length === 0) {
     return {
       issue:
+        importResult.issue ??
         'No persisted job scores were found yet, so the dashboard is using the seeded ranked-job fallback set.',
-      jobs: seededJobs,
+      jobs: applyQualificationEngine(
+        dedupeRankedJobs(applyWorkflowLearning(seededJobs)),
+        workspace.profile,
+      ),
       source: 'database-fallback',
     }
   }
 
-  const jobs = data
+  const jobs = dedupeRankedJobs(
+    data
     .map((item) => normalizeRankedJob(item))
-    .filter((item): item is RankedJobRecord => item !== null)
+    .filter((item): item is RankedJobRecord => item !== null),
+  )
 
   if (jobs.length === 0) {
     return {
       issue:
+        importResult.issue ??
         'Job scores were loaded, but the joined job records were incomplete. The dashboard is falling back to the seeded ranked set.',
-      jobs: seededJobs,
+      jobs: applyQualificationEngine(
+        dedupeRankedJobs(applyWorkflowLearning(seededJobs)),
+        workspace.profile,
+      ),
       source: 'database-fallback',
     }
   }
 
+  const importedJobs = jobs.filter((job) => isImportedSourceName(job.sourceName))
+
+  if (importedJobs.length > 0) {
+    const diagnosticsSummary = summarizeSourceDiagnostics(importResult.sourceDiagnostics ?? [])
+
+    return {
+      issue:
+        importResult.importedCount > 0
+          ? `Imported ${importResult.importedCount} jobs into the primary ranked feed.${diagnosticsSummary ? ` ${diagnosticsSummary}.` : ''}`
+          : undefined,
+      jobs: applyQualificationEngine(
+        dedupeRankedJobs(applyWorkflowLearning(importedJobs)),
+        workspace.profile,
+      ),
+      source: 'database',
+    }
+  }
+
   return {
-    jobs,
-    source: 'database',
+    issue:
+      importResult.issue ??
+      'Imported-source jobs are not available yet, so the database-backed feed is still showing the existing seeded demo records.',
+    jobs: applyQualificationEngine(
+      dedupeRankedJobs(applyWorkflowLearning(jobs)),
+      workspace.profile,
+    ),
+    source: 'database-fallback',
   }
 }
 

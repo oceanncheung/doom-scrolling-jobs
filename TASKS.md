@@ -1,68 +1,43 @@
 # Execution Checklist
 
-_Date: April 1, 2026_
+_Last updated: April 2, 2026_
 
-## Phase A Planning
+## Completed
 
-- [x] Write the initial product overview in `README.md`.
-- [x] Capture Phase 1 requirements in `PRD.md`.
-- [x] Define the initial schema for users, jobs, scoring, and application packets.
-- [x] Define the job ranking framework with hard filters and weighted factors.
-- [x] Record accepted product and architecture decisions in `DECISIONS.md`.
-- [ ] Turn the Phase 1 checklist into GitHub issues and milestones.
-- [ ] Decide the first launch sources for job ingestion.
-- [ ] Define normalized enums for remote type, status, seniority, and recommendation levels.
-- [ ] Draft prompt contracts for job parsing, scoring, resume tailoring, portfolio recommendation, and answer generation.
-- [ ] Define acceptance criteria for a "good application packet."
+- [x] Write and keep the product docs in `README.md`, `PRD.md`, `SCHEMA.md`, `SCORING.md`, and `DECISIONS.md`.
+- [x] Scaffold the Next.js App Router app and single-user Supabase setup.
+- [x] Commit `.env.example` and make `npm run check` a reliable local verification loop.
+- [x] Create the core Supabase schema for users, profiles, jobs, scoring, packets, answers, events, saved searches, and prompts.
+- [x] Add the `search_brief` profile migration and seed one deterministic internal operator workspace.
+- [x] Build the profile workspace with save/load for canonical profile fields, resume source content, and portfolio items.
+- [x] Define shared domain types, scoring weights, presentation helpers, and Supabase server/client helpers.
+- [x] Build the ranked jobs dashboard with recommendation and workflow filters.
+- [x] Build the job detail page with visible score breakdown, fit reasons, red flags, and source links.
+- [x] Add workflow actions for shortlist, dismiss, and status changes, persisted through `job_scores` and `application_events`.
+- [x] Add the first workflow-learning loop so shortlist/dismiss/apply behavior changes ranking.
+- [x] Build the packet review screen with editable packet, resume version, checklist, and structured answers persistence.
+- [x] Define the raw intake contract for imported jobs and normalize basic fields into persisted `jobs` rows.
+- [x] Replace demo-first feed behavior with real imported jobs when persisted imports exist.
+- [x] Keep Remote OK as a source and add source expansion foundations: source registry, company watchlist, Greenhouse ATS importer, and source diagnostics.
+- [x] Enforce remote-only plus designer-first import gates before jobs enter the ranked queue.
+- [x] Add deterministic dedupe for imported jobs and keep the dashboard on a ranked queue instead of a raw import list.
+- [x] Add import/refresh diagnostics via `app/api/jobs/import`.
 
-## Phase B Foundation
+## Next Up
 
-- [x] Scaffold the Next.js app with TypeScript, App Router, and Supabase integration.
-- [x] Set up environment variable strategy and commit an `.env.example`.
-- [x] Create the first Supabase migration for core tables and enums.
-- [x] Seed one deterministic internal user/profile for the single-user setup.
-- [ ] Defer row-level security until the product leaves internal single-user mode.
+- [ ] Harden packet lifecycle so saved packets, resume versions, workflow moves, and application events stay fully in sync.
+- [ ] Add a practical resume PDF export flow from saved `resume_versions`.
+- [ ] Add saved searches and reusable dashboard filter presets backed by `saved_searches`.
+- [ ] Wire the `prompts` table into real task contracts for scoring and packet-generation work.
+- [ ] Add a job activity timeline view with status history, packet linkage, and manual notes.
+
+## After That
+
+- [ ] Add follow-up reminders and lightweight pipeline analytics on top of `application_events`.
 - [ ] Define storage buckets and access rules for resume exports and packet assets.
-- [x] Wire the app to the seeded internal profile instead of a login gate.
-- [x] Create shared types for profile, job, score, packet, and event records.
-- [ ] Implement a repository-wide validation and formatting baseline.
-- [ ] Set up GitHub Actions for lint, typecheck, and migration checks.
-
-## Phase C Core Product
-
-- [x] Add one-field search brief capture before any structured follow-up intake.
-- [x] Expand the canonical profile setup flow to cover experience history, education, portfolio library, and resume source content.
-- [x] Implement CRUD for portfolio items and the master resume source.
-- [x] Design the raw intake contract for imported job data.
-- [ ] Build the normalization pipeline for title, company, location, remote status, salary, and extracted skills.
-- [ ] Add duplicate detection and source selection logic.
-- [ ] Implement the first scoring engine using the model in `SCORING.md`.
-- [ ] Persist per-user `job_scores` with explanation payloads.
-- [x] Build the main jobs dashboard with ranking and filtering.
-- [ ] Add shortlist, dismiss, and workflow mutation actions to the jobs dashboard.
-- [x] Build the job detail view with score breakdown, reasons, and red flags.
-- [ ] Add saved searches and reusable filter presets.
-
-## Phase D Application Prep
-
-- [ ] Define the application packet generation contract end to end.
-- [ ] Implement resume tailoring output generation from `resume_master` to `resume_versions`.
-- [ ] Implement portfolio recommendation logic against `portfolio_items`.
-- [ ] Generate cover letter drafts with editable sections.
-- [ ] Generate structured short-answer responses and field-by-field application text.
-- [ ] Build the packet review screen for editing and approval.
-- [ ] Implement a practical resume PDF export flow.
-- [ ] Save packet versions and tie them to application status changes.
-- [ ] Add a user checklist for final manual submission steps.
-
-## Phase E Refinement
-
-- [ ] Tune scoring weights against real saved and skipped jobs.
-- [ ] Add prompt version tracking and evaluation notes for each AI task.
-- [ ] Improve remote classification for ambiguous listings.
-- [ ] Add follow-up reminders and lightweight pipeline analytics.
-- [ ] Instrument core user actions with PostHog.
+- [ ] Set up GitHub Actions for lint, typecheck, build, and migration verification.
+- [ ] Add prompt/version evaluation notes for generation and scoring tasks.
+- [ ] Improve source coverage further without weakening designer-first gating or ranking quality.
+- [ ] Add PostHog instrumentation for core workflow actions.
 - [ ] Add Sentry for runtime and generation error monitoring.
-- [ ] Explore Playwright-assisted workflows only after manual prep flow is reliable.
-- [ ] Review whether source expansion improves quality or only volume.
-- [ ] Add export and reporting views for packet history and application outcomes.
+- [ ] Explore Playwright-assisted workflows only after packet prep and export are stable.

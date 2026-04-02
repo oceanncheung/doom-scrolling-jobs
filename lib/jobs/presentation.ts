@@ -1,10 +1,14 @@
-import type { RankedJobRecord } from '@/lib/jobs/contracts'
+import type { QualifiedJobRecord, RankedJobRecord } from '@/lib/jobs/contracts'
 
 export function formatRecommendationLabel(value: RankedJobRecord['recommendationLevel']) {
   return value.replaceAll('_', ' ')
 }
 
 export function formatWorkflowLabel(value: RankedJobRecord['workflowStatus']) {
+  return value.replaceAll('_', ' ')
+}
+
+export function formatQueueSegmentLabel(value: QualifiedJobRecord['queueSegment']) {
   return value.replaceAll('_', ' ')
 }
 
@@ -58,6 +62,14 @@ export function formatScore(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
+export function formatSignedScore(value: number) {
+  if (value === 0) {
+    return '0'
+  }
+
+  return `${value > 0 ? '+' : '-'}${formatScore(Math.abs(value))}`
+}
+
 export function recommendationTone(value: RankedJobRecord['recommendationLevel']) {
   switch (value) {
     case 'strong_apply':
@@ -69,4 +81,16 @@ export function recommendationTone(value: RankedJobRecord['recommendationLevel']
     default:
       return 'tone-skip'
   }
+}
+
+export function learningTone(value: number) {
+  if (value > 0.4) {
+    return 'tone-strong'
+  }
+
+  if (value < -0.4) {
+    return 'tone-careful'
+  }
+
+  return 'tone-skip'
 }

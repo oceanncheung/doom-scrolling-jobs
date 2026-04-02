@@ -30,6 +30,11 @@ insert into public.user_profiles (
   location_label,
   timezone,
   remote_required,
+  primary_market,
+  secondary_markets,
+  allowed_remote_regions,
+  timezone_tolerance_hours,
+  relocation_open,
   target_roles,
   allowed_adjacent_roles,
   industries_preferred,
@@ -51,6 +56,11 @@ values (
   'Toronto, Canada',
   'America/Toronto',
   true,
+  'Canada',
+  '["United States"]'::jsonb,
+  '["Canada","United States","North America"]'::jsonb,
+  3,
+  false,
   '["graphic designer","brand designer","visual designer","marketing designer","presentation designer"]'::jsonb,
   '["product designer","motion designer","art director","creative lead","creative director","content designer","campaign designer","ui designer"]'::jsonb,
   '["technology","education","media"]'::jsonb,
@@ -105,6 +115,11 @@ set
   location_label = excluded.location_label,
   timezone = excluded.timezone,
   remote_required = excluded.remote_required,
+  primary_market = excluded.primary_market,
+  secondary_markets = excluded.secondary_markets,
+  allowed_remote_regions = excluded.allowed_remote_regions,
+  timezone_tolerance_hours = excluded.timezone_tolerance_hours,
+  relocation_open = excluded.relocation_open,
   target_roles = excluded.target_roles,
   allowed_adjacent_roles = excluded.allowed_adjacent_roles,
   industries_preferred = excluded.industries_preferred,
@@ -117,6 +132,155 @@ set
   experience_summary = excluded.experience_summary,
   education_summary = excluded.education_summary,
   preferences_notes = excluded.preferences_notes;
+
+insert into public.source_registry (
+  slug,
+  display_name,
+  source_kind,
+  provider,
+  base_url,
+  metadata,
+  is_active
+)
+values
+(
+  'remote-ok',
+  'Remote OK',
+  'remote_board',
+  'remoteok',
+  'https://remoteok.com/api',
+  '{}'::jsonb,
+  true
+),
+(
+  'greenhouse-ats',
+  'Greenhouse ATS',
+  'ats_hosted_job_page',
+  'greenhouse',
+  'https://boards-api.greenhouse.io/v1/boards',
+  '{"canonicalHostPattern":"job-boards.greenhouse.io"}'::jsonb,
+  true
+)
+on conflict (slug) do update
+set
+  display_name = excluded.display_name,
+  source_kind = excluded.source_kind,
+  provider = excluded.provider,
+  base_url = excluded.base_url,
+  metadata = excluded.metadata,
+  is_active = excluded.is_active;
+
+insert into public.company_watchlist (
+  user_id,
+  source_registry_id,
+  company_name,
+  company_slug,
+  source_key,
+  source_name,
+  career_page_url,
+  ats_board_token,
+  priority,
+  notes,
+  metadata,
+  is_active
+)
+values
+(
+  '11111111-1111-4111-8111-111111111111',
+  (select id from public.source_registry where slug = 'greenhouse-ats'),
+  'Fluxon',
+  'fluxon',
+  'greenhouse:fluxon',
+  'Fluxon Careers',
+  'https://job-boards.greenhouse.io/fluxon',
+  'fluxon',
+  5,
+  'Brand and growth design watchlist target for ATS-backed acquisition.',
+  '{"regionHint":"Europe"}'::jsonb,
+  true
+),
+(
+  '11111111-1111-4111-8111-111111111111',
+  (select id from public.source_registry where slug = 'greenhouse-ats'),
+  'Metalab',
+  'metalab',
+  'greenhouse:metalab',
+  'Metalab Careers',
+  'https://job-boards.greenhouse.io/metalab',
+  'metalab',
+  10,
+  'Brand design watchlist target for ATS-backed acquisition.',
+  '{"regionHint":"Americas"}'::jsonb,
+  true
+),
+(
+  '11111111-1111-4111-8111-111111111111',
+  (select id from public.source_registry where slug = 'greenhouse-ats'),
+  'NinjaTrader',
+  'ninjatrader',
+  'greenhouse:ninjatrader',
+  'NinjaTrader Careers',
+  'https://job-boards.greenhouse.io/ninjatrader',
+  'ninjatrader',
+  20,
+  'Brand and marketing designer watchlist target for ATS-backed acquisition.',
+  '{"regionHint":"United States"}'::jsonb,
+  true
+),
+(
+  '11111111-1111-4111-8111-111111111111',
+  (select id from public.source_registry where slug = 'greenhouse-ats'),
+  'Universal Audio',
+  'universalaudio',
+  'greenhouse:universalaudio',
+  'Universal Audio Careers',
+  'https://job-boards.greenhouse.io/universalaudio',
+  'universalaudio',
+  30,
+  'Visual design watchlist target for ATS-backed acquisition.',
+  '{"regionHint":"United States"}'::jsonb,
+  true
+),
+(
+  '11111111-1111-4111-8111-111111111111',
+  (select id from public.source_registry where slug = 'greenhouse-ats'),
+  'Flo Health',
+  'flohealth',
+  'greenhouse:flohealth',
+  'Flo Health Careers',
+  'https://job-boards.greenhouse.io/flohealth',
+  'flohealth',
+  40,
+  'Visual design watchlist target for ATS-backed acquisition.',
+  '{"regionHint":"Europe"}'::jsonb,
+  true
+),
+(
+  '11111111-1111-4111-8111-111111111111',
+  (select id from public.source_registry where slug = 'greenhouse-ats'),
+  'Appspace',
+  'appspace',
+  'greenhouse:appspace',
+  'Appspace Careers',
+  'https://job-boards.greenhouse.io/appspace',
+  'appspace',
+  50,
+  'Design watchlist target for ATS-backed acquisition.',
+  '{"regionHint":"Europe"}'::jsonb,
+  true
+)
+on conflict (source_key) do update
+set
+  source_registry_id = excluded.source_registry_id,
+  company_name = excluded.company_name,
+  company_slug = excluded.company_slug,
+  source_name = excluded.source_name,
+  career_page_url = excluded.career_page_url,
+  ats_board_token = excluded.ats_board_token,
+  priority = excluded.priority,
+  notes = excluded.notes,
+  metadata = excluded.metadata,
+  is_active = excluded.is_active;
 
 insert into public.resume_master (
   id,

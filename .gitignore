@@ -26,6 +26,8 @@ pnpm-debug.log*
 coverage/
 .turbo/
 .cache/
+.trace/
+cache/
 .eslintcache
 *.tsbuildinfo
 .vercel/
