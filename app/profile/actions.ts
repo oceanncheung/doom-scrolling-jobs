@@ -1,5 +1,7 @@
 'use server'
 
+import { highlightLinesFromMultiline } from '@/lib/profile/highlight-lines'
+import { normalizeSalaryFloorCurrency } from '@/lib/profile/salary-currency'
 import { revalidatePath } from 'next/cache'
 
 import { getActiveOperatorContext } from '@/lib/data/operators'
@@ -104,7 +106,9 @@ function parseExperienceEntries(formData: FormData): ParseResult<ResumeExperienc
   const startDates = asFieldArray(formData, 'experienceStartDate')
   const endDates = asFieldArray(formData, 'experienceEndDate')
   const summaries = asFieldArray(formData, 'experienceSummary')
-  const highlights = asFieldArray(formData, 'experienceHighlights').map((value) => asList(value))
+  const highlights = asFieldArray(formData, 'experienceHighlights').map((value) =>
+    highlightLinesFromMultiline(value),
+  )
 
   const count = Math.max(
     roleTitles.length,
@@ -350,11 +354,14 @@ export async function saveOperatorProfile(
   const portfolioItems = portfolioResult.items
   const resumeSkillsSection = asList(formData.get('resumeSkillsSection'))
   const certifications = asList(formData.get('certifications'))
+  const coverLetterPdfFileName = asOptionalText(formData.get('coverLetterPdfFileName'))
   const derivedPortfolioPrimaryUrl =
     asOptionalText(formData.get('portfolioPrimaryUrl')) ??
     portfolioItems.find((item) => item.isPrimary && item.isActive)?.url ??
     portfolioItems.find((item) => item.isActive)?.url ??
     null
+  const portfolioPdfFileName = asOptionalText(formData.get('portfolioPdfFileName'))
+  const resumePdfFileName = asOptionalText(formData.get('resumePdfFileName'))
   const searchBrief = asOptionalText(formData.get('searchBrief')) ?? ''
 
   const supabase = createClient()
@@ -394,29 +401,29 @@ export async function saveOperatorProfile(
     timezone: asOptionalText(formData.get('timezone')) ?? 'America/Toronto',
     remote_required: formData.get('remoteRequired') === 'on',
     primary_market: asOptionalText(formData.get('primaryMarket')) ?? '',
-    secondary_markets: asList(formData.get('secondaryMarkets')),
+    secondary_markets: [],
     allowed_remote_regions: asList(formData.get('allowedRemoteRegions')),
-    timezone_tolerance_hours: asOptionalInteger(formData.get('timezoneToleranceHours')),
+    timezone_tolerance_hours: null,
     relocation_open: formData.get('relocationOpen') === 'on',
-    salary_floor_currency: asOptionalText(formData.get('salaryFloorCurrency')) ?? 'USD',
-    salary_floor_amount: asOptionalInteger(formData.get('salaryFloorAmount')),
+    salary_floor_currency: normalizeSalaryFloorCurrency(asTextValue(formData.get('salaryFloorCurrency'))),
+    salary_floor_amount: null,
     salary_target_min: asOptionalInteger(formData.get('salaryTargetMin')),
     salary_target_max: asOptionalInteger(formData.get('salaryTargetMax')),
     seniority_level: asOptionalText(formData.get('seniorityLevel')),
     target_roles: asList(formData.get('targetRoles')),
     allowed_adjacent_roles: asList(formData.get('allowedAdjacentRoles')),
     industries_preferred: asList(formData.get('industriesPreferred')),
-    industries_avoid: asList(formData.get('industriesAvoid')),
+    industries_avoid: [],
     skills: asList(formData.get('skills')),
     tools: asList(formData.get('tools')),
-    work_authorization_notes: asOptionalText(formData.get('workAuthorizationNotes')),
+    work_authorization_notes: '',
     portfolio_primary_url: derivedPortfolioPrimaryUrl,
     linkedin_url: asOptionalText(formData.get('linkedinUrl')),
     personal_site_url: asOptionalText(formData.get('personalSiteUrl')),
     bio_summary: asOptionalText(formData.get('bioSummary')),
     experience_summary: experienceEntries,
     education_summary: educationEntries,
-    preferences_notes: asOptionalText(formData.get('preferencesNotes')),
+    preferences_notes: '',
   }
 
   const resumePayload = {
@@ -438,9 +445,12 @@ export async function saveOperatorProfile(
     source_format: 'structured_json',
     source_content: {
       achievementCount: achievementBank.length,
+      coverLetterPdfFileName,
       educationCount: educationEntries.length,
       experienceCount: experienceEntries.length,
       portfolioItemCount: portfolioItems.length,
+      portfolioPdfFileName,
+      resumePdfFileName,
       searchBrief,
       updatedFrom: 'profile-workspace',
     },

@@ -232,6 +232,9 @@ export interface ResumeMasterRecord {
   skillsSection: string[]
   educationEntries: ResumeEducationRecord[]
   certifications: string[]
+  resumePdfFileName: string
+  coverLetterPdfFileName: string
+  portfolioPdfFileName: string
 }
 
 export interface OperatorPortfolioItemRecord {

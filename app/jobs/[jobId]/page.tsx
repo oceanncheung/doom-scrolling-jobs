@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
-import { getRankedJob } from '@/lib/data/jobs'
+import { WorkspaceTodayRail } from '@/components/navigation/workspace-today-rail'
+import { getRankedJob, getRankedJobs } from '@/lib/data/jobs'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
 import { getOperatorProfile } from '@/lib/data/operator-profile'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
@@ -195,29 +196,26 @@ function DetailActions({
 export default async function JobDetailPage({ params }: JobDetailPageProps) {
   await requireActiveOperatorSelection()
   const { jobId } = await params
-  const { job, source } = await getRankedJob(jobId)
-  const { workspace } = await getOperatorProfile()
+  const [{ job, source }, { jobs, source: jobsSource }, { workspace }] = await Promise.all([
+    getRankedJob(jobId),
+    getRankedJobs(),
+    getOperatorProfile(),
+  ])
 
   if (!job) {
     notFound()
   }
 
   const actionsEnabled = source === 'database'
+  const railActionsEnabled = jobsSource === 'database'
 
   return (
-    <main className="page-stack">
+    <main className="page-stack workspace-surface">
       <div className="dashboard-workspace">
-        <aside className="today-rail">
-          <section className="today-block">
-            <div className="today-block-heading">
-              <p className="panel-label">Job</p>
-              <h2>Workspace</h2>
-            </div>
-            <Link className="button button-secondary" href="/dashboard">
-              Back to queue
-            </Link>
-          </section>
-        </aside>
+        <WorkspaceTodayRail
+          actionsEnabled={railActionsEnabled}
+          jobs={jobs}
+        />
         <div className="queue-column">
       <section className="page-header flow-header">
         <div className="page-heading">

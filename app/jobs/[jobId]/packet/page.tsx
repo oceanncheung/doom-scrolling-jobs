@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
 import { ApplicationPacketForm } from '@/components/jobs/application-packet-form'
+import { WorkspaceTodayRail } from '@/components/navigation/workspace-today-rail'
 import { getApplicationPacketReview } from '@/lib/data/application-packets'
+import { getRankedJobs } from '@/lib/data/jobs'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
 import { getOperatorProfile } from '@/lib/data/operator-profile'
 import {
@@ -78,30 +80,23 @@ function PacketActions({
 export default async function PacketReviewPage({ params }: PacketReviewPageProps) {
   await requireActiveOperatorSelection()
   const { jobId } = await params
-  const { canSave, issue, job, packet } = await getApplicationPacketReview(jobId)
-  const { workspace } = await getOperatorProfile()
+  const [{ canSave, issue, job, packet }, { jobs, source }, { workspace }] = await Promise.all([
+    getApplicationPacketReview(jobId),
+    getRankedJobs(),
+    getOperatorProfile(),
+  ])
 
   if (!job || !packet) {
     notFound()
   }
 
   return (
-    <main className="page-stack">
+    <main className="page-stack workspace-surface">
       <div className="dashboard-workspace">
-        <aside className="today-rail">
-          <section className="today-block">
-            <div className="today-block-heading">
-              <p className="panel-label">Packet</p>
-              <h2>Workspace</h2>
-            </div>
-            <Link className="button button-secondary" href="/dashboard">
-              Back to queue
-            </Link>
-            <Link className="button button-ghost button-small" href={`/jobs/${job.id}`}>
-              Job detail
-            </Link>
-          </section>
-        </aside>
+        <WorkspaceTodayRail
+          actionsEnabled={source === 'database'}
+          jobs={jobs}
+        />
         <div className="queue-column">
       <section className="page-header flow-header">
         <div className="page-heading">

@@ -130,6 +130,9 @@ const seededResumeMaster: ResumeMasterRecord = {
     },
   ],
   certifications: [],
+  coverLetterPdfFileName: '',
+  portfolioPdfFileName: '',
+  resumePdfFileName: '',
 }
 
 const seededPortfolioItems: OperatorPortfolioItemRecord[] = [
@@ -267,6 +270,7 @@ function normalizePortfolioItem(value: unknown): OperatorPortfolioItemRecord {
 
 function normalizeResumeMaster(value: unknown): ResumeMasterRecord {
   const record = asRecord(value)
+  const sourceContent = asRecord(record?.source_content ?? record?.sourceContent)
 
   return {
     baseTitle: asString(record?.base_title ?? record?.baseTitle) || seededResumeMaster.baseTitle,
@@ -282,6 +286,15 @@ function normalizeResumeMaster(value: unknown): ResumeMasterRecord {
       normalizeEducationEntry,
     ),
     certifications: asStringArray(record?.certifications),
+    coverLetterPdfFileName: asString(
+      sourceContent?.coverLetterPdfFileName ?? sourceContent?.cover_letter_pdf_file_name,
+    ),
+    portfolioPdfFileName: asString(
+      sourceContent?.portfolioPdfFileName ?? sourceContent?.portfolio_pdf_file_name,
+    ),
+    resumePdfFileName: asString(
+      sourceContent?.resumePdfFileName ?? sourceContent?.resume_pdf_file_name,
+    ),
   }
 }
 

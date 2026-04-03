@@ -1,8 +1,11 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
+import { refreshDashboardQueue } from '@/app/dashboard/actions'
 import { JobsMarqueeBanner } from '@/components/jobs/jobs-marquee-banner'
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
+import { QueueRefreshButton } from '@/components/jobs/queue-refresh-button'
+import { WorkspaceTodayRail } from '@/components/navigation/workspace-today-rail'
 import { getRankedJobs } from '@/lib/data/jobs'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
 import { getOperatorProfile } from '@/lib/data/operator-profile'
@@ -32,12 +35,6 @@ interface SalaryDisplay {
   label: string
   note?: string
   value: string
-}
-
-interface ResumeStatus {
-  ctaLabel: string
-  href: string
-  label: string
 }
 
 function getSalaryDisplay(job: QualifiedJobRecord, profile: OperatorProfileRecord): SalaryDisplay {
@@ -129,50 +126,6 @@ function getDescriptionExcerpt(job: QualifiedJobRecord) {
   }
 
   return `${text.slice(0, 277).trimEnd()}...`
-}
-
-function getApplyNextJob(savedJobs: QualifiedJobRecord[], preparedJobs: QualifiedJobRecord[]) {
-  return preparedJobs[0] ?? savedJobs[0] ?? null
-}
-
-function getApplyNextLink(job: QualifiedJobRecord) {
-  if (job.workflowStatus === 'ready_to_apply') {
-    return {
-      href: job.applicationUrl ?? job.sourceUrl,
-      label: 'Apply',
-      external: true,
-    }
-  }
-
-  return {
-    href: `/jobs/${job.id}/packet`,
-    label: 'Prepare',
-    external: false,
-  }
-}
-
-function getNewTodayCount(jobs: QualifiedJobRecord[]) {
-  return jobs.filter((job) => job.daysSincePosted === 0).length
-}
-
-function getResumeStatus(profile: OperatorProfileRecord, resumeSummaryText: string, experienceCount: number) {
-  if (
-    resumeSummaryText.trim().length > 0 ||
-    experienceCount > 0 ||
-    profile.portfolioPrimaryUrl.trim().length > 0
-  ) {
-    return {
-      ctaLabel: 'Update',
-      href: '/profile#source-files',
-      label: 'Resume source is present.',
-    } satisfies ResumeStatus
-  }
-
-  return {
-    ctaLabel: 'Add source',
-    href: '/profile#source-files',
-    label: 'Resume source is still missing.',
-  } satisfies ResumeStatus
 }
 
 function StageEmpty({
@@ -617,118 +570,26 @@ function QueueMeta({
 
   return (
     <div className="queue-meta">
-      <div className="queue-meta-heading">
-        <p className="panel-label">{copy[activeView].eyebrow}</p>
-        <h1>{copy[activeView].label}</h1>
+      <div
+        className={
+          activeView === 'potential'
+            ? 'queue-meta-heading queue-meta-heading-with-action'
+            : 'queue-meta-heading'
+        }
+      >
+        <div>
+          <p className="panel-label">{copy[activeView].eyebrow}</p>
+          <h1>{copy[activeView].label}</h1>
+        </div>
+        {activeView === 'potential' ? (
+          <form action={refreshDashboardQueue} className="queue-meta-actions">
+            <input name="view" type="hidden" value={activeView} />
+            <QueueRefreshButton />
+          </form>
+        ) : null}
       </div>
       <p>{copy[activeView].note}</p>
     </div>
-  )
-}
-
-function TodayRail({
-  actionsEnabled,
-  applyNextJob,
-  newTodayCount,
-  preparedCount,
-  resumeStatus,
-  savedCount,
-}: {
-  actionsEnabled: boolean
-  applyNextJob: QualifiedJobRecord | null
-  newTodayCount: number
-  preparedCount: number
-  resumeStatus: ResumeStatus
-  savedCount: number
-}) {
-  const applyNextAction = applyNextJob ? getApplyNextLink(applyNextJob) : null
-
-  return (
-    <aside className="today-rail" aria-label="Today">
-      <section className="today-block">
-        <div className="today-block-heading">
-          <p className="panel-label">Today</p>
-          <h2>Apply next</h2>
-        </div>
-
-        {applyNextJob ? (
-          <div className="today-apply-next">
-            <div className="today-apply-copy">
-              <Link className="today-job-link" href={`/jobs/${applyNextJob.id}`}>
-                {applyNextJob.title}
-              </Link>
-              <p className="today-job-company">{applyNextJob.companyName}</p>
-              <p className="today-job-reason">{getMatchReason(applyNextJob)}</p>
-            </div>
-
-            <div className="today-actions">
-              {applyNextAction?.external ? (
-                <a
-                  className="button button-primary"
-                  href={applyNextAction.href}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {applyNextAction.label}
-                </a>
-              ) : (
-                <Link className="button button-primary" href={applyNextAction?.href ?? `/jobs/${applyNextJob.id}`}>
-                  {applyNextAction?.label ?? 'Prepare'}
-                </Link>
-              )}
-
-              <JobStageActionButton
-                canEdit={actionsEnabled}
-                disabledReason="Switch back to the database-backed queue to skip jobs."
-                intent="dismiss"
-                jobId={applyNextJob.id}
-                label="Skip"
-                sourceContext="today-rail"
-                variant="secondary"
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="today-empty">
-            <p>No job is ready for prep yet.</p>
-            <p>Save something from Potential and it will move into the next-action rail.</p>
-          </div>
-        )}
-      </section>
-
-      <section className="today-block">
-        <div className="today-block-heading">
-          <h2>Snapshot</h2>
-        </div>
-        <dl className="today-stats">
-          <div>
-            <dt>New today</dt>
-            <dd>{newTodayCount}</dd>
-          </div>
-          <div>
-            <dt>Ready to apply</dt>
-            <dd>{preparedCount}</dd>
-          </div>
-          <div>
-            <dt>Saved</dt>
-            <dd>{savedCount}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section className="today-block">
-        <div className="today-block-heading">
-          <p className="panel-label">Source</p>
-          <h2>Resume status</h2>
-        </div>
-        <div className="today-resume-status">
-          <p>{resumeStatus.label}</p>
-          <Link className="button button-secondary" href={resumeStatus.href}>
-            {resumeStatus.ctaLabel}
-          </Link>
-        </div>
-      </section>
-    </aside>
   )
 }
 
@@ -741,13 +602,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const { appliedJobs, archivedJobs, counts, potentialJobs, preparedJobs, savedJobs, screeningPool } =
     getDashboardQueues(jobs)
-  const applyNextJob = getApplyNextJob(savedJobs, preparedJobs)
-  const newTodayCount = getNewTodayCount(jobs)
-  const resumeStatus = getResumeStatus(
-    workspace.profile,
-    workspace.resumeMaster.summaryText,
-    workspace.resumeMaster.experienceEntries.length,
-  )
 
   const activeContent: Record<QueueView, ReactNode> = {
     applied:
@@ -813,13 +667,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   return (
     <main className="page-stack jobs-index">
       <section className="dashboard-workspace">
-        <TodayRail
+        <WorkspaceTodayRail
           actionsEnabled={actionsEnabled}
-          applyNextJob={applyNextJob}
-          newTodayCount={newTodayCount}
-          preparedCount={preparedJobs.length}
-          resumeStatus={resumeStatus}
-          savedCount={savedJobs.length}
+          jobs={jobs}
         />
 
         <div className="queue-column">

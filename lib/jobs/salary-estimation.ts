@@ -29,7 +29,11 @@ export interface SalaryInsight {
   value: string
 }
 
-const currencyConversionRates: Record<string, number> = {
+/** Codes with conversion rates for estimated ranges; profile salary target uses the same set. */
+export const SUPPORTED_SALARY_CURRENCIES = ['USD', 'CAD', 'EUR', 'GBP'] as const
+export type SupportedSalaryCurrency = (typeof SUPPORTED_SALARY_CURRENCIES)[number]
+
+const currencyConversionRates: Record<SupportedSalaryCurrency, number> = {
   CAD: 1.35,
   EUR: 0.92,
   GBP: 0.79,
@@ -263,7 +267,7 @@ function getMarketMultiplier(job: SalaryEstimateJob, profile?: OperatorProfileRe
 }
 
 function convertFromUsd(amountUsd: number, currency: string) {
-  return amountUsd * (currencyConversionRates[currency] ?? 1)
+  return amountUsd * (currencyConversionRates[currency as SupportedSalaryCurrency] ?? 1)
 }
 
 function buildEstimatedRange(job: SalaryEstimateJob, profile?: OperatorProfileRecord) {

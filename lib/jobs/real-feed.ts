@@ -1132,6 +1132,14 @@ function getSeniorityScore(
     return 6
   }
 
+  if (desired.includes('lead') && actual.includes('lead')) {
+    return 8.5
+  }
+
+  if (desired.includes('staff') && actual.includes('staff')) {
+    return 8
+  }
+
   if (desired.includes('senior') && (actual.includes('senior') || actual.includes('lead'))) {
     return 8.5
   }

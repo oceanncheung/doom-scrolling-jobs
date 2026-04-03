@@ -28,6 +28,7 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const activeView = pathname === '/dashboard' ? getQueueView(searchParams.get('view')) : null
+  const profileActive = pathname === '/profile'
 
   return (
     <header className="site-header">
@@ -35,7 +36,12 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
         <Link href="/dashboard">
           <strong>Doom Scrolling Jobs</strong>
         </Link>
-        <Link aria-label="Profile settings" className="site-profile-avatar-link" href="/profile">
+        <Link
+          aria-current={profileActive ? 'page' : undefined}
+          aria-label="Profile settings"
+          className="site-profile-avatar-link"
+          href="/profile"
+        >
           <span className="site-profile-mark">
             <ProfileSettingsIcon className="site-profile-icon" />
           </span>
