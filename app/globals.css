@@ -1,27 +1,89 @@
 @font-face {
-  font-family: "Public Sans";
-  src: local("Public Sans"), local("PublicSans-Regular");
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans/IBMPlexSans-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Geist Mono";
-  src: local("Geist Mono"), local("GeistMono-Regular");
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans/IBMPlexSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans/IBMPlexSans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans/IBMPlexSans-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/ibm-plex-sans/IBMPlexSans-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/ibm-plex-mono/IBMPlexMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/ibm-plex-mono/IBMPlexMono-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/ibm-plex-mono/IBMPlexMono-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
   font-display: swap;
 }
 
 :root {
   color-scheme: light;
   --bg: #ffffff;
-  --text: #111111;
-  --muted: #6a6a6a;
-  --line: #111111;
+  --text: #000000;
+  --muted: #525252;
+  --line: #000000;
   --line-soft: #d6d6d6;
-  --line-faint: #ececec;
+  --line-faint: #e5e5e5;
   --surface-soft: #f5f5f5;
-  --font-display: "Public Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-body: "Public Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-mono: "Geist Mono", "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+  --accent: #d4e700;
+  --accent-hover: #bfd100;
+  --font-display: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", Menlo, Consolas, monospace;
   /* Align header brand column with dashboard today-rail */
   --site-gutter: 24px;
   --dashboard-rail: minmax(18rem, 28%);
@@ -70,7 +132,7 @@ h1,
 h2,
 h3 {
   margin: 0;
-  line-height: 0.98;
+  line-height: 1.15;
 }
 
 main {
@@ -104,10 +166,10 @@ main {
 }
 
 .site-brand strong {
-  font-family: var(--font-display), sans-serif;
-  font-size: 1.22rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: 0.04em;
 }
 
 .site-workflow-link {
@@ -118,10 +180,10 @@ main {
   min-height: 72px;
   padding: 0 24px;
   border-left: 1px solid var(--line-soft);
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  text-transform: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .site-workflow-link:hover {
@@ -129,14 +191,15 @@ main {
 }
 
 .site-workflow-link[aria-current="page"] {
-  background: var(--surface-soft);
+  background: var(--accent);
+  color: var(--text);
 }
 
 .site-workflow-count {
   color: var(--muted);
   font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.02em;
 }
 
@@ -152,14 +215,15 @@ main {
   justify-self: end;
   padding-left: 0;
   border-left: 1px solid var(--line-soft);
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  text-transform: capitalize;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .site-profile-link:hover .site-profile-label {
-  background: #2a2a2a;
+  background: var(--text);
+  color: var(--bg);
 }
 
 .site-profile-mark {
@@ -169,8 +233,8 @@ main {
   align-self: stretch;
   box-sizing: border-box;
   border: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.22);
-  background: var(--surface-soft);
+  border-left: 1px solid var(--line-soft);
+  background: transparent;
 }
 
 .site-profile-label {
@@ -182,8 +246,9 @@ main {
   min-width: 0;
   max-width: 16rem;
   padding: 0 18px;
-  background: var(--text);
-  color: var(--bg);
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--text);
 }
 
 .workspace-main > main {
@@ -266,10 +331,11 @@ main {
 
 .panel-label {
   color: var(--muted);
-  font-family: var(--font-mono), monospace;
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-  text-transform: capitalize;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .jobs-index {
@@ -332,9 +398,9 @@ main {
 
 .today-block-heading h2 {
   font-family: var(--font-display), sans-serif;
-  font-size: 1.7rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .today-apply-next,
@@ -352,8 +418,8 @@ main {
 .today-job-link {
   font-family: var(--font-display), sans-serif;
   font-size: 1.45rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  letter-spacing: 0;
   line-height: 1.05;
 }
 
@@ -392,16 +458,18 @@ main {
 
 .today-stats dt {
   color: var(--muted);
-  font-family: var(--font-mono), monospace;
-  font-size: 0.82rem;
-  letter-spacing: 0.02em;
-  text-transform: capitalize;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .today-stats dd {
   margin: 0;
-  font-size: 1.12rem;
-  font-weight: 600;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .queue-meta {
@@ -419,9 +487,9 @@ main {
 
 .queue-meta-heading h1 {
   font-family: var(--font-display), sans-serif;
-  font-size: clamp(2.15rem, 5vw, 3.6rem);
-  font-weight: 700;
-  letter-spacing: -0.05em;
+  font-size: clamp(2rem, 4vw, 2.625rem);
+  font-weight: 300;
+  letter-spacing: 0;
 }
 
 .queue-meta > p:last-child {
@@ -490,8 +558,8 @@ main.jobs-index .queue-meta::after {
 .toolbar-block h2 {
   font-family: var(--font-display), sans-serif;
   font-size: 1.85rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .stage-section-note {
@@ -578,9 +646,10 @@ main.jobs-index .queue-list .screening-row:not(:first-child)::before {
 }
 
 .screening-cell strong {
-  font-size: 1.08rem;
+  font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.4;
+  letter-spacing: 0.16px;
 }
 
 .screening-cell span {
@@ -590,38 +659,50 @@ main.jobs-index .queue-list .screening-row:not(:first-child)::before {
 .screening-title-cell strong {
   display: block;
   font-family: var(--font-display), sans-serif;
-  font-size: 1.7rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0;
   line-height: 1.05;
 }
 
 .screening-title-cell span {
   color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0.16px;
 }
 
 .screening-match {
   max-width: 52rem;
   color: var(--muted);
-  font-size: 1.02rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.16px;
 }
 
 .screening-freshness {
   color: var(--muted);
-  font-family: var(--font-mono), monospace;
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: capitalize;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.32px;
+  text-transform: none;
 }
 
-.screening-fit-meta,
+.screening-fit-meta {
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  text-transform: none;
+}
+
 .stage-fit-meta {
   color: var(--muted);
   font-family: var(--font-mono), monospace;
   font-size: 0.8rem;
   letter-spacing: 0.02em;
-  text-transform: capitalize;
+  text-transform: uppercase;
 }
 
 .screening-expanded {
@@ -683,9 +764,10 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
   border: 0;
   border-radius: 0;
   justify-content: center;
-  font-size: 1.08rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   line-height: 1.2;
   background: transparent;
 }
@@ -696,12 +778,12 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
 }
 
 .screening-actions-bar .button-primary {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .screening-actions-bar .button-secondary {
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .screening-actions-bar .button:disabled {
@@ -737,17 +819,18 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
 .stage-title-link {
   font-family: var(--font-display), sans-serif;
   font-size: 1.58rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  letter-spacing: 0;
   line-height: 1.05;
 }
 
 .stage-column-label {
   color: var(--muted);
-  font-family: var(--font-mono), monospace;
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-  text-transform: capitalize;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .stage-column-actions {
@@ -777,9 +860,9 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
   border-radius: 0;
   background: transparent;
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.16px;
   line-height: 1.2;
   cursor: pointer;
 }
@@ -794,7 +877,7 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
 }
 
 .button-primary {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .button-ghost {
@@ -849,7 +932,7 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  text-transform: capitalize;
+  text-transform: uppercase;
 }
 
 .inline-disclosure-body,
@@ -877,7 +960,7 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
   font-family: var(--font-mono), monospace;
   font-size: 0.8rem;
   letter-spacing: 0.02em;
-  text-transform: capitalize;
+  text-transform: uppercase;
 }
 
 .detail-pair-grid {
@@ -902,7 +985,7 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
   color: var(--muted);
   font-size: 0.92rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .panel {
@@ -980,7 +1063,7 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  text-transform: capitalize;
+  text-transform: uppercase;
 }
 
 .score-pill {
@@ -1041,8 +1124,8 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
 .settings-source-note h3 {
   font-family: var(--font-display), sans-serif;
   font-size: 1.4rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .settings-core-grid {
@@ -1078,11 +1161,11 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
 
 .field span,
 .workflow-select-label span {
-  font-family: var(--font-mono), monospace;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: capitalize;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .field input,
@@ -1244,8 +1327,8 @@ main.jobs-index .queue-list .screening-row:last-child .screening-actions-bar {
 .operator-row-main strong {
   font-family: var(--font-display), sans-serif;
   font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .operator-row-main span,

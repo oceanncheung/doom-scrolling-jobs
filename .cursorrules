@@ -1,0 +1,298 @@
+# Project Rules — Read DESIGN.md Before Every Edit
+
+## CRITICAL: Preservation-First Approach
+This project has an existing layout and structure that MUST be preserved.
+DESIGN.md defines the visual refinement layer — not a redesign.
+Your job is to IMPROVE what exists, not rebuild it.
+
+## Current Architecture
+- Next.js app router project (TypeScript + TSX)
+- Styling: single `globals.css` file (no CSS modules, no Tailwind)
+- CSS variables on `:root` drive all theming
+- Layout: CSS Grid with `--dashboard-rail` for two-panel structure
+- Components in `components/` (navigation/, jobs/, operators/, profile/)
+- Key layout file: `app/layout.tsx`
+- Key nav component: `components/navigation/workspace-header.tsx`
+
+## What Must NOT Change
+- The two-panel grid: `.dashboard-workspace` with `.today-rail` + `.queue-column`
+- The header grid: `.site-header` column structure and responsive breakpoints
+- The screening row structure: `.screening-row`, `.screening-summary-grid`, `.screening-actions-bar`
+- The sidebar blocks: `.today-block`, `.today-stats`, `.today-apply-next`, `.today-resume-status`
+- All responsive breakpoints at 1180px, 900px, and 720px
+- The `--dashboard-rail` and `--site-gutter` sizing logic
+- All component file structures and HTML semantics
+
+---
+
+## STEP-BY-STEP VARIABLE REMAPPING
+
+### :root — Replace These Variables
+
+**Fonts** (swap Public Sans → IBM Plex Sans, Geist Mono → IBM Plex Mono):
+```
+OLD: --font-display: "Public Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+NEW: --font-display: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+
+OLD: --font-body: "Public Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+NEW: --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+
+OLD: --font-mono: "Geist Mono", "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+NEW: --font-mono: "IBM Plex Mono", Menlo, Consolas, monospace;
+```
+
+**Colors** (tighten palette to DESIGN.md):
+```
+KEEP: --bg: #ffffff;
+OLD:  --text: #111111;           → NEW: --text: #000000;
+OLD:  --muted: #6a6a6a;          → NEW: --muted: #525252;
+OLD:  --line: #111111;           → NEW: --line: #000000;
+KEEP: --line-soft: #d6d6d6;      (close enough to #E5E5E5 — OR change to #e5e5e5)
+OLD:  --line-faint: #ececec;     → NEW: --line-faint: #e5e5e5;
+KEEP: --surface-soft: #f5f5f5;
+
+ADD:  --accent: #D4E700;
+ADD:  --accent-hover: #BFD100;
+```
+
+**@font-face** (replace both declarations):
+```
+OLD: font-family: "Public Sans" → NEW: font-family: "IBM Plex Sans"
+OLD: font-family: "Geist Mono"  → NEW: font-family: "IBM Plex Mono"
+
+Update src paths to point to the IBM Plex font files in the project.
+If using variable font: IBMPlexSans-VariableFont_wdth,wght.ttf
+If using static: load Regular (400), Medium (500), SemiBold (600), Bold (700), Light (300).
+For Mono: load Regular, Medium, SemiBold, Bold static weights.
+```
+
+---
+
+## COMPONENT-BY-COMPONENT REFINEMENT MAP
+
+### Navigation — `.site-header`
+
+**App title — `.site-brand strong`**
+```
+CURRENT: font-family: var(--font-display); font-size: 1.22rem; font-weight: 700; letter-spacing: -0.03em;
+TARGET:  font-family: var(--font-mono); font-size: 0.875rem; font-weight: 700; letter-spacing: 0.04em;
+```
+Rationale: App title uses Plex Mono to distinguish it from content. Smaller, tracked, mono — reads as a system label.
+
+**Nav tabs — `.site-workflow-link`**
+```
+CURRENT: font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; text-transform: none;
+TARGET:  font-size: 0.875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+```
+
+**Active tab — `.site-workflow-link[aria-current="page"]`**
+```
+CURRENT: background: var(--surface-soft);
+TARGET:  background: var(--accent); color: var(--text);
+```
+
+**Tab hover — `.site-workflow-link:hover`**
+```
+KEEP: background: var(--surface-soft);  (this is fine)
+```
+
+**Tab count — `.site-workflow-count`**
+```
+CURRENT: font-size: 0.75rem; font-weight: 500; letter-spacing: 0.02em;
+TARGET:  font-size: 0.75rem; font-weight: 400; letter-spacing: 0.02em;
+```
+Minor tweak — keep mostly as is.
+
+**Profile indicator — `.site-profile-link`**
+```
+CURRENT: font-size: 1rem; font-weight: 600; letter-spacing: -0.02em; text-transform: capitalize;
+TARGET:  font-size: 0.875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+```
+
+**Profile label — `.site-profile-label`**
+```
+CURRENT: background: var(--text); color: var(--bg);
+TARGET:  background: transparent; color: var(--text); border: 1px solid var(--text);
+```
+This is the key change: profile switches from filled black to outlined/ghost.
+
+**Profile label hover — `.site-profile-link:hover .site-profile-label`**
+```
+CURRENT: background: #2a2a2a;
+TARGET:  background: var(--text); color: var(--bg);
+```
+Hover inverts to filled state.
+
+**Profile mark — `.site-profile-mark`**
+```
+CURRENT: background: var(--surface-soft); border-left: 1px solid rgba(255,255,255,0.22);
+TARGET:  background: transparent; border-left: 1px solid var(--line-soft);
+```
+Or remove `.site-profile-mark` entirely if it's just a decorative spacer — flag for review.
+
+---
+
+### Sidebar — `.today-rail`
+
+**Section labels — `.panel-label`**
+```
+CURRENT: font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.02em; text-transform: capitalize;
+TARGET:  font-family: var(--font-body); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+```
+Switch from mono to sans-serif. Apply DESIGN.md Label style.
+
+**Section titles — `.today-block-heading h2`**
+```
+CURRENT: font-family: var(--font-display); font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em;
+TARGET:  font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; letter-spacing: 0;
+```
+Slightly smaller, semibold instead of bold. Cleaner.
+
+**Stat labels — `.today-stats dt`**
+```
+CURRENT: font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.02em; text-transform: capitalize;
+TARGET:  font-family: var(--font-body); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+```
+
+**Stat values — `.today-stats dd`**
+```
+CURRENT: font-size: 1.12rem; font-weight: 600;
+TARGET:  font-family: var(--font-mono); font-size: 0.875rem; font-weight: 400;
+```
+Stat numbers switch to Plex Mono for data texture.
+
+**Sidebar dividers — `.today-block + .today-block`**
+```
+CURRENT: border-top: 1px solid var(--line-soft); (already correct)
+KEEP AS IS.
+```
+
+---
+
+### Job Cards — `.screening-row`
+
+**Card title — `.screening-title-cell strong`**
+```
+CURRENT: font-family: var(--font-display); font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em;
+TARGET:  font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; letter-spacing: 0;
+```
+
+**Company name — `.screening-title-cell span`**
+```
+CURRENT: color: var(--muted); (inherits body font-size)
+TARGET:  color: var(--muted); font-size: 0.875rem; font-weight: 400; letter-spacing: 0.16px;
+```
+
+**Column headers — `.screening-cell` labels (the small text like "Remote / Location")**
+These are likely rendered as `span` elements inside `.screening-cell`. Check the component TSX for exact markup.
+```
+TARGET: font-family: var(--font-body); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+```
+
+**Column values — `.screening-cell strong`**
+```
+CURRENT: font-size: 1.08rem; font-weight: 600; line-height: 1.4;
+TARGET:  font-size: 0.875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.16px;
+```
+
+**Fit score meta — `.screening-fit-meta`**
+```
+CURRENT: font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.02em; text-transform: capitalize;
+TARGET:  font-family: var(--font-mono); font-size: 0.875rem; font-weight: 400; letter-spacing: 0.16px; text-transform: none; color: var(--muted);
+```
+
+**Freshness label — `.screening-freshness`**
+```
+CURRENT: font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; letter-spacing: 0.02em; text-transform: capitalize;
+TARGET:  font-family: var(--font-body); font-size: 0.75rem; font-weight: 400; letter-spacing: 0.32px; text-transform: none; color: var(--muted);
+```
+
+**Match/description text — `.screening-match`**
+```
+CURRENT: color: var(--muted); font-size: 1.02rem;
+TARGET:  color: var(--muted); font-size: 0.875rem; letter-spacing: 0.16px;
+```
+
+**Card dividers — `.screening-row` separators**
+```
+CURRENT: Uses ::before pseudo-element with border-top: 1px solid var(--line);
+KEEP AS IS — this pattern works.
+```
+
+**Action bar — `.screening-actions-bar .button`**
+```
+CURRENT: font-size: 1.08rem; font-weight: 700; letter-spacing: -0.02em;
+TARGET:  font-size: 0.875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+```
+
+**Save button — `.screening-actions-bar .button-primary`**
+```
+CURRENT: font-weight: 700;
+TARGET:  font-weight: 600;
+```
+
+**Skip button — `.screening-actions-bar .button-secondary`**
+```
+CURRENT: color: var(--muted); font-weight: 600;
+TARGET:  color: var(--muted); font-weight: 500;
+```
+
+---
+
+### Queue Header — `.queue-meta`
+
+**Page heading — `.queue-meta-heading h1`**
+```
+CURRENT: font-size: clamp(2.15rem, 5vw, 3.6rem); font-weight: 700; letter-spacing: -0.05em;
+TARGET:  font-size: clamp(2rem, 4vw, 2.625rem); font-weight: 300; letter-spacing: 0;
+```
+This is the big editorial change — light weight at display size. The IBM Plex signature.
+
+---
+
+### Buttons — `.button` (global)
+```
+CURRENT: font-size: 0.98rem; font-weight: 600; letter-spacing: -0.01em;
+TARGET:  font-size: 0.875rem; font-weight: 600; letter-spacing: 0.16px;
+```
+
+---
+
+### Stage/Column Labels — `.stage-column-label`
+```
+CURRENT: font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.02em; text-transform: capitalize;
+TARGET:  font-family: var(--font-body); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+```
+
+---
+
+### Forms — `.field span` (field labels)
+```
+CURRENT: font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em; text-transform: capitalize;
+TARGET:  font-family: var(--font-body); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+```
+
+---
+
+## Global Typography Normalization
+
+After remapping individual components, ensure these global rules:
+- `h1, h2, h3` line-height: change from `0.98` to `1.15` (current value is too tight)
+- All `letter-spacing: -0.03em` on headings → change to `0` (no negative tracking below display size)
+- All `text-transform: capitalize` → change to `text-transform: uppercase` (labels should be full uppercase, not capitalize)
+- All `font-weight: 700` on elements below 32px → change to `font-weight: 600` (reserve 700 for display/app title)
+
+---
+
+## Edit Discipline
+- When editing globals.css, work section by section. Do not batch the entire file.
+- After each section edit, list exactly what selectors and properties changed.
+- Confirm that no layout properties (display, grid-template-columns, gap, padding that affects layout) were modified.
+- One section per edit. Wait for confirmation before proceeding.
+- If a change breaks the layout, revert immediately and report.
+
+## When In Doubt
+- Preserve what exists. Only refine what is explicitly mapped above.
+- If a selector is not listed here, do not change it.
+- If uncertain about a value, flag it and ask — do not guess.
+- Check DESIGN.md section 9 for exact token values.
