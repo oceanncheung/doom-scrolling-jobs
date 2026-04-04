@@ -11,11 +11,14 @@
   .dashboard-workspace,
   .queue-meta,
   .flow-header,
+  .packet-page-actions,
+  .job-flow-actions,
   .stage-section-header,
   .settings-section-header,
   .screening-summary-grid,
   .stage-row-grid,
   .stage-summary-row,
+  .stage-actions-bar,
   .panel-grid-2,
   .panel-grid-3,
   .settings-source-grid,
@@ -105,11 +108,13 @@
   }
 
   .screening-row,
+  .stage-row,
   .stage-column-actions {
     justify-items: start;
   }
 
-  .screening-row {
+  .screening-row,
+  .stage-row {
     gap: 0;
   }
 
@@ -132,7 +137,39 @@
     grid-template-columns: 1fr;
   }
 
+  .job-review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .job-material-grid,
+  .packet-material-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .packet-question-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .packet-question-status-slot {
+    grid-column: 1 / 2;
+  }
+
+  .packet-question-controls {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+  }
+
   .screening-actions-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-actions-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .packet-form .packet-grid-section,
+  .packet-form .packet-advanced-grid,
+  .packet-form .packet-form-footer {
     grid-template-columns: 1fr;
   }
 
@@ -140,6 +177,21 @@
     grid-column: 1 / -1;
     width: 100%;
     min-width: 0;
+  }
+
+  .job-overview-actions .screening-actions-cluster {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+  }
+
+  .stage-actions-cluster {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .stage-actions-bar .stage-actions {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -234,7 +286,6 @@
     justify-content: center;
   }
 
-  .today-actions,
   .settings-toggle-row {
     flex-direction: column;
     align-items: stretch;

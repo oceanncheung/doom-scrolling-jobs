@@ -167,6 +167,11 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  position: fixed;
+  top: 73px;
+  left: 0;
+  z-index: 4;
+  width: max(18rem, 28%);
   align-content: stretch;
   justify-items: unset;
   align-items: stretch;
@@ -175,6 +180,7 @@
   max-height: calc(100dvh - 73px);
   min-height: calc(100dvh - 73px);
   overflow: hidden;
+  background: var(--bg);
 }
 
 .dashboard-workspace .today-rail.settings-profile-rail > .settings-profile-rail-scroll {
@@ -221,6 +227,8 @@
 
 .dashboard-workspace .queue-column {
   --queue-column-pad: 32px;
+  align-content: start;
+  align-items: start;
   padding-top: 24px;
   border-left: 0;
   padding-left: var(--queue-column-pad);
@@ -293,9 +301,23 @@
 }
 
 .today-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.today-actions > a.button,
+.today-actions > .stage-action-form {
+  width: 100%;
+  min-width: 0;
+}
+
+.today-actions > .stage-action-form {
+  display: flex;
+}
+
+.today-actions .stage-action-form .button {
+  width: 100%;
 }
 
 .today-resume-status .button,
@@ -361,4 +383,3 @@
   font-size: 0.875rem;
   font-weight: 400;
 }
-

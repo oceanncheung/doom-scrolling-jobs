@@ -17,17 +17,21 @@ export function AppliedRow({
     <StageRow
       actions={
         <div className="stage-actions">
-          <Link className="button button-primary button-small" href={`/jobs/${job.id}/packet`}>
-            View packet
-          </Link>
-          <a
-            className="button button-ghost button-small"
-            href={job.applicationUrl ?? job.sourceUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Source
-          </a>
+          <div className="stage-action-slot stage-action-slot--remote">
+            <Link className="button button-primary button-small" href={`/jobs/${job.id}/packet`}>
+              View packet
+            </Link>
+          </div>
+          <div className="stage-action-slot stage-action-slot--salary">
+            <a
+              className="button button-ghost button-small"
+              href={job.applicationUrl ?? job.sourceUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Source
+            </a>
+          </div>
         </div>
       }
       detailLabel="Application context"

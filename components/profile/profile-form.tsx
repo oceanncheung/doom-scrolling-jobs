@@ -235,18 +235,18 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
       {saveMessageRoot
         ? createPortal(
             <div className="profile-rail-save-message">
-              <div
-                className={`form-message ${
-                  state.status === 'success'
-                    ? 'form-message-success'
-                    : state.status === 'error'
-                      ? 'form-message-error'
-                      : ''
-                }`}
-              >
-                {state.message ||
+        <div
+          className={`form-message ${
+            state.status === 'success'
+              ? 'form-message-success'
+              : state.status === 'error'
+                ? 'form-message-error'
+                : ''
+          }`}
+        >
+          {state.message ||
                   'Saved changes update job recommendations, packet drafts, and portfolio picks.'}
-              </div>
+        </div>
             </div>,
             saveMessageRoot,
           )

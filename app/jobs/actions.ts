@@ -334,6 +334,7 @@ export async function saveApplicationPacket(
   }
 
   const jobId = asTextValue(formData.get('jobId'))
+  const submitIntent = asTextValue(formData.get('submitIntent')) || 'save-draft'
   const packetId = asPersistedId(formData.get('packetId')) ?? crypto.randomUUID()
   const resumeVersionId = asPersistedId(formData.get('resumeVersionId')) ?? crypto.randomUUID()
   const suppliedJobScoreId = asPersistedId(formData.get('jobScoreId'))
@@ -395,6 +396,12 @@ export async function saveApplicationPacket(
   const persistedPacketId = existingPacket?.id ?? packetId
   const persistedResumeVersionId = existingPacket?.resume_version_id ?? resumeVersionId
   const now = new Date().toISOString()
+  const nextPacketStatus =
+    submitIntent === 'mark-ready'
+      ? 'ready'
+      : submitIntent === 'apply'
+        ? 'applied'
+        : asPacketStatus(asTextValue(formData.get('packetStatus')))
   const experienceEntries = parseJsonArray(formData.get('resumeExperienceEntriesJson'), [])
   const caseStudySelection = parseJsonArray(formData.get('caseStudySelectionJson'), [])
   const applicationAnswers = parseApplicationAnswers(formData)
@@ -406,7 +413,7 @@ export async function saveApplicationPacket(
       job_id: jobId,
       job_score_id: jobScoreId,
       operator_id: operatorContext.operator.id,
-      packet_status: asPacketStatus(asTextValue(formData.get('packetStatus'))),
+      packet_status: nextPacketStatus,
       user_id: operatorContext.userId,
     })
 
@@ -456,7 +463,7 @@ export async function saveApplicationPacket(
       last_reviewed_at: now,
       manual_notes: asOptionalText(formData.get('manualNotes')),
       operator_id: operatorContext.operator.id,
-      packet_status: asPacketStatus(asTextValue(formData.get('packetStatus'))),
+      packet_status: nextPacketStatus,
       portfolio_recommendation: {
         primaryLabel: asTextValue(formData.get('portfolioPrimaryLabel')),
         primaryUrl: asTextValue(formData.get('portfolioPrimaryUrl')),
@@ -508,12 +515,38 @@ export async function saveApplicationPacket(
   }
 
   const currentWorkflowStatus = asWorkflowStatus(asTextValue(jobScore?.workflow_status))
+  const shouldMarkReady = submitIntent === 'mark-ready'
   const shouldMarkPreparing =
-    currentWorkflowStatus === 'new' ||
-    currentWorkflowStatus === 'ranked' ||
-    currentWorkflowStatus === 'shortlisted'
+    !shouldMarkReady &&
+    (currentWorkflowStatus === 'new' ||
+      currentWorkflowStatus === 'ranked' ||
+      currentWorkflowStatus === 'shortlisted')
 
-  if (shouldMarkPreparing) {
+  if (shouldMarkReady) {
+    await supabase
+      .from('job_scores')
+      .update({
+        last_status_changed_at: now,
+        workflow_status: 'ready_to_apply',
+      })
+      .eq('operator_id', operatorContext.operator.id)
+      .eq('job_id', jobId)
+
+    await supabase.from('application_events').insert({
+      operator_id: operatorContext.operator.id,
+      user_id: operatorContext.userId,
+      job_id: jobId,
+      event_type: 'status_changed',
+      from_status: currentWorkflowStatus,
+      to_status: 'ready_to_apply',
+      event_payload: {
+        sourceContext: 'packet-save',
+        submitIntent,
+        targetStatus: 'ready_to_apply',
+      },
+      notes: 'Packet marked ready from the prep workspace.',
+    })
+  } else if (shouldMarkPreparing) {
     await supabase
       .from('job_scores')
       .update({
@@ -539,8 +572,10 @@ export async function saveApplicationPacket(
   }
 
   const signalStatus =
-    currentWorkflowStatus === 'ready_to_apply' || currentWorkflowStatus === 'applied'
-      ? currentWorkflowStatus
+    shouldMarkReady
+      ? 'ready_to_apply'
+      : currentWorkflowStatus === 'ready_to_apply' || currentWorkflowStatus === 'applied'
+        ? currentWorkflowStatus
       : currentWorkflowStatus === 'archived' || currentWorkflowStatus === 'rejected'
         ? null
         : 'preparing'
@@ -561,7 +596,12 @@ export async function saveApplicationPacket(
   refresh()
 
   return {
-    message: `Packet review saved with ${applicationAnswers.length} structured answers and ${asList(formData.get('checklistItems')).length} checklist items.`,
+    message:
+      submitIntent === 'mark-ready'
+        ? 'Draft saved and marked ready to apply.'
+        : submitIntent === 'generate-draft'
+          ? 'Draft generated from the current packet data.'
+          : `Draft saved with ${applicationAnswers.length} structured answers.`,
     status: 'success',
   }
 }

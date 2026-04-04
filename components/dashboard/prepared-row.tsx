@@ -19,29 +19,35 @@ export function PreparedRow({
     <StageRow
       actions={
         <div className="stage-actions">
-          <a
-            className="button button-primary button-small"
-            href={job.applicationUrl ?? job.sourceUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Apply
-          </a>
-          <JobStageActionButton
-            canEdit={actionsEnabled}
-            disabledReason="Switch back to the database-backed queue to mark jobs as applied."
-            jobId={job.id}
-            label="Mark applied"
-            sourceContext="prepared-apply"
-            variant="secondary"
-            workflowStatus="applied"
-          />
-          <Link className="button button-ghost button-small" href={`/jobs/${job.id}/packet`}>
-            Packet
-          </Link>
+          <div className="stage-action-slot stage-action-slot--remote-salary">
+            <a
+              className="button button-primary button-small"
+              href={job.applicationUrl ?? job.sourceUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Apply
+            </a>
+          </div>
+          <div className="stage-action-slot stage-action-slot--fit">
+            <JobStageActionButton
+              canEdit={actionsEnabled}
+              disabledReason="Switch back to the database-backed queue to mark jobs as applied."
+              jobId={job.id}
+              label="Mark applied"
+              sourceContext="prepared-apply"
+              variant="secondary"
+              workflowStatus="applied"
+            />
+          </div>
+          <div className="stage-action-slot stage-action-slot--status">
+            <Link className="button button-ghost button-small" href={`/jobs/${job.id}/packet`}>
+              Materials
+            </Link>
+          </div>
         </div>
       }
-      detailLabel="Application readiness"
+      detailLabel="Prepared materials"
       job={job}
       profile={profile}
     >
@@ -49,17 +55,17 @@ export function PreparedRow({
         <div>
           <p className="panel-label">Ready now</p>
           <ul className="readiness-list">
-            <li>Resume ready</li>
-            <li>Cover letter ready</li>
-            <li>Answers ready</li>
+            <li>Resume prepared</li>
+            <li>Cover letter prepared</li>
+            <li>Answers recognized</li>
           </ul>
         </div>
         <div>
-          <p className="panel-label">Why it is still strong</p>
-          <p>{job.fitSummary}</p>
+          <p className="panel-label">Next step</p>
+          <p>Open the prepared materials if you want one last review, or apply directly from here.</p>
         </div>
         <div>
-          <p className="panel-label">Final watchout</p>
+          <p className="panel-label">Before applying</p>
           <p>{getRiskReason(job)}</p>
         </div>
       </div>

@@ -44,8 +44,7 @@ export function WorkspaceTodayRail({ actionsEnabled, jobs }: WorkspaceTodayRailP
     <WorkspaceRailShell ariaLabel="Today">
       <section className="today-block">
         <div className="today-block-heading">
-          <p className="panel-label">Today</p>
-          <h2>Apply next</h2>
+          <p className="panel-label">Apply next</p>
         </div>
 
         {applyNextJob ? (

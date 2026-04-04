@@ -55,14 +55,18 @@ export function QueueMeta({
       >
         <div>
           <p className="panel-label">{copy[activeView].eyebrow}</p>
-          <h1>{copy[activeView].label}</h1>
+          {activeView === 'potential' ? (
+            <div className="queue-meta-title-row">
+              <h1>{copy[activeView].label}</h1>
+              <form action={refreshDashboardQueue} className="queue-meta-actions">
+                <input name="view" type="hidden" value={activeView} />
+                <QueueRefreshButton />
+              </form>
+            </div>
+          ) : (
+            <h1>{copy[activeView].label}</h1>
+          )}
         </div>
-        {activeView === 'potential' ? (
-          <form action={refreshDashboardQueue} className="queue-meta-actions">
-            <input name="view" type="hidden" value={activeView} />
-            <QueueRefreshButton />
-          </form>
-        ) : null}
       </div>
       <p>{copy[activeView].note}</p>
     </div>

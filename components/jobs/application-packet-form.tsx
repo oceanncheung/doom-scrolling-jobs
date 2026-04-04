@@ -3,13 +3,8 @@
 import { useActionState } from 'react'
 
 import { saveApplicationPacket, type ApplicationPacketActionState } from '@/app/jobs/actions'
-import {
-  packetStatuses,
-  type ApplicationPacketRecord,
-  type PacketCaseStudyRecord,
-} from '@/lib/domain/types'
+import { type ApplicationPacketRecord } from '@/lib/domain/types'
 import type { RankedJobRecord } from '@/lib/jobs/contracts'
-import { formatDateLabel, formatWorkflowLabel } from '@/lib/jobs/presentation'
 
 const initialState: ApplicationPacketActionState = {
   message: '',
@@ -20,6 +15,24 @@ function toTextAreaValue(values: string[]) {
   return values.join('\n')
 }
 
+function getFirstFilledText(...values: Array<string | null | undefined>) {
+  return values.find((value) => value?.trim())?.trim() ?? ''
+}
+
+function getPreviewText(value: string, fallback: string, maxLength = 220) {
+  const trimmed = value.trim()
+
+  if (!trimmed) {
+    return fallback
+  }
+
+  if (trimmed.length <= maxLength) {
+    return trimmed
+  }
+
+  return `${trimmed.slice(0, maxLength).trimEnd()}...`
+}
+
 interface ApplicationPacketFormProps {
   canSave: boolean
   disabledReason?: string
@@ -27,41 +40,42 @@ interface ApplicationPacketFormProps {
   packet: ApplicationPacketRecord
 }
 
-function CaseStudyList({ caseStudies }: { caseStudies: PacketCaseStudyRecord[] }) {
-  return (
-    <div className="repeat-list">
-      {caseStudies.map((caseStudy) => (
-        <article className="repeat-card" key={`${caseStudy.title}-${caseStudy.displayOrder}`}>
-          <div className="repeat-card-header">
-            <strong>
-              {caseStudy.displayOrder}. {caseStudy.title}
-            </strong>
-            <a className="button button-ghost button-small" href={caseStudy.url} rel="noreferrer" target="_blank">
-              Open work
-            </a>
-          </div>
-          <p>{caseStudy.reason}</p>
-        </article>
-      ))}
-    </div>
-  )
-}
-
 export function ApplicationPacketForm({
-  canSave,
-  disabledReason,
   job,
   packet,
 }: ApplicationPacketFormProps) {
-  const [state, formAction, isPending] = useActionState(saveApplicationPacket, initialState)
-  const isDisabled = !canSave || isPending
+  const [state, formAction] = useActionState(saveApplicationPacket, initialState)
+
+  const resumeSource = getFirstFilledText(packet.resumeVersion.summaryText, packet.professionalSummary)
+  const coverLetterSource = packet.coverLetterDraft.trim()
+  const readyAnswerCount = packet.answers.filter(
+    (answer) => answer.answerText.trim() || answer.answerVariantShort.trim(),
+  ).length
+
+  const resumeReady = Boolean(
+    resumeSource ||
+      packet.resumeVersion.highlightedRequirements.length > 0 ||
+      packet.resumeVersion.skillsSection.length > 0,
+  )
+  const coverLetterReady = Boolean(coverLetterSource)
+
+  const resumeSummary = getPreviewText(
+    resumeSource,
+    'A tailored resume summary will appear here once the application materials are generated.',
+  )
+  const coverLetterSummary = getPreviewText(
+    coverLetterSource,
+    'A role-specific cover letter will appear here once the application materials are generated.',
+  )
 
   return (
-    <form action={formAction} className="packet-form">
+    <form action={formAction} className="packet-form" id="packet-form">
       <input name="jobId" type="hidden" value={job.id} />
       <input name="jobScoreId" type="hidden" value={packet.jobScoreId} />
       <input name="packetId" type="hidden" value={packet.id} />
       <input name="resumeVersionId" type="hidden" value={packet.resumeVersion.id} />
+      <input name="packetStatus" type="hidden" value={packet.packetStatus} />
+      <input name="resumeVersionLabel" type="hidden" value={packet.resumeVersion.versionLabel} />
       <input
         name="resumeExperienceEntriesJson"
         type="hidden"
@@ -73,307 +87,184 @@ export function ApplicationPacketForm({
         value={JSON.stringify(packet.caseStudySelection)}
       />
 
-      <section className="panel">
-        <div className="section-header">
-          <div>
-            <p className="panel-label">Packet review</p>
-            <h2>Packet draft</h2>
-          </div>
-          <div className="status-track">
-            <span>{packet.packetStatus.replaceAll('_', ' ')}</span>
-            <span>{formatWorkflowLabel(job.workflowStatus)}</span>
-          </div>
-        </div>
+      <textarea hidden name="resumeSummaryText" readOnly value={packet.resumeVersion.summaryText} />
+      <textarea
+        hidden
+        name="highlightedRequirements"
+        readOnly
+        value={toTextAreaValue(packet.resumeVersion.highlightedRequirements)}
+      />
+      <textarea
+        hidden
+        name="resumeSkillsSection"
+        readOnly
+        value={toTextAreaValue(packet.resumeVersion.skillsSection)}
+      />
+      <textarea hidden name="tailoringNotes" readOnly value={packet.resumeVersion.tailoringNotes} />
+      <textarea hidden name="coverLetterDraft" readOnly value={packet.coverLetterDraft} />
+      <textarea hidden name="professionalSummary" readOnly value={packet.professionalSummary} />
+      <input name="portfolioPrimaryLabel" type="hidden" value={packet.portfolioRecommendation.primaryLabel} />
+      <input name="portfolioPrimaryUrl" type="hidden" value={packet.portfolioRecommendation.primaryUrl} />
+      <textarea hidden name="portfolioRationale" readOnly value={packet.portfolioRecommendation.rationale} />
+      <textarea hidden name="checklistItems" readOnly value={toTextAreaValue(packet.checklistItems)} />
+      <textarea hidden name="manualNotes" readOnly value={packet.manualNotes} />
 
-        {!canSave ? <p className="workflow-note">{disabledReason}</p> : null}
-
-        <div className="field-grid field-grid-2">
-          <label className="field">
-            <span>Packet status</span>
-            <select defaultValue={packet.packetStatus} disabled={isDisabled} name="packetStatus">
-              {packetStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {status.replaceAll('_', ' ')}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="field">
-            <span>Resume version label</span>
-            <input
-              defaultValue={packet.resumeVersion.versionLabel}
-              disabled={isDisabled}
-              name="resumeVersionLabel"
-              type="text"
-            />
-            <small>
-              Updated {packet.generatedAt ? formatDateLabel(packet.generatedAt) : 'from current job data'}.
-            </small>
-          </label>
-        </div>
-      </section>
-
-      <section className="panel-grid panel-grid-2">
-        <article className="panel">
-          <p className="panel-label">Professional summary</p>
-          <h2>Summary</h2>
-          <label className="field">
-            <span>Summary</span>
-            <textarea
-              defaultValue={packet.professionalSummary}
-              disabled={isDisabled}
-              name="professionalSummary"
-              rows={6}
-            />
-          </label>
-        </article>
-
-        <article className="panel">
-          <p className="panel-label">Role anchor</p>
-          <h2>Role</h2>
-          <ul className="compact-list">
-            <li>
-              <strong>{job.companyName}</strong>
-              <span>
-                {job.title} · {job.locationLabel ?? 'location pending'} · posted{' '}
-                {formatDateLabel(job.postedAt)}
-              </span>
-            </li>
-            <li>
-              <strong>{job.fitSummary}</strong>
-              <span>{job.fitReasons.slice(0, 3).join(' · ')}</span>
-            </li>
-          </ul>
-        </article>
-      </section>
-
-      <section className="panel-grid panel-grid-2">
-        <article className="panel">
-          <p className="panel-label">Tailored resume</p>
-          <h2>Resume</h2>
-
-          <label className="field">
-            <span>Resume summary</span>
-            <textarea
-              defaultValue={packet.resumeVersion.summaryText}
-              disabled={isDisabled}
-              name="resumeSummaryText"
-              rows={6}
-            />
-          </label>
-
-          <label className="field">
-            <span>Highlighted requirements</span>
-            <textarea
-              defaultValue={toTextAreaValue(packet.resumeVersion.highlightedRequirements)}
-              disabled={isDisabled}
-              name="highlightedRequirements"
-              rows={5}
-            />
-          </label>
-
-          <label className="field">
-            <span>Skills section</span>
-            <textarea
-              defaultValue={toTextAreaValue(packet.resumeVersion.skillsSection)}
-              disabled={isDisabled}
-              name="resumeSkillsSection"
-              rows={4}
-            />
-          </label>
-
-          <label className="field">
-            <span>Tailoring notes</span>
-            <textarea
-              defaultValue={packet.resumeVersion.tailoringNotes}
-              disabled={isDisabled}
-              name="tailoringNotes"
-              rows={5}
-            />
-          </label>
-        </article>
-
-        <article className="panel">
-          <p className="panel-label">Experience emphasis</p>
-          <h2>Experience</h2>
-          <div className="repeat-list">
-            {packet.resumeVersion.experienceEntries.map((entry, index) => (
-              <article className="repeat-card" key={`${entry.companyName}-${entry.roleTitle}-${index}`}>
-                <div className="repeat-card-header">
-                  <strong>
-                    {entry.roleTitle} · {entry.companyName}
-                  </strong>
-                  <span className="score-pill">{entry.locationLabel || 'location pending'}</span>
-                </div>
-                <p>{entry.summary}</p>
-                <ul className="reason-list">
-                  {entry.highlights.map((highlight) => (
-                    <li key={highlight}>{highlight}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <section className="panel-grid panel-grid-2">
-        <article className="panel">
-          <p className="panel-label">Portfolio recommendation</p>
-          <h2>Portfolio</h2>
-
-          <label className="field">
-            <span>Primary portfolio label</span>
-            <input
-              defaultValue={packet.portfolioRecommendation.primaryLabel}
-              disabled={isDisabled}
-              name="portfolioPrimaryLabel"
-              type="text"
-            />
-          </label>
-
-          <label className="field">
-            <span>Primary portfolio URL</span>
-            <input
-              defaultValue={packet.portfolioRecommendation.primaryUrl}
-              disabled={isDisabled}
-              name="portfolioPrimaryUrl"
-              type="url"
-            />
-          </label>
-
-          <label className="field">
-            <span>Recommendation rationale</span>
-            <textarea
-              defaultValue={packet.portfolioRecommendation.rationale}
-              disabled={isDisabled}
-              name="portfolioRationale"
-              rows={5}
-            />
-          </label>
-        </article>
-
-        <article className="panel">
-          <p className="panel-label">Case studies</p>
-          <h2>Case studies</h2>
-          <CaseStudyList caseStudies={packet.caseStudySelection} />
-        </article>
-      </section>
-
-      <section className="panel">
-        <p className="panel-label">Cover letter draft</p>
-        <h2>Cover letter</h2>
-        <label className="field">
-          <span>Draft</span>
-          <textarea
-            defaultValue={packet.coverLetterDraft}
-            disabled={isDisabled}
-            name="coverLetterDraft"
-            rows={14}
+      {packet.answers.map((answer, index) => (
+        <div hidden key={`${answer.questionKey}-${index}`}>
+          <input name="answerId" type="hidden" value={answer.id} />
+          <input name="questionText" type="hidden" value={answer.questionText} />
+          <input name="questionKey" type="hidden" value={answer.questionKey} />
+          <input name="fieldType" type="hidden" value={answer.fieldType} />
+          <input name="reviewStatus" type="hidden" value={answer.reviewStatus} />
+          <input
+            name="characterLimit"
+            type="hidden"
+            value={answer.characterLimit ? String(answer.characterLimit) : ''}
           />
-        </label>
-      </section>
+          <textarea hidden name="answerText" readOnly value={answer.answerText} />
+          <input name="answerVariantShort" type="hidden" value={answer.answerVariantShort} />
+        </div>
+      ))}
 
-      <section className="panel">
-        <p className="panel-label">Short answers</p>
-        <h2>Answers</h2>
-        <div className="repeat-list">
-          {packet.answers.map((answer, index) => (
-            <article className="repeat-card" key={`${answer.questionKey}-${index}`}>
-              <input name="answerId" type="hidden" value={answer.id} />
-              <input name="questionKey" type="hidden" value={answer.questionKey} />
-              <input name="fieldType" type="hidden" value={answer.fieldType} />
-              <input name="reviewStatus" type="hidden" value={answer.reviewStatus} />
-              <input
-                name="characterLimit"
-                type="hidden"
-                value={answer.characterLimit ? String(answer.characterLimit) : ''}
-              />
+      <section className="packet-section">
+        <div className="packet-section-inner">
+          <div className="settings-section-header packet-section-heading">
+            <div className="settings-section-title-stack">
+              <p className="panel-label">Application materials</p>
+              <h2>Review what will be sent.</h2>
+              <p className="settings-section-note">
+                Short summaries of the AI-tailored resume and cover letter are below. Use the source listing on this page if you need the full job text or posting.
+              </p>
+            </div>
+          </div>
 
-              <label className="field">
-                <span>Question</span>
-                <input defaultValue={answer.questionText} disabled={isDisabled} name="questionText" type="text" />
-              </label>
-
-              <label className="field">
-                <span>Answer</span>
-                <textarea
-                  defaultValue={answer.answerText}
-                  disabled={isDisabled}
-                  name="answerText"
-                  rows={6}
+          <div className="packet-material-grid">
+            <article className="packet-material-block">
+              <div className="packet-material-heading">
+                <p className="upload-slot-label">Resume summary</p>
+              </div>
+              <p className="packet-material-copy">{resumeSummary}</p>
+              <p className="packet-material-status" role="status">
+                <span
+                  aria-hidden="true"
+                  className={
+                    resumeReady ? 'packet-material-status-dot packet-material-status-dot--ready' : 'packet-material-status-dot packet-material-status-dot--pending'
+                  }
                 />
-              </label>
-
-              <label className="field">
-                <span>Short variant</span>
-                <input
-                  defaultValue={answer.answerVariantShort}
-                  disabled={isDisabled}
-                  name="answerVariantShort"
-                  type="text"
-                />
-                <small>
-                  {answer.characterLimit
-                    ? `Keep one version near ${answer.characterLimit} characters.`
-                    : 'Use this for a shorter version.'}
-                </small>
-              </label>
+                {resumeReady ? 'Ready' : 'Pending'}
+              </p>
             </article>
-          ))}
+
+            <article className="packet-material-block">
+              <div className="packet-material-heading">
+                <p className="upload-slot-label">Cover letter summary</p>
+              </div>
+              <p className="packet-material-copy">{coverLetterSummary}</p>
+              <p className="packet-material-status" role="status">
+                <span
+                  aria-hidden="true"
+                  className={
+                    coverLetterReady
+                      ? 'packet-material-status-dot packet-material-status-dot--ready'
+                      : 'packet-material-status-dot packet-material-status-dot--pending'
+                  }
+                />
+                {coverLetterReady ? 'Ready' : 'Pending'}
+              </p>
+            </article>
+          </div>
         </div>
       </section>
 
-      <section className="panel-grid panel-grid-2">
-        <article className="panel">
-          <p className="panel-label">Submission checklist</p>
-          <h2>Checklist</h2>
-          <label className="field">
-            <span>Checklist items</span>
-            <textarea
-              defaultValue={toTextAreaValue(packet.checklistItems)}
-              disabled={isDisabled}
-              name="checklistItems"
-              rows={8}
-            />
-          </label>
-        </article>
+      <section className="packet-section">
+        <div className="packet-section-inner">
+          <div className="settings-section-header packet-section-heading">
+            <div className="settings-section-title-stack">
+              <p className="panel-label">Application questions</p>
+              <h2>Check the generated answers.</h2>
+              <p className="settings-section-note">
+                {packet.answers.length > 0
+                  ? `${readyAnswerCount} of ${packet.answers.length} recognized questions already have prepared answers.`
+                  : 'Questions will appear here when the application asks for them.'}
+              </p>
+            </div>
+          </div>
 
-        <article className="panel">
-          <p className="panel-label">Manual notes</p>
-          <h2>Notes</h2>
-          <label className="field">
-            <span>Notes</span>
-            <textarea
-              defaultValue={packet.manualNotes}
-              disabled={isDisabled}
-              name="manualNotes"
-              rows={8}
-            />
-          </label>
-        </article>
+          {packet.answers.length > 0 ? (
+            <div className="packet-question-list">
+              {packet.answers.map((answer, index) => {
+                const answerReady = Boolean(answer.answerText.trim() || answer.answerVariantShort.trim())
+
+                return (
+                  <details className="disclosure packet-question-card" key={`${answer.questionKey}-${index}`}>
+                    <summary className="disclosure-summary packet-question-summary">
+                      <div className="packet-question-main">
+                        <p className="upload-slot-label">Question {index + 1}</p>
+                        <h3>{answer.questionText}</h3>
+                      </div>
+                      <div className="packet-question-status-slot">
+                        <span className="packet-material-status" role="status">
+                          <span
+                            aria-hidden="true"
+                            className={
+                              answerReady
+                                ? 'packet-material-status-dot packet-material-status-dot--ready'
+                                : 'packet-material-status-dot packet-material-status-dot--pending'
+                            }
+                          />
+                          {answerReady ? 'Ready' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className="disclosure-controls packet-question-controls">
+                        <span className="disclosure-caret" aria-hidden="true">
+                          <svg fill="none" height="14" viewBox="0 0 16 16" width="14">
+                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.25" />
+                          </svg>
+                        </span>
+                      </div>
+                    </summary>
+                    <div className="disclosure-body packet-disclosure-body">
+                      <div className="packet-preview-block">
+                        <p>
+                          {answer.answerText.trim() ||
+                            'A prepared answer will appear here once this question is generated.'}
+                        </p>
+                        {answer.answerVariantShort.trim() ? (
+                          <p className="packet-preview-secondary">
+                            <strong>Short answer.</strong> {answer.answerVariantShort}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </details>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="packet-inline-note">
+              <p>No extra questions have been detected for this application yet.</p>
+            </div>
+          )}
+        </div>
       </section>
 
-      <div className="profile-form-footer">
-        <p
-          className={`form-message ${
-            state.status === 'success'
-              ? 'form-message-success'
-              : state.status === 'error'
-                ? 'form-message-error'
-                : ''
-          }`}
-        >
-          {state.message ||
-            (canSave
-              ? 'Save changes to this packet draft.'
-              : disabledReason ?? 'Saving is disabled until the ranked job is backed by a real database row.')}
-        </p>
-        <button className="button button-primary" disabled={isDisabled} type="submit">
-          {isPending ? 'Saving packet...' : 'Save packet'}
-        </button>
-      </div>
+      {state.message ? (
+        <div className="profile-form-footer packet-form-footer">
+          <div className="packet-form-footer-inner">
+            <p
+              className={`form-message ${
+                state.status === 'success'
+                  ? 'form-message-success'
+                  : state.status === 'error'
+                    ? 'form-message-error'
+                    : ''
+              }`}
+            >
+              {state.message}
+            </p>
+          </div>
+        </div>
+      ) : null}
     </form>
   )
 }
