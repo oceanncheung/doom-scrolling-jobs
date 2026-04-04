@@ -716,6 +716,11 @@
   background: var(--line);
 }
 
+/* Job overview already ends with a full-width rule; drop the duplicate line above Application materials */
+.packet-form > .packet-section:first-of-type::before {
+  display: none;
+}
+
 .packet-form > .packet-form-footer {
   padding-bottom: 0;
 }
@@ -970,7 +975,7 @@
 .packet-question-summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(96px, 132px) auto;
-  align-items: start;
+  align-items: center;
   gap: 16px;
 }
 
@@ -983,7 +988,7 @@
 .packet-question-status-slot {
   display: flex;
   justify-content: flex-start;
-  align-items: flex-start;
+  align-items: center;
   min-width: 0;
 }
 
@@ -993,6 +998,8 @@
 
 .packet-question-controls {
   justify-content: flex-end;
+  /* Override .disclosure-controls { align-self: flex-start } so caret matches Ready/Pending row */
+  align-self: center;
 }
 
 .packet-answer-list {

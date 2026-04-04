@@ -20,7 +20,7 @@ export function ArchiveRow({
     <StageRow
       actions={
         <div className="stage-actions">
-          <div className="stage-action-slot stage-action-slot--remote">
+          <div className="stage-action-slot stage-action-slot--fit">
             <JobStageActionButton
               canEdit={actionsEnabled}
               disabledReason="Switch back to the database-backed queue to return jobs to Potential."
@@ -31,7 +31,7 @@ export function ArchiveRow({
               workflowStatus="ranked"
             />
           </div>
-          <div className="stage-action-slot stage-action-slot--salary">
+          <div className="stage-action-slot stage-action-slot--status">
             <Link className="button button-ghost button-small" href={`/jobs/${job.id}`}>
               Details
             </Link>

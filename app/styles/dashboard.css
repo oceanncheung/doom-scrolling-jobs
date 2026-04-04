@@ -270,6 +270,88 @@ main.jobs-index .queue-list .stage-row::after {
   pointer-events: none;
 }
 
+/* Jobs index: stage action slots share the same column tracks as .screening-summary-grid */
+main.jobs-index .queue-list .stage-actions-bar {
+  display: block;
+  margin-top: 16px;
+  margin-left: 0;
+  padding: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+main.jobs-index .queue-list .stage-actions-cluster {
+  width: 100%;
+  min-width: 0;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 2.8fr)
+    minmax(10rem, 1.25fr)
+    minmax(10rem, 1.15fr)
+    minmax(8rem, 0.9fr)
+    minmax(8rem, 0.9fr);
+  column-gap: 16px;
+  row-gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote {
+  grid-column: 2;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--salary {
+  grid-column: 3;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary {
+  grid-column: 2 / span 2;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--fit {
+  grid-column: 4;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--status {
+  grid-column: 5;
+}
+
+/* Bridge 16px column-gaps so adjacent buttons share an edge; next column stays left-aligned with summary text */
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote:has(+ .stage-action-slot--salary) {
+  width: calc(100% + 16px);
+  min-width: 0;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit) {
+  width: calc(100% + 16px);
+  min-width: 0;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--fit:has(+ .stage-action-slot--status) {
+  width: calc(100% + 16px);
+  min-width: 0;
+}
+
+/* Potential queue: Save under Fit, Skip under Posted; bridge Fit–Posted gutter so buttons stay connected */
+main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster {
+  display: contents;
+}
+
+main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child {
+  grid-column: 4;
+  width: calc(100% + 16px);
+  min-width: 0;
+}
+
+main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child {
+  grid-column: 5;
+  min-width: 0;
+}
+
 .screening-disclosure {
   padding-top: 0;
 }
@@ -947,12 +1029,30 @@ details[open].disclosure .disclosure-caret {
 
 .job-flow-header.detail-page-header {
   grid-template-columns: minmax(0, 1fr);
-  padding-bottom: 32px;
+  /* Space below snapshot comes from .queue-column gap + first section padding-top */
+  padding-bottom: 0;
 }
 
+/* Same column tracks as .job-flow-snapshot.detail-page-snapshot: title ends at Posted’s left edge */
+.detail-page-header-stack,
 .job-flow-header-stack {
   display: grid;
-  gap: 24px;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2fr) minmax(0, 2fr);
+  column-gap: 16px;
+  row-gap: 32px;
+  align-items: start;
+  min-width: 0;
+}
+
+.detail-page-header-stack .job-flow-heading,
+.job-flow-header-stack .job-flow-heading {
+  grid-column: 1 / 4;
+  min-width: 0;
+}
+
+.detail-page-header-stack .job-flow-snapshot,
+.job-flow-header-stack .job-flow-snapshot {
+  grid-column: 1 / -1;
   min-width: 0;
 }
 
@@ -970,6 +1070,7 @@ details[open].disclosure .disclosure-caret {
 
 .page-heading.job-flow-heading h1 {
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .job-flow-heading-main {
@@ -984,9 +1085,16 @@ details[open].disclosure .disclosure-caret {
   gap: 0;
 }
 
+/* Clear separation from snapshot row (Remote / location) after the title block was simplified */
+.job-flow-prep-overview-wrap > .detail-review-section--first .job-flow-section-inner {
+  padding-top: 32px;
+}
+
+/* Cancels .queue-column grid gap so spacing above Application materials matches the next section (24px = .packet-section-inner padding-top only) */
 .job-prep-direct {
   display: grid;
   gap: 0;
+  margin-top: -24px;
 }
 
 .job-flow-prep-bar {
@@ -1037,6 +1145,11 @@ details[open].disclosure .disclosure-caret {
 @media (max-width: 900px) {
   .job-flow-snapshot.detail-page-snapshot {
     grid-template-columns: 1fr;
+  }
+
+  .detail-page-header-stack .job-flow-heading,
+  .job-flow-header-stack .job-flow-heading {
+    grid-column: 1 / -1;
   }
 }
 
@@ -1117,6 +1230,17 @@ details[open].disclosure .disclosure-caret {
   box-sizing: border-box;
 }
 
+.job-flow-section.detail-review-section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: calc(-1 * var(--queue-column-pad));
+  width: calc(100% + var(--queue-column-pad));
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+
 .job-flow-section::before {
   content: '';
   position: absolute;
@@ -1127,14 +1251,8 @@ details[open].disclosure .disclosure-caret {
   background: var(--line);
 }
 
-.detail-review-section--terminal::after {
-  content: '';
-  position: absolute;
-  left: calc(-1 * var(--queue-column-pad));
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: var(--line);
+.detail-review-section--first::before {
+  display: none;
 }
 
 .job-flow-section-inner {
@@ -1150,17 +1268,13 @@ details[open].disclosure .disclosure-caret {
   padding-bottom: 0;
 }
 
-.job-flow-section-heading {
-  max-width: 42rem;
+.job-flow-section-inner:has(button[form='packet-form']) {
+  padding-bottom: 0;
 }
 
-.job-flow-section-heading h2 {
-  font-family: var(--font-display), sans-serif;
-  font-size: 1.55rem;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  margin: 0;
+/* Flush overview actions to the section rule (no extra inner padding below the bar) */
+.detail-review-section--with-actions .job-flow-section-inner {
+  padding-bottom: 0;
 }
 
 .job-review-grid {
@@ -1230,30 +1344,53 @@ details[open].disclosure .disclosure-caret {
   border-top: 0;
 }
 
-.job-overview-actions {
-  grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2fr) minmax(0, 2fr);
-  margin-top: 0;
-  margin-right: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + var(--queue-column-pad));
-}
-
-.job-overview-actions .screening-actions-cluster {
-  display: grid;
-  width: 100%;
-  min-width: 0;
-}
-
-.job-overview-actions--save .screening-actions-cluster {
-  grid-column: 4 / 6;
+/* Match .job-review-grid: two columns + 32px gap; cluster aligns with Skills column and bleeds to viewport right. */
+.screening-actions-bar.job-overview-actions {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+  margin-top: 0;
+  margin-right: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-.job-overview-actions--prepare .screening-actions-cluster {
-  grid-column: 3 / 6;
+.screening-actions-bar.job-overview-actions .screening-actions-cluster {
+  grid-column: 2;
+  display: grid;
+  width: calc(100% + var(--queue-column-pad));
+  margin-right: calc(-1 * var(--queue-column-pad));
+  min-width: 0;
+  justify-self: stretch;
+  box-sizing: border-box;
+}
+
+.job-overview-actions--pair-right .screening-actions-cluster {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+
+/* Anchor vs form in slots can get different baselines; pin controls to the row bottom */
+.screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot .stage-action-form {
+  align-items: stretch;
+}
+
+.job-overview-actions--prepare-left .screening-actions-cluster {
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 }
 
-.job-overview-actions--single .screening-actions-cluster {
-  grid-column: 3 / 5;
+.job-overview-actions--single-right .screening-actions-cluster {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.job-overview-actions--single-right .button {
+  border-right: none;
 }

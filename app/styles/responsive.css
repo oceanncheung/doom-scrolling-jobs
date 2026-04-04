@@ -179,6 +179,19 @@
     min-width: 0;
   }
 
+  main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child,
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child {
+    grid-column: auto;
+    width: 100%;
+  }
+
   .job-overview-actions .screening-actions-cluster {
     grid-column: 1 / -1;
     grid-template-columns: 1fr;
@@ -188,6 +201,31 @@
     grid-column: 1 / -1;
     width: 100%;
     min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-cluster {
+    width: 100%;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: none;
+    grid-template-columns: unset;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot {
+    flex: 1 1 auto;
+    grid-column: auto;
+    width: 100%;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote:has(+ .stage-action-slot--salary),
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit),
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--fit:has(+ .stage-action-slot--status) {
+    width: 100%;
   }
 
   .stage-actions-bar .stage-actions {

@@ -32,15 +32,16 @@ function getPrepIntro(job: QualifiedJobRecord, hasDraft: boolean) {
     return 'Review the role and the prepared materials below, then mark the application ready to apply.'
   }
 
-  return 'Review the role first, then generate the application materials when you want to move forward.'
+  return 'Generate tailored materials for this role first. The resume, cover letter, and answers will appear after that step.'
 }
 
-function hasPacketDraft(packet: ApplicationPacketRecord) {
-  return Boolean(
-    packet.generatedAt ||
-      packet.coverLetterDraft ||
-      packet.resumeVersion.summaryText ||
-      packet.answers.length > 0,
+function hasGeneratedPacket(job: QualifiedJobRecord) {
+  return (
+    job.workflowStatus === 'preparing' ||
+    job.workflowStatus === 'ready_to_apply' ||
+    job.workflowStatus === 'applied' ||
+    job.workflowStatus === 'follow_up_due' ||
+    job.workflowStatus === 'interview'
   )
 }
 
@@ -54,64 +55,78 @@ function PrepSubmitButton({ canSave, hasDraft }: { canSave: boolean; hasDraft: b
       type="submit"
       value={hasDraft ? 'mark-ready' : 'generate-draft'}
     >
-      {hasDraft ? 'Mark Ready to Apply' : 'Generate Draft'}
+      {hasDraft ? 'Mark Ready to Apply' : 'Generate Content'}
     </button>
   )
 }
 
-function JobFlowActions({
+function JobOverviewActions({
   canSave,
+  draftReady,
   job,
   prepOpen,
 }: {
   canSave: boolean
+  draftReady: boolean
   job: QualifiedJobRecord
   prepOpen: boolean
 }) {
   if (prepOpen) {
     if (job.workflowStatus === 'ready_to_apply') {
       return (
-        <div className="job-flow-actions detail-page-actions">
-          <a
-            className="button button-primary button-small"
-            href={job.applicationUrl ?? job.sourceUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Apply
-          </a>
-          <JobStageActionButton
-            canEdit={canSave}
-            disabledReason="Switch back to the database-backed queue to mark jobs applied."
-            jobId={job.id}
-            label="Mark Applied"
-            sourceContext="job-flow"
-            variant="secondary"
-            workflowStatus="applied"
-          />
+        <div
+          aria-label="Job overview actions"
+          className="screening-actions-bar job-overview-actions job-overview-actions--pair-right"
+          role="group"
+        >
+          <div className="screening-actions-cluster">
+            <div className="screening-action-slot">
+              <a
+                className="button button-primary button-small"
+                href={job.applicationUrl ?? job.sourceUrl}
+                rel="noreferrer"
+                target="_blank"
+              >
+                Apply
+              </a>
+            </div>
+            <div className="screening-action-slot">
+              <JobStageActionButton
+                canEdit={canSave}
+                disabledReason="Switch back to the database-backed queue to mark jobs applied."
+                jobId={job.id}
+                label="Mark Applied"
+                sourceContext="job-flow"
+                variant="secondary"
+                workflowStatus="applied"
+              />
+            </div>
+          </div>
         </div>
       )
     }
 
-    return null
+    return (
+      <div
+        aria-label="Job overview actions"
+        className="screening-actions-bar job-overview-actions job-overview-actions--single-right"
+        role="group"
+      >
+        <div className="screening-actions-cluster">
+          <div className="screening-action-slot">
+            <PrepSubmitButton canSave={canSave} hasDraft={draftReady} />
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  return null
-}
-
-function JobOverviewActions({
-  canSave,
-  job,
-}: {
-  canSave: boolean
-  job: QualifiedJobRecord
-}) {
   if (job.workflowStatus !== 'new' && job.workflowStatus !== 'ranked') {
     if (job.workflowStatus === 'shortlisted') {
       return (
         <div
           aria-label="Job overview actions"
-          className="screening-actions-bar job-overview-actions job-overview-actions--prepare"
+          className="screening-actions-bar job-overview-actions job-overview-actions--prepare-left"
           role="group"
         >
           <div className="screening-actions-cluster">
@@ -140,7 +155,7 @@ function JobOverviewActions({
       return (
         <div
           aria-label="Job overview actions"
-          className="screening-actions-bar job-overview-actions job-overview-actions--single"
+          className="screening-actions-bar job-overview-actions job-overview-actions--single-right"
           role="group"
         >
           <div className="screening-actions-cluster">
@@ -158,7 +173,7 @@ function JobOverviewActions({
       return (
         <div
           aria-label="Job overview actions"
-          className="screening-actions-bar job-overview-actions job-overview-actions--prepare"
+          className="screening-actions-bar job-overview-actions job-overview-actions--single-right"
           role="group"
         >
           <div className="screening-actions-cluster">
@@ -169,14 +184,9 @@ function JobOverviewActions({
                 rel="noreferrer"
                 target="_blank"
               >
-                Apply
-              </a>
-            </div>
-            <div className="screening-action-slot">
-              <Link className="button button-secondary button-small" href={`/jobs/${job.id}/packet`}>
-                View Materials
-              </Link>
-            </div>
+                  Apply
+                </a>
+              </div>
           </div>
         </div>
       )
@@ -188,7 +198,7 @@ function JobOverviewActions({
   return (
     <div
       aria-label="Job overview actions"
-      className="screening-actions-bar job-overview-actions job-overview-actions--save"
+      className="screening-actions-bar job-overview-actions job-overview-actions--pair-right"
       role="group"
     >
       <div className="screening-actions-cluster">
@@ -238,15 +248,21 @@ export function JobFlowPage({
 }: JobFlowPageProps) {
   const salaryDisplay = getSalaryDisplay(job, profile)
   const descriptionPreview = getDescriptionExcerpt(job)
-  const draftReady = hasPacketDraft(packet)
+  const draftReady = hasGeneratedPacket(job)
   const pageLabel = prepOpen ? 'Application prep' : 'Job detail'
   const pageIntro = prepOpen ? getPrepIntro(job, draftReady) : getDetailIntro(job)
-  const prepBarAboveOverview = prepOpen && job.workflowStatus !== 'ready_to_apply'
+  const hasOverviewActions =
+    prepOpen ||
+    job.workflowStatus === 'new' ||
+    job.workflowStatus === 'ranked' ||
+    job.workflowStatus === 'shortlisted' ||
+    job.workflowStatus === 'preparing' ||
+    job.workflowStatus === 'ready_to_apply'
 
   return (
     <>
       <section className="page-header flow-header job-flow-header detail-page-header">
-        <div className="job-flow-header-stack">
+        <div className="job-flow-header-stack detail-page-header-stack">
           <div className="page-heading job-flow-heading">
             <div className="job-flow-heading-main">
               <p className="panel-label">{pageLabel}</p>
@@ -277,38 +293,19 @@ export function JobFlowPage({
               <strong>{job.freshness.label}</strong>
             </div>
           </div>
-
-          <JobFlowActions canSave={canSave} job={job} prepOpen={prepOpen} />
         </div>
       </section>
 
       <div className="job-flow-prep-overview-wrap">
-        {prepBarAboveOverview ? (
-          <div className="job-flow-prep-bar">
-            <div aria-label="Application prep actions" className="screening-actions-bar" role="group">
-              <div className="screening-actions-cluster">
-                <div className="screening-action-slot">
-                  <PrepSubmitButton canSave={canSave} hasDraft={draftReady} />
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        <section className={`job-flow-section detail-review-section${prepOpen ? '' : ' detail-review-section--terminal'}`}>
+        <section
+          className={`job-flow-section detail-review-section detail-review-section--first${
+            !prepOpen ? ' detail-review-section--terminal' : ''
+          }${hasOverviewActions ? ' detail-review-section--with-actions' : ''}`}
+        >
           <div className="job-flow-section-inner">
-            <div className="job-flow-section-heading">
-              <div className="settings-section-title-stack">
-                <p className="panel-label">Job overview</p>
-                <h2>Scan the role before you prep.</h2>
-                <p className="settings-section-note">
-                  Short description and skills here; open Source when you need the full posting or to apply off-site.
-                </p>
-              </div>
-            </div>
             <div className="job-review-grid">
               <div className="job-review-column">
-                <p className="panel-label">Description</p>
+                <p className="panel-label">Job overview</p>
                 <p>{descriptionPreview}</p>
                 <div className="inline-link-row">
                   <a href={job.sourceUrl} rel="noreferrer" target="_blank">
@@ -329,14 +326,22 @@ export function JobFlowPage({
                 )}
               </div>
             </div>
-            {!prepOpen ? <JobOverviewActions canSave={canSave} job={job} /> : null}
+            {hasOverviewActions ? (
+              <JobOverviewActions canSave={canSave} draftReady={draftReady} job={job} prepOpen={prepOpen} />
+            ) : null}
           </div>
         </section>
       </div>
 
       {prepOpen ? (
         <div className="job-prep-direct">
-          <ApplicationPacketForm canSave={canSave} disabledReason={issue} job={job} packet={packet} />
+          <ApplicationPacketForm
+            canSave={canSave}
+            disabledReason={issue}
+            job={job}
+            packet={packet}
+            showGeneratedContent={draftReady}
+          />
         </div>
       ) : null}
     </>
