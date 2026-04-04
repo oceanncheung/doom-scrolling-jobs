@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
 import { ApplicationPacketForm } from '@/components/jobs/application-packet-form'
+import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
 import { WorkspaceTodayRail } from '@/components/navigation/workspace-today-rail'
 import { getApplicationPacketReview } from '@/lib/data/application-packets'
 import { getRankedJobs } from '@/lib/data/jobs'
@@ -92,12 +93,14 @@ export default async function PacketReviewPage({ params }: PacketReviewPageProps
 
   return (
     <main className="page-stack workspace-surface">
-      <div className="dashboard-workspace">
-        <WorkspaceTodayRail
-          actionsEnabled={source === 'database'}
-          jobs={jobs}
-        />
-        <div className="queue-column">
+      <WorkspaceSurface
+        rail={
+          <WorkspaceTodayRail
+            actionsEnabled={source === 'database'}
+            jobs={jobs}
+          />
+        }
+      >
       <section className="page-header flow-header">
         <div className="page-heading">
           <p className="panel-label">Application prep</p>
@@ -152,8 +155,7 @@ export default async function PacketReviewPage({ params }: PacketReviewPageProps
         <Link href="/dashboard">Back to jobs</Link>
         <Link href={`/jobs/${job.id}`}>Back to detail</Link>
       </div>
-        </div>
-      </div>
+      </WorkspaceSurface>
     </main>
   )
 }

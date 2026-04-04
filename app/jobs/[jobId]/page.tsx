@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
+import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
 import { WorkspaceTodayRail } from '@/components/navigation/workspace-today-rail'
 import { getRankedJob, getRankedJobs } from '@/lib/data/jobs'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
@@ -211,12 +212,14 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
   return (
     <main className="page-stack workspace-surface">
-      <div className="dashboard-workspace">
-        <WorkspaceTodayRail
-          actionsEnabled={railActionsEnabled}
-          jobs={jobs}
-        />
-        <div className="queue-column">
+      <WorkspaceSurface
+        rail={
+          <WorkspaceTodayRail
+            actionsEnabled={railActionsEnabled}
+            jobs={jobs}
+          />
+        }
+      >
       <section className="page-header flow-header">
         <div className="page-heading">
           <p className="panel-label">{job.companyName}</p>
@@ -393,8 +396,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
           ) : null}
         </div>
       </details>
-        </div>
-      </div>
+      </WorkspaceSurface>
     </main>
   )
 }

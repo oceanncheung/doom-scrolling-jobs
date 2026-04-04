@@ -1,4 +1,6 @@
 import { OperatorAccessForm } from '@/components/operators/operator-access-form'
+import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
+import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
 import { getOperatorSessionState } from '@/lib/data/operators'
 
 export const dynamic = 'force-dynamic'
@@ -8,17 +10,19 @@ export default async function OperatorsPage() {
 
   return (
     <main className="page-stack">
-      <div className="dashboard-workspace">
-        <aside className="today-rail">
-          <section className="today-block">
-            <div className="today-block-heading">
-              <p className="panel-label">Accounts</p>
-              <h2>Workspace</h2>
-            </div>
-            <p className="profile-note">Pick who is operating this browser session.</p>
-          </section>
-        </aside>
-        <div className="queue-column">
+      <WorkspaceSurface
+        rail={
+          <WorkspaceRailShell className="today-rail">
+            <section className="today-block">
+              <div className="today-block-heading">
+                <p className="panel-label">Accounts</p>
+                <h2>Workspace</h2>
+              </div>
+              <p className="profile-note">Pick who is operating this browser session.</p>
+            </section>
+          </WorkspaceRailShell>
+        }
+      >
           <section className="page-header">
             <div className="page-heading">
               <p className="panel-label">Accounts</p>
@@ -41,8 +45,7 @@ export default async function OperatorsPage() {
             activeOperatorId={session.activeOperator?.id}
             operators={session.operators}
           />
-        </div>
-      </div>
+      </WorkspaceSurface>
     </main>
   )
 }

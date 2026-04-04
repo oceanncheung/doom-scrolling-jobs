@@ -1,4 +1,5 @@
 import { clearActiveOperatorSelection } from '@/app/operators/actions'
+import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
 import { ProfileSaveMessageSlot } from '@/components/profile/profile-save-message-root'
 import type { OperatorWorkspaceRecord } from '@/lib/domain/types'
 
@@ -9,8 +10,36 @@ interface ProfileSettingsRailProps {
 
 export function ProfileSettingsRail({ formId, workspace }: ProfileSettingsRailProps) {
   return (
-    <aside aria-label="Profile setup" className="today-rail settings-profile-rail">
-      <div className="settings-profile-rail-scroll">
+    <WorkspaceRailShell
+      ariaLabel="Profile setup"
+      className="today-rail settings-profile-rail"
+      footer={
+        <div className="settings-profile-rail-footer">
+          <section className="today-block settings-rail-actions-block">
+            <div className="settings-rail-heading-with-status">
+              <div className="today-block-heading">
+                <p className="panel-label">Actions</p>
+                <h2>Account</h2>
+              </div>
+              <ProfileSaveMessageSlot />
+            </div>
+
+            <div className="settings-rail-actions">
+              <button className="button button-secondary" form={formId} type="submit">
+                Save settings
+              </button>
+
+              <form action={clearActiveOperatorSelection}>
+                <button className="button button-secondary" type="submit">
+                  Log out
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+      }
+      scrollClassName="settings-profile-rail-scroll"
+    >
         <section className="today-block">
           <div className="settings-profile-rail-heading-stack">
             <div className="today-block-heading">
@@ -100,31 +129,6 @@ export function ProfileSettingsRail({ formId, workspace }: ProfileSettingsRailPr
             </label>
           </div>
         </section>
-      </div>
-
-      <div className="settings-profile-rail-footer">
-        <section className="today-block settings-rail-actions-block">
-          <div className="settings-rail-heading-with-status">
-            <div className="today-block-heading">
-              <p className="panel-label">Actions</p>
-              <h2>Account</h2>
-            </div>
-            <ProfileSaveMessageSlot />
-          </div>
-
-          <div className="settings-rail-actions">
-            <button className="button button-secondary" form={formId} type="submit">
-              Save settings
-            </button>
-
-            <form action={clearActiveOperatorSelection}>
-              <button className="button button-secondary" type="submit">
-                Log out
-              </button>
-            </form>
-          </div>
-        </section>
-      </div>
-    </aside>
+    </WorkspaceRailShell>
   )
 }

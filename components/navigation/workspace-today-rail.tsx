@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
+import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
 import { getDashboardQueues, getMatchReason } from '@/lib/jobs/dashboard-queue'
 
@@ -40,7 +41,7 @@ export function WorkspaceTodayRail({ actionsEnabled, jobs }: WorkspaceTodayRailP
   const newTodayCount = getNewTodayCount(jobs)
 
   return (
-    <aside aria-label="Today" className="today-rail">
+    <WorkspaceRailShell ariaLabel="Today">
       <section className="today-block">
         <div className="today-block-heading">
           <p className="panel-label">Today</p>
@@ -68,7 +69,10 @@ export function WorkspaceTodayRail({ actionsEnabled, jobs }: WorkspaceTodayRailP
                   {applyNextAction.label}
                 </a>
               ) : (
-                <Link className="button button-primary" href={applyNextAction?.href ?? `/jobs/${applyNextJob.id}`}>
+                <Link
+                  className="button button-primary"
+                  href={applyNextAction?.href ?? `/jobs/${applyNextJob.id}`}
+                >
                   {applyNextAction?.label ?? 'Prepare'}
                 </Link>
               )}
@@ -111,6 +115,6 @@ export function WorkspaceTodayRail({ actionsEnabled, jobs }: WorkspaceTodayRailP
           </div>
         </dl>
       </section>
-    </aside>
+    </WorkspaceRailShell>
   )
 }

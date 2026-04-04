@@ -1,0 +1,364 @@
+.page-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.page-header,
+.panel,
+.stage-section,
+.stage-shell,
+.empty-state {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.flow-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 1fr);
+  gap: 32px;
+}
+
+.page-heading {
+  display: grid;
+  gap: 24px;
+  align-content: start;
+}
+
+.page-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.page-heading h1 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+}
+
+.page-heading > p:last-child,
+.panel p,
+.stage-row-reason,
+.stage-helper-text,
+.workflow-note,
+.workflow-current-status,
+.field small,
+.form-message,
+.compact-list span,
+.job-card-tags span,
+.status-track span {
+  color: var(--muted);
+}
+
+.flow-snapshot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-content: start;
+}
+
+.flow-snapshot > div {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.flow-snapshot strong {
+  font-size: 1.12rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.panel-label {
+  color: var(--muted);
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.jobs-index {
+  gap: 16px;
+}
+
+.dashboard-workspace {
+  display: grid;
+  grid-template-columns: var(--dashboard-rail) minmax(0, 1fr);
+  column-gap: 0;
+  row-gap: 0;
+  align-items: stretch;
+  min-height: calc(100vh - 73px);
+}
+
+.today-rail,
+.queue-column {
+  display: grid;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.dashboard-workspace .today-rail,
+.dashboard-workspace .queue-column {
+  border-top: none;
+}
+
+/* Reserves the first grid track while the real rail is position:fixed (out of flow). */
+.dashboard-rail-column {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  align-self: start;
+}
+
+.dashboard-rail-spacer {
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.dashboard-workspace .today-rail {
+  --today-rail-pad-left: var(--site-gutter);
+  --today-rail-pad-right: 24px;
+  padding-top: 24px;
+  padding-left: var(--today-rail-pad-left);
+  padding-right: var(--today-rail-pad-right);
+  border-right: 1px solid var(--line);
+  box-sizing: border-box;
+}
+
+/* Locked to the viewport while the page scrolls (not position:sticky — that still moves with the document). */
+.dashboard-workspace .today-rail:not(.settings-profile-rail) {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: fixed;
+  top: 73px;
+  left: 0;
+  z-index: 4;
+  width: max(18rem, 28%);
+  height: calc(100dvh - 73px);
+  max-height: calc(100dvh - 73px);
+  min-height: 0;
+  overflow: visible;
+  background: var(--bg);
+}
+
+.dashboard-workspace .today-rail > .today-rail-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: grid;
+  gap: 24px;
+  align-content: start;
+  justify-items: stretch;
+}
+
+/* Profile rail: viewport-tall column; scroll middle; actions pinned to viewport bottom (not in scroll) */
+.dashboard-workspace .today-rail.settings-profile-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-content: stretch;
+  justify-items: unset;
+  align-items: stretch;
+  align-self: start;
+  height: calc(100dvh - 73px);
+  max-height: calc(100dvh - 73px);
+  min-height: calc(100dvh - 73px);
+  overflow: hidden;
+}
+
+.dashboard-workspace .today-rail.settings-profile-rail > .settings-profile-rail-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-profile-rail-heading-stack {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Single rule between Apply next and Snapshot: drop paired bottom+top borders */
+.dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block:first-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dashboard-workspace
+  .today-rail:not(.settings-profile-rail)
+  > .today-rail-scroll
+  > .today-block:first-child
+  + .today-block {
+  border-top: none;
+  padding-top: 0;
+}
+
+.dashboard-workspace .today-rail.settings-profile-rail > .settings-profile-rail-scroll > .today-block:first-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dashboard-workspace .today-rail.settings-profile-rail > .settings-profile-rail-scroll > .today-block:first-child + .today-block {
+  border-top: none;
+  padding-top: 0;
+}
+
+.dashboard-workspace .queue-column {
+  --queue-column-pad: 32px;
+  padding-top: 24px;
+  border-left: 0;
+  padding-left: var(--queue-column-pad);
+  padding-right: 0;
+  min-width: 0;
+}
+
+.today-block {
+  display: grid;
+  gap: 16px;
+}
+
+.today-block + .today-block {
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  margin-left: calc(-1 * var(--today-rail-pad-left));
+  padding-left: var(--today-rail-pad-left);
+  padding-right: var(--today-rail-pad-right);
+  width: calc(100% + var(--today-rail-pad-left) + var(--today-rail-pad-right));
+  box-sizing: border-box;
+}
+
+.today-block:first-child {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+  margin-left: calc(-1 * var(--today-rail-pad-left));
+  padding-left: var(--today-rail-pad-left);
+  padding-right: var(--today-rail-pad-right);
+  width: calc(100% + var(--today-rail-pad-left) + var(--today-rail-pad-right));
+  box-sizing: border-box;
+}
+
+.today-block-heading {
+  display: grid;
+  gap: 8px;
+}
+
+.today-block-heading h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.today-apply-next,
+.today-resume-status,
+.today-empty {
+  display: grid;
+  gap: 16px;
+}
+
+.today-apply-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.today-job-link {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.today-job-company,
+.today-job-reason,
+.today-resume-status p,
+.today-empty p:last-child {
+  color: var(--muted);
+}
+
+.today-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.today-resume-status .button,
+.today-block .button {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  text-align: center;
+  justify-content: center;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.today-block .button:hover,
+.today-resume-status .button:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.today-stats {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.today-stats div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-faint);
+  transition: background-color 200ms ease;
+}
+
+.today-stats div:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.today-stats div:last-child {
+  padding-bottom: 0;
+}
+
+.today-stats dt {
+  color: var(--muted);
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.today-stats dd {
+  margin: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+

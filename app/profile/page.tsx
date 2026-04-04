@@ -1,6 +1,7 @@
 import { ProfileForm } from '@/components/profile/profile-form'
 import { ProfileSaveMessageRootProvider } from '@/components/profile/profile-save-message-root'
 import { ProfileSettingsRail } from '@/components/profile/profile-settings-rail'
+import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
 import { getOperatorProfile } from '@/lib/data/operator-profile'
 
@@ -13,10 +14,9 @@ export default async function ProfilePage() {
   return (
     <main className="page-stack workspace-surface settings-page">
       <ProfileSaveMessageRootProvider>
-        <section className="dashboard-workspace">
-          <ProfileSettingsRail formId="profile-workspace-form" workspace={workspace} />
-
-          <div className="queue-column">
+        <WorkspaceSurface
+          rail={<ProfileSettingsRail formId="profile-workspace-form" workspace={workspace} />}
+        >
             <div className="queue-meta settings-page-header">
               <div className="queue-meta-heading">
                 <div>
@@ -28,8 +28,7 @@ export default async function ProfilePage() {
             </div>
 
             <ProfileForm workspace={workspace} />
-          </div>
-        </section>
+        </WorkspaceSurface>
       </ProfileSaveMessageRootProvider>
     </main>
   )

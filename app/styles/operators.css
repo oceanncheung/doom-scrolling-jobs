@@ -1,0 +1,69 @@
+.operator-access-shell {
+  display: grid;
+  gap: 24px;
+}
+
+.operator-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.operator-row {
+  margin: 0;
+}
+
+.operator-row-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.operator-row-main {
+  display: grid;
+  gap: 8px;
+}
+
+.operator-row-main strong {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.operator-row-main span,
+.operator-row-meta {
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+
+.operator-setup-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.operator-setup-form {
+  display: grid;
+  gap: 16px;
+  max-width: 32rem;
+}
+
+.detail-group {
+  display: grid;
+  gap: 8px;
+}
+
+.empty-state {
+  display: grid;
+  gap: 8px;
+}
+

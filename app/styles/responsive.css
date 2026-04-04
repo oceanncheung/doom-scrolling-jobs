@@ -1,0 +1,242 @@
+@media (max-width: 1180px) {
+  .settings-main {
+    --settings-section-pad-right: 0px;
+  }
+
+  .dashboard-workspace {
+    align-items: start;
+    min-height: auto;
+  }
+
+  .dashboard-workspace,
+  .queue-meta,
+  .flow-header,
+  .stage-section-header,
+  .settings-section-header,
+  .screening-summary-grid,
+  .stage-row-grid,
+  .stage-summary-row,
+  .panel-grid-2,
+  .panel-grid-3,
+  .settings-source-grid,
+  .settings-source-uploads-row,
+  .settings-core-grid,
+  .settings-job-targets-row,
+  .settings-advanced-tags-row,
+  .strengths-experience-grid,
+  .field-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-rail-spacer {
+    display: none;
+  }
+
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) {
+    position: static;
+    top: auto;
+    left: auto;
+    width: auto;
+    max-width: none;
+    z-index: auto;
+    background: transparent;
+  }
+
+  .dashboard-workspace .today-rail {
+    position: static;
+    top: auto;
+    align-self: stretch;
+    height: auto;
+    max-height: none;
+    min-height: auto;
+    overflow: visible;
+    border-right: 0;
+  }
+
+  .dashboard-workspace .today-rail > .today-rail-scroll {
+    flex: none;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .dashboard-workspace .today-rail.settings-profile-rail {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    align-self: stretch;
+  }
+
+  .dashboard-workspace .today-rail.settings-profile-rail > .settings-profile-rail-scroll {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .settings-profile-rail {
+    min-height: auto;
+    padding-bottom: 0;
+  }
+
+  .settings-profile-rail-footer {
+    margin-top: 0;
+    padding-bottom: 24px;
+  }
+
+  .dashboard-workspace .queue-column {
+    --queue-column-pad: var(--site-gutter);
+    border-left: 0;
+    padding-left: var(--site-gutter);
+    padding-right: var(--site-gutter);
+    border-top: 1px solid var(--line-soft);
+    padding-top: 24px;
+  }
+
+  .settings-page .dashboard-workspace .queue-column {
+    grid-template-rows: auto;
+  }
+
+  .settings-page .dashboard-workspace .queue-column > form.settings-main.profile-form {
+    display: grid;
+  }
+
+  .dashboard-workspace .queue-column > .queue-meta::after {
+    left: 0;
+    width: 100%;
+  }
+
+  .screening-row,
+  .stage-column-actions {
+    justify-items: start;
+  }
+
+  .screening-row {
+    gap: 0;
+  }
+
+  .settings-field-wide,
+  .settings-source-primary,
+  .settings-source-secondary {
+    grid-column: auto;
+  }
+
+  .settings-source-primary,
+  .settings-source-secondary {
+    padding-right: 0;
+  }
+
+  .stage-actions {
+    justify-content: flex-start;
+  }
+
+  .detail-pair-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .screening-actions-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .screening-actions-cluster {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+
+  .site-workflow-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .site-brand {
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-left: var(--site-gutter);
+  }
+
+  .site-brand::after {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+.workspace-main > main:not(.jobs-index):not(.workspace-surface) {
+    padding: 16px;
+  }
+
+  .site-header {
+    padding: 0;
+  }
+
+  .site-brand {
+    padding-left: 16px;
+  }
+
+  .dashboard-workspace .today-rail {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .settings-profile-rail {
+    --today-rail-pad-left: 16px;
+    --today-rail-pad-right: 16px;
+  }
+
+  .dashboard-workspace .queue-column {
+    --queue-column-pad: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .page-stack {
+    gap: 16px;
+  }
+
+  .page-heading h1 {
+    font-size: 2.1rem;
+  }
+
+  .site-workflow-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-page-toolbar {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .stage-actions,
+  .repeat-card-header,
+  .section-header,
+  .profile-form-footer,
+  .workflow-control-meta,
+  .workflow-quick-actions,
+  .workflow-select-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .button {
+    justify-content: flex-start;
+  }
+
+  .screening-actions-bar .button {
+    justify-content: center;
+  }
+
+  .today-actions,
+  .settings-toggle-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

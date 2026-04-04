@@ -1,0 +1,87 @@
+html.jobs-marquee-open .workspace-main > main.jobs-index {
+  padding-bottom: 3rem;
+}
+
+@keyframes ticker-scroll-infinite {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Root: viewport sizing comes from inline style on the portaled node (beats cascade quirks). */
+.ticker-stripe-root .ticker-stripe {
+  pointer-events: auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.ticker-stripe {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  margin: 0;
+  box-sizing: border-box;
+  background: var(--text);
+  color: var(--bg);
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.ticker-rail {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-content-infinite {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  animation: ticker-scroll-infinite 30s linear infinite;
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.ticker-content-infinite span {
+  flex-shrink: 0;
+}
+
+.ticker-close {
+  width: 48px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity 200ms ease;
+  padding: 0;
+}
+
+.ticker-close:hover {
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-content-infinite {
+    animation: none;
+  }
+}
