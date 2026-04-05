@@ -1,7 +1,7 @@
-import { formatSourceLinkLabel, getDescriptionExcerpt } from '@/components/dashboard/formatters'
 import { JobOverviewActions } from '@/components/jobs/job-overview-actions'
 import type { ApplicationPacketRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
+import { formatSourceLinkLabel, getDescriptionExcerpt } from '@/lib/jobs/display'
 import { getJobOverviewActionModel } from '@/lib/jobs/job-overview-action-model'
 
 interface JobOverviewSectionProps {

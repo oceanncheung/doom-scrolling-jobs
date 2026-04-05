@@ -5,7 +5,7 @@ import {
   StageDetailItem,
 } from '@/components/dashboard/stage-primitives'
 import { StageRow } from '@/components/dashboard/stage-row'
-import { getRiskReason } from '@/components/dashboard/formatters'
+import { getRiskReason } from '@/lib/jobs/display'
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
 import type { OperatorProfileRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'

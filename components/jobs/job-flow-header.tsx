@@ -1,6 +1,6 @@
-import { getLocationDisplay, getSalaryDisplay } from '@/components/dashboard/formatters'
 import type { OperatorProfileRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
+import { getLocationDisplay, getSalaryDisplay } from '@/lib/jobs/display'
 import { formatDateLabel, formatWorkflowLabel } from '@/lib/jobs/presentation'
 
 interface JobFlowHeaderProps {

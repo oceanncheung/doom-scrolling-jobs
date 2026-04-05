@@ -2,15 +2,8 @@ import type { ReactNode } from 'react'
 
 import type { OperatorProfileRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
+import { buildStageRowSummary } from '@/lib/jobs/stage-row-view-model'
 import { formatDateLabel, formatWorkflowLabel } from '@/lib/jobs/presentation'
-
-import {
-  formatFitBand,
-  getFreshnessLabel,
-  getLocationDisplay,
-  getMatchReason,
-  getSalaryDisplay,
-} from '@/components/dashboard/formatters'
 
 export function StageRow({
   actions,
@@ -27,8 +20,7 @@ export function StageRow({
   profile: OperatorProfileRecord
   showActions?: boolean
 }) {
-  const salary = getSalaryDisplay(job, profile)
-  const fit = formatFitBand(job)
+  const summary = buildStageRowSummary(job, profile)
 
   return (
     <article className="stage-row">
@@ -38,30 +30,30 @@ export function StageRow({
             <div className="screening-cell screening-title-cell">
               <strong>{job.title}</strong>
               <span>{job.companyName}</span>
-              <p className="screening-match">{getMatchReason(job)}</p>
+              <p className="screening-match">{summary.matchReason}</p>
             </div>
 
             <div className="screening-cell">
               <span className="stage-column-label">Remote / location</span>
-              <strong>{getLocationDisplay(job)}</strong>
+              <strong>{summary.location}</strong>
             </div>
 
             <div className="screening-cell">
-              <span className="stage-column-label">{salary.label}</span>
-              <strong>{salary.value}</strong>
+              <span className="stage-column-label">{summary.salaryLabel}</span>
+              <strong>{summary.salaryValue}</strong>
             </div>
 
             <div className="screening-cell">
               <span className="stage-column-label">Fit</span>
-              <strong>{fit.label}</strong>
-              <span className="screening-fit-meta">{fit.score}</span>
+              <strong>{summary.fitLabel}</strong>
+              <span className="screening-fit-meta">{summary.fitScore}</span>
             </div>
 
             <div className="screening-cell">
               <span className="stage-column-label">Status</span>
               <strong>{formatWorkflowLabel(job.workflowStatus)}</strong>
               <span className="screening-freshness">
-                {job.postedAt ? `${formatDateLabel(job.postedAt)} · ${getFreshnessLabel(job)}` : ''}
+                {job.postedAt ? `${formatDateLabel(job.postedAt)} · ${summary.freshness}` : ''}
               </span>
             </div>
           </div>

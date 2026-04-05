@@ -13,6 +13,7 @@ import { WorkspaceTodayRail } from '@/components/navigation/workspace-today-rail
 import { getRankedJobs } from '@/lib/data/jobs'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
 import { getOperatorProfile } from '@/lib/data/operator-profile'
+import { getQueueEmptyState } from '@/lib/jobs/dashboard-view-model'
 import {
   getDashboardQueues,
   getQueueView,
@@ -33,7 +34,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     getRankedJobs(),
     getOperatorProfile(),
   ])
-  const actionsEnabled = source === 'database' && !screeningLocked
+  const isScreeningLocked = Boolean(screeningLocked)
+  const actionsEnabled = source === 'database' && !isScreeningLocked
 
   const { appliedJobs, archivedJobs, counts, potentialJobs, preparedJobs, savedJobs, screeningPool } =
     getDashboardQueues(jobs)
@@ -46,11 +48,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             job={job}
             key={job.id}
             profile={workspace.profile}
-            showActions={!screeningLocked}
+            showActions={!isScreeningLocked}
           />
         ))
       ) : (
-        <StageEmpty message="Applied jobs will collect here once you mark them sent." title="Applied" />
+        <StageEmpty {...getQueueEmptyState('applied', isScreeningLocked)} />
       ),
     archive:
       archivedJobs.length > 0 ? (
@@ -60,11 +62,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             job={job}
             key={job.id}
             profile={workspace.profile}
-            showActions={!screeningLocked}
+            showActions={!isScreeningLocked}
           />
         ))
       ) : (
-        <StageEmpty message="Skipped and archived jobs will show up here." title="Archived" />
+        <StageEmpty {...getQueueEmptyState('archive', isScreeningLocked)} />
       ),
     potential:
       potentialJobs.length > 0 ? (
@@ -77,14 +79,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           />
         ))
       ) : (
-        <StageEmpty
-          message={
-            screeningLocked
-              ? 'Complete your profile draft in Settings to unlock Potential.'
-              : 'No active screening jobs are available right now.'
-          }
-          title="Potential"
-        />
+        <StageEmpty {...getQueueEmptyState('potential', isScreeningLocked)} />
       ),
     prepared:
       preparedJobs.length > 0 ? (
@@ -94,11 +89,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             job={job}
             key={job.id}
             profile={workspace.profile}
-            showActions={!screeningLocked}
+            showActions={!isScreeningLocked}
           />
         ))
       ) : (
-        <StageEmpty message="Mark a packet ready and it will show up here." title="Ready" />
+        <StageEmpty {...getQueueEmptyState('prepared', isScreeningLocked)} />
       ),
     saved:
       savedJobs.length > 0 ? (
@@ -108,11 +103,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             job={job}
             key={job.id}
             profile={workspace.profile}
-            showActions={!screeningLocked}
+            showActions={!isScreeningLocked}
           />
         ))
       ) : (
-        <StageEmpty message="Saved jobs will appear here after you shortlist them." title="Saved" />
+        <StageEmpty {...getQueueEmptyState('saved', isScreeningLocked)} />
       ),
   }
 
@@ -123,7 +118,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <WorkspaceTodayRail
             actionsEnabled={actionsEnabled}
             jobs={jobs}
-            screeningLocked={screeningLocked}
+            screeningLocked={isScreeningLocked}
           />
         }
       >

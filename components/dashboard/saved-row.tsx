@@ -6,7 +6,7 @@ import {
   StageInlineLinks,
 } from '@/components/dashboard/stage-primitives'
 import { StageRow } from '@/components/dashboard/stage-row'
-import { formatSourceLinkLabel, getMatchReason, getRiskReason } from '@/components/dashboard/formatters'
+import { formatSourceLinkLabel, getMatchReason, getRiskReason } from '@/lib/jobs/display'
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
 import type { OperatorProfileRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'

@@ -1,6 +1,7 @@
 import { refreshDashboardQueue } from '@/app/dashboard/actions'
 import { QueueRefreshButton } from '@/components/jobs/queue-refresh-button'
 import type { QueueView } from '@/lib/jobs/dashboard-queue'
+import { getQueueMetaViewModel } from '@/lib/jobs/dashboard-view-model'
 
 export function QueueMeta({
   activeView,
@@ -13,62 +14,38 @@ export function QueueMeta({
   potentialTotalCount: number
   totalCount: number
 }) {
-  const copy: Record<QueueView, { eyebrow: string; label: string; note: string }> = {
-    applied: {
-      eyebrow: 'Applied',
-      label: `${totalCount} applied jobs`,
-      note: 'Submitted roles and active follow-up states.',
-    },
-    archive: {
-      eyebrow: 'Archived',
-      label: `${totalCount} archived jobs`,
-      note: 'Skipped, rejected, and archived roles live here.',
-    },
-    potential: {
-      eyebrow: 'Potential jobs',
-      label: `${potentialVisibleCount} of ${potentialTotalCount} screening jobs`,
-      note:
-        potentialTotalCount > potentialVisibleCount
-          ? 'Save or skip to replenish from the next ranked jobs.'
-          : 'Save or skip to keep the screening queue moving.',
-    },
-    prepared: {
-      eyebrow: 'Ready',
-      label: `${totalCount} ready jobs`,
-      note: 'Saved roles with application materials ready to submit.',
-    },
-    saved: {
-      eyebrow: 'Saved',
-      label: `${totalCount} saved jobs`,
-      note: 'Saved roles waiting for review or packet work.',
-    },
-  }
+  const copy = getQueueMetaViewModel({
+    activeView,
+    potentialTotalCount,
+    potentialVisibleCount,
+    totalCount,
+  })
 
   return (
     <div className="queue-meta">
       <div
         className={
-          activeView === 'potential'
+          copy.showRefresh
             ? 'queue-meta-heading queue-meta-heading-with-action'
             : 'queue-meta-heading'
         }
       >
         <div>
-          <p className="panel-label">{copy[activeView].eyebrow}</p>
-          {activeView === 'potential' ? (
+          <p className="panel-label">{copy.eyebrow}</p>
+          {copy.showRefresh ? (
             <div className="queue-meta-title-row">
-              <h1>{copy[activeView].label}</h1>
+              <h1>{copy.label}</h1>
               <form action={refreshDashboardQueue} className="queue-meta-actions">
                 <input name="view" type="hidden" value={activeView} />
                 <QueueRefreshButton />
               </form>
             </div>
           ) : (
-            <h1>{copy[activeView].label}</h1>
+            <h1>{copy.label}</h1>
           )}
         </div>
       </div>
-      <p>{copy[activeView].note}</p>
+      <p>{copy.note}</p>
     </div>
   )
 }

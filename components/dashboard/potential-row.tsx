@@ -18,7 +18,7 @@ import {
   getMatchReason,
   getRiskReason,
   getSalaryDisplay,
-} from '@/components/dashboard/formatters'
+} from '@/lib/jobs/display'
 import { getJobReviewHref } from '@/lib/jobs/review-navigation'
 import { formatDateLabel } from '@/lib/jobs/presentation'
 

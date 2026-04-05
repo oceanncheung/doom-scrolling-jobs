@@ -5,7 +5,7 @@ import {
   StageDetailItem,
 } from '@/components/dashboard/stage-primitives'
 import { StageRow } from '@/components/dashboard/stage-row'
-import { formatSourceLinkLabel, getMatchReason, getRiskReason } from '@/components/dashboard/formatters'
+import { formatSourceLinkLabel, getMatchReason, getRiskReason } from '@/lib/jobs/display'
 import type { OperatorProfileRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
 import { getJobReviewHref } from '@/lib/jobs/review-navigation'
