@@ -326,7 +326,7 @@
  * but not force the OS popup panel width with CSS alone.
  */
 .list-input-shell {
-  --list-input-shell-mask-bg: var(--bg);
+  --list-input-shell-mask-bg: var(--settings-field-surface, var(--bg));
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -357,11 +357,6 @@
   );
   pointer-events: none;
   z-index: 1;
-}
-
-.settings-action-body .list-input-shell,
-.settings-tab-panel .list-input-shell {
-  --list-input-shell-mask-bg: var(--surface-soft);
 }
 
 .list-input-shell input[list] {
@@ -441,15 +436,10 @@
 }
 
 .overlay-option-field {
-  --overlay-option-surface: var(--bg);
+  --overlay-option-surface: var(--settings-field-surface, var(--bg));
   position: relative;
   width: 100%;
   min-width: 0;
-}
-
-.settings-action-body .overlay-option-field,
-.settings-tab-panel .overlay-option-field {
-  --overlay-option-surface: var(--surface-soft);
 }
 
 .overlay-option-control {
@@ -678,18 +668,13 @@
   z-index: 6;
   border: 1px solid var(--text);
   box-sizing: border-box;
-  background: var(--overlay-option-surface, var(--bg));
+  background: var(--overlay-option-surface);
 }
 
 .overlay-option-panel.is-above,
 .tag-input-square-suggestion-panel.is-above {
   top: auto;
   bottom: calc(100% + 8px);
-}
-
-.settings-action-body .overlay-option-panel,
-.settings-tab-panel .overlay-option-panel {
-  background: var(--overlay-option-surface, var(--surface-soft));
 }
 
 .overlay-option-item {
@@ -1029,44 +1014,14 @@
   gap: 24px;
 }
 
-.strengths-tag-stack .tag-input-field {
-  gap: 6px;
-  align-content: start;
-}
-
-.strengths-tag-stack .tag-input-container {
-  min-height: 40px;
-  padding: 8px 0;
-  border: 0;
-  align-items: flex-end;
-  gap: 8px;
-  box-sizing: border-box;
-}
-
-.strengths-tag-stack .tag-list {
-  gap: 8px;
-}
-
-.strengths-tag-stack .tag-input:not(.tag-input-square) {
-  min-width: 12rem;
-  padding: 0;
-}
-
-.strengths-tag-stack .field small {
-  margin-top: 0;
-}
-
-.settings-core-grid .settings-tag-row {
-  grid-column: 1 / -1;
-  gap: 24px;
-}
-
+.strengths-tag-stack .tag-input-field,
 .settings-tag-row .tag-input-field,
 .settings-job-targets-col-left .tag-input-field {
   gap: 6px;
   align-content: start;
 }
 
+.strengths-tag-stack .tag-input-container,
 .settings-tag-row .tag-input-container,
 .settings-job-targets-col-left .tag-input-container {
   min-height: 40px;
@@ -1077,9 +1032,28 @@
   box-sizing: border-box;
 }
 
+.strengths-tag-stack .tag-list,
 .settings-tag-row .tag-list,
 .settings-job-targets-col-left .tag-list {
   gap: 8px;
+}
+
+.strengths-tag-stack .tag-input:not(.tag-input-square),
+.settings-tag-row .tag-input:not(.tag-input-square),
+.settings-job-targets-col-left .tag-input:not(.tag-input-square) {
+  min-width: 12rem;
+  padding: 0;
+}
+
+.strengths-tag-stack .field small,
+.settings-tag-row .field small,
+.settings-job-targets-col-left .field small {
+  margin-top: 0;
+}
+
+.settings-core-grid .settings-tag-row {
+  grid-column: 1 / -1;
+  gap: 24px;
 }
 
 .tag-add-trigger {
@@ -1107,16 +1081,6 @@
   display: block;
 }
 
-.settings-tag-row .tag-input:not(.tag-input-square),
-.settings-job-targets-col-left .tag-input:not(.tag-input-square) {
-  min-width: 12rem;
-  padding: 0;
-}
-
-.settings-tag-row .field small,
-.settings-job-targets-col-left .field small {
-  margin-top: 0;
-}
 
 /* Same rhythm as `.settings-core-grid .settings-tag-row` when the row isn’t inside core-grid */
 .settings-tab-panel > .settings-tag-row.field-grid {

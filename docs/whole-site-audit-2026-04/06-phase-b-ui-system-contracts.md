@@ -59,6 +59,7 @@ Contract:
   - searchable underline
   - button-style underline
 - Overlay panel styling is shared; route-specific look changes are not allowed.
+- Elevated settings surfaces should provide background context through inherited CSS variables instead of descendant overrides wherever possible.
 
 ### 3. Tag inputs
 

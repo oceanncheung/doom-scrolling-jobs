@@ -575,6 +575,7 @@
 }
 
 .settings-action-body {
+  --settings-field-surface: var(--surface-soft);
   display: grid;
   gap: 24px;
   padding: 24px 0;
@@ -781,6 +782,7 @@
 }
 
 .settings-tab-panel {
+  --settings-field-surface: var(--surface-soft);
   display: grid;
   gap: 24px;
   padding-top: 16px;
