@@ -6,6 +6,8 @@ import { WorkspaceTodayRail } from '@/components/navigation/workspace-today-rail
 import { getApplicationPacketReview } from '@/lib/data/application-packets'
 import { getRankedJobs } from '@/lib/data/jobs'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
+import { computeProfileMaterialReady } from '@/lib/jobs/profile-material'
+import { isJobPrepOpen } from '@/lib/jobs/review-navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +29,8 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
     notFound()
   }
 
+  const profileMaterialReady = computeProfileMaterialReady(packet, workspace)
+
   return (
     <main className="page-stack workspace-surface">
       <WorkspaceSurface
@@ -43,8 +47,9 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
           issue={issue}
           job={job}
           packet={packet}
-          prepOpen={false}
+          prepOpen={isJobPrepOpen(job.workflowStatus)}
           profile={workspace.profile}
+          profileMaterialReady={profileMaterialReady}
           screeningLocked={Boolean(screeningLocked)}
         />
       </WorkspaceSurface>

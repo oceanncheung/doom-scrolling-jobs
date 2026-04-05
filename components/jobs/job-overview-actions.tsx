@@ -1,5 +1,3 @@
-import Link from 'next/link'
-
 import { GeneratePacketButton } from '@/components/jobs/generate-packet-button'
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
 import type { ApplicationPacketRecord } from '@/lib/domain/types'
@@ -91,14 +89,19 @@ export function JobOverviewActions({
       )
     }
 
+    const showShortlistArchive = job.workflowStatus === 'shortlisted'
+    const slotCount = 1 + (hasGeneratedContent ? 1 : 0) + (showShortlistArchive ? 1 : 0)
+    const layoutClass =
+      slotCount >= 3
+        ? 'job-overview-actions--triple-right'
+        : slotCount >= 2
+          ? 'job-overview-actions--pair-right'
+          : 'job-overview-actions--single-right'
+
     return (
       <div
         aria-label="Job overview actions"
-        className={`screening-actions-bar job-overview-actions ${
-          hasGeneratedContent
-            ? 'job-overview-actions--pair-right'
-            : 'job-overview-actions--single-right'
-        }`}
+        className={`screening-actions-bar job-overview-actions ${layoutClass}`}
         role="group"
       >
         <div className="screening-actions-cluster">
@@ -116,25 +119,7 @@ export function JobOverviewActions({
               </a>
             </div>
           ) : null}
-        </div>
-      </div>
-    )
-  }
-
-  if (job.workflowStatus !== 'new' && job.workflowStatus !== 'ranked') {
-    if (job.workflowStatus === 'shortlisted') {
-      return (
-        <div
-          aria-label="Job overview actions"
-          className="screening-actions-bar job-overview-actions job-overview-actions--prepare-left"
-          role="group"
-        >
-          <div className="screening-actions-cluster">
-            <div className="screening-action-slot">
-              <Link className="button button-primary button-small" href={`/jobs/${job.id}/packet`}>
-                Prepare Packet
-              </Link>
-            </div>
+          {showShortlistArchive ? (
             <div className="screening-action-slot">
               <JobStageActionButton
                 canEdit={canSave}
@@ -146,52 +131,13 @@ export function JobOverviewActions({
                 variant="secondary"
               />
             </div>
-          </div>
+          ) : null}
         </div>
-      )
-    }
+      </div>
+    )
+  }
 
-    if (job.workflowStatus === 'preparing') {
-      return (
-        <div
-          aria-label="Job overview actions"
-          className="screening-actions-bar job-overview-actions job-overview-actions--single-right"
-          role="group"
-        >
-          <div className="screening-actions-cluster">
-            <div className="screening-action-slot">
-              <Link className="button button-primary button-small" href={`/jobs/${job.id}/packet`}>
-                Continue Packet
-              </Link>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    if (job.workflowStatus === 'ready_to_apply') {
-      return (
-        <div
-          aria-label="Job overview actions"
-          className="screening-actions-bar job-overview-actions job-overview-actions--single-right"
-          role="group"
-        >
-          <div className="screening-actions-cluster">
-            <div className="screening-action-slot">
-              <a
-                className="button button-primary button-small"
-                href={job.applicationUrl ?? job.sourceUrl}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Apply
-              </a>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
+  if (job.workflowStatus !== 'new' && job.workflowStatus !== 'ranked') {
     return null
   }
 

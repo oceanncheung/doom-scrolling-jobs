@@ -39,6 +39,7 @@ interface ApplicationPacketFormProps {
   disabledReason?: string
   job: RankedJobRecord
   packet: ApplicationPacketRecord
+  profileMaterialReady: boolean
   screeningLocked?: boolean
   showGeneratedContent: boolean
 }
@@ -46,6 +47,7 @@ interface ApplicationPacketFormProps {
 export function ApplicationPacketForm({
   job,
   packet,
+  profileMaterialReady,
   screeningLocked = false,
   showGeneratedContent,
 }: ApplicationPacketFormProps) {
@@ -103,6 +105,7 @@ export function ApplicationPacketForm({
           generationError={packet.generationError}
           isFailed={isFailed}
           isRunning={isRunning}
+          profileMaterialReady={profileMaterialReady}
           screeningLocked={screeningLocked}
         />
       )}

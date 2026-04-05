@@ -1,11 +1,7 @@
-import { notFound } from 'next/navigation'
+import { redirect } from 'next/navigation'
 
-import { JobFlowPage } from '@/components/jobs/job-flow-page'
-import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
-import { WorkspaceTodayRail } from '@/components/navigation/workspace-today-rail'
-import { getApplicationPacketReview } from '@/lib/data/application-packets'
-import { getRankedJobs } from '@/lib/data/jobs'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
+import { getJobReviewHref } from '@/lib/jobs/review-navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,39 +11,9 @@ interface PacketReviewPageProps {
   }>
 }
 
+/** Packet prep lives on `/jobs/[jobId]`; keep this route as a redirect for bookmarks and old links. */
 export default async function PacketReviewPage({ params }: PacketReviewPageProps) {
   await requireActiveOperatorSelection()
   const { jobId } = await params
-  const [{ canSave, issue, job, packet, workspace }, { jobs, screeningLocked, source }] = await Promise.all([
-    getApplicationPacketReview(jobId),
-    getRankedJobs(),
-  ])
-
-  if (!job || !packet) {
-    notFound()
-  }
-
-  return (
-    <main className="page-stack workspace-surface">
-      <WorkspaceSurface
-        rail={
-          <WorkspaceTodayRail
-            actionsEnabled={source === 'database' && !screeningLocked}
-            jobs={jobs}
-            screeningLocked={screeningLocked}
-          />
-        }
-      >
-        <JobFlowPage
-          canSave={canSave}
-          issue={issue}
-          job={job}
-          packet={packet}
-          prepOpen
-          profile={workspace.profile}
-          screeningLocked={Boolean(screeningLocked)}
-        />
-      </WorkspaceSurface>
-    </main>
-  )
+  redirect(getJobReviewHref(jobId))
 }

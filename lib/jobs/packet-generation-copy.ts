@@ -1,3 +1,9 @@
+const INCOMPLETE_ATS_MARKER = 'Resume generation returned incomplete ATS content.'
+
+export function isIncompleteAtsGenerationError(error?: string) {
+  return Boolean(error?.trim().includes(INCOMPLETE_ATS_MARKER))
+}
+
 export function getPacketGenerationUserMessage(error?: string) {
   const message = error?.trim() ?? ''
 
@@ -5,7 +11,7 @@ export function getPacketGenerationUserMessage(error?: string) {
     return ''
   }
 
-  if (message.includes('Resume generation returned incomplete ATS content.')) {
+  if (message.includes(INCOMPLETE_ATS_MARKER)) {
     return 'The profile does not have enough structured resume material yet to generate a reliable tailored resume.'
   }
 
@@ -15,7 +21,7 @@ export function getPacketGenerationUserMessage(error?: string) {
 export function getPacketGenerationRemediationHint(error?: string) {
   const message = error?.trim() ?? ''
 
-  if (message.includes('Resume generation returned incomplete ATS content.')) {
+  if (message.includes(INCOMPLETE_ATS_MARKER)) {
     return 'Update the profile fields marked for review in Profile, save, then try generating again.'
   }
 

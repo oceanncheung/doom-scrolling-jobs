@@ -13,6 +13,7 @@ interface JobFlowPageProps {
   packet: ApplicationPacketRecord
   prepOpen: boolean
   profile: OperatorProfileRecord
+  profileMaterialReady: boolean
   screeningLocked?: boolean
 }
 
@@ -23,6 +24,7 @@ export function JobFlowPage({
   packet,
   prepOpen,
   profile,
+  profileMaterialReady,
   screeningLocked = false,
 }: JobFlowPageProps) {
   const draftReady = packet.generationStatus === 'generated'
@@ -58,6 +60,7 @@ export function JobFlowPage({
             disabledReason={issue}
             job={job}
             packet={packet}
+            profileMaterialReady={profileMaterialReady}
             screeningLocked={screeningLocked}
             showGeneratedContent={draftReady}
           />

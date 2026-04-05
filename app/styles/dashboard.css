@@ -697,6 +697,8 @@ main.jobs-index .queue-list .stage-disclosure {
 
 .stage-actions-bar .button-primary {
   font-weight: 600;
+  /* Above adjacent secondary/ghost so the shared overlap edge reads from left to right. */
+  z-index: 1;
 }
 
 .screening-actions-bar .button-secondary {
@@ -1428,8 +1430,14 @@ details[open].disclosure .disclosure-caret {
   align-items: end;
 }
 
+.job-overview-actions--triple-right .screening-actions-cluster {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+}
+
 /* Anchor vs form in slots can get different baselines; pin controls to the row bottom */
-.screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot {
+.screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot,
+.screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -1437,12 +1445,9 @@ details[open].disclosure .disclosure-caret {
   min-height: 0;
 }
 
-.screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot .stage-action-form {
+.screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot .stage-action-form,
+.screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot .stage-action-form {
   align-items: stretch;
-}
-
-.job-overview-actions--prepare-left .screening-actions-cluster {
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 }
 
 .job-overview-actions--single-right .screening-actions-cluster {

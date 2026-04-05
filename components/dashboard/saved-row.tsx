@@ -5,6 +5,7 @@ import { formatSourceLinkLabel, getMatchReason, getRiskReason } from '@/componen
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
 import type { OperatorProfileRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
+import { getInternalJobReviewLabel, getJobReviewHref } from '@/lib/jobs/review-navigation'
 
 export function SavedRow({
   actionsEnabled,
@@ -17,16 +18,15 @@ export function SavedRow({
   profile: OperatorProfileRecord
   showActions?: boolean
 }) {
-  const packetLabel =
-    job.workflowStatus === 'preparing' ? 'Continue Preparation' : 'Prepare Application'
+  const reviewLabel = getInternalJobReviewLabel(job.workflowStatus)
 
   return (
     <StageRow
       actions={
         <div className="stage-actions">
           <div className="stage-action-slot stage-action-slot--remote-salary">
-            <Link className="button button-primary button-small" href={`/jobs/${job.id}/packet`}>
-              {packetLabel}
+            <Link className="button button-primary button-small" href={getJobReviewHref(job.id)}>
+              {reviewLabel}
             </Link>
           </div>
           <div className="stage-action-slot stage-action-slot--fit">
@@ -74,7 +74,7 @@ export function SavedRow({
       </div>
 
       <div className="inline-link-row">
-        <Link href={`/jobs/${job.id}`}>Details</Link>
+        <Link href={getJobReviewHref(job.id)}>Details</Link>
         <a href={job.sourceUrl} rel="noreferrer" target="_blank">
           {formatSourceLinkLabel(job)}
         </a>

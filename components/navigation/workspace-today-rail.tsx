@@ -2,8 +2,10 @@ import Link from 'next/link'
 
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
 import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
+import { TodayBlockHeading } from '@/components/ui/today-block-heading'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
 import { getDashboardQueues, getMatchReason } from '@/lib/jobs/dashboard-queue'
+import { getApplyNextAction, getJobReviewHref } from '@/lib/jobs/review-navigation'
 
 interface WorkspaceTodayRailProps {
   actionsEnabled: boolean
@@ -13,22 +15,6 @@ interface WorkspaceTodayRailProps {
 
 function getApplyNextJob(savedJobs: QualifiedJobRecord[], preparedJobs: QualifiedJobRecord[]) {
   return preparedJobs[0] ?? savedJobs[0] ?? null
-}
-
-function getApplyNextLink(job: QualifiedJobRecord) {
-  if (job.workflowStatus === 'ready_to_apply') {
-    return {
-      external: true,
-      href: job.applicationUrl ?? job.sourceUrl,
-      label: 'Apply',
-    }
-  }
-
-  return {
-    external: false,
-    href: `/jobs/${job.id}/packet`,
-    label: 'Prepare',
-  }
 }
 
 function getNewTodayCount(jobs: QualifiedJobRecord[]) {
@@ -42,15 +28,13 @@ export function WorkspaceTodayRail({
 }: WorkspaceTodayRailProps) {
   const { preparedJobs, savedJobs } = getDashboardQueues(jobs)
   const applyNextJob = getApplyNextJob(savedJobs, preparedJobs)
-  const applyNextAction = applyNextJob ? getApplyNextLink(applyNextJob) : null
+  const applyNextAction = applyNextJob ? getApplyNextAction(applyNextJob) : null
   const newTodayCount = getNewTodayCount(jobs)
 
   return (
     <WorkspaceRailShell ariaLabel="Today">
       <section className="today-block">
-        <div className="today-block-heading">
-          <p className="panel-label">Apply next</p>
-        </div>
+        <TodayBlockHeading label="Apply next" title="" className="today-block-heading--label-only" />
 
         {screeningLocked ? (
           <div className="today-empty">
@@ -60,7 +44,7 @@ export function WorkspaceTodayRail({
         ) : applyNextJob ? (
           <div className="today-apply-next">
             <div className="today-apply-copy">
-              <Link className="today-job-link" href={`/jobs/${applyNextJob.id}`}>
+              <Link className="today-job-link" href={getJobReviewHref(applyNextJob.id)}>
                 {applyNextJob.title}
               </Link>
               <p className="today-job-company">{applyNextJob.companyName}</p>
@@ -80,9 +64,9 @@ export function WorkspaceTodayRail({
               ) : (
                 <Link
                   className="button button-primary"
-                  href={applyNextAction?.href ?? `/jobs/${applyNextJob.id}`}
+                  href={applyNextAction?.href ?? getJobReviewHref(applyNextJob.id)}
                 >
-                  {applyNextAction?.label ?? 'Prepare'}
+                  {applyNextAction?.label ?? 'Review'}
                 </Link>
               )}
 
@@ -106,9 +90,7 @@ export function WorkspaceTodayRail({
       </section>
 
       <section className="today-block">
-        <div className="today-block-heading">
-          <h2>Snapshot</h2>
-        </div>
+        <TodayBlockHeading label="" title="Snapshot" className="today-block-heading--title-only" />
         <dl className="today-stats">
           <div>
             <dt>New today</dt>

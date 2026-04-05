@@ -4,6 +4,7 @@ import { StageRow } from '@/components/dashboard/stage-row'
 import { formatSourceLinkLabel, getMatchReason, getRiskReason } from '@/components/dashboard/formatters'
 import type { OperatorProfileRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
+import { getJobReviewHref } from '@/lib/jobs/review-navigation'
 import { formatWorkflowLabel } from '@/lib/jobs/presentation'
 
 export function AppliedRow({
@@ -20,8 +21,8 @@ export function AppliedRow({
       actions={
         <div className="stage-actions">
           <div className="stage-action-slot stage-action-slot--remote">
-            <Link className="button button-primary button-small" href={`/jobs/${job.id}/packet`}>
-              Materials
+            <Link className="button button-primary button-small" href={getJobReviewHref(job.id)}>
+              Review
             </Link>
           </div>
           <div className="stage-action-slot stage-action-slot--salary">
