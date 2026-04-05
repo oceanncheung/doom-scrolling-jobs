@@ -39,6 +39,7 @@ Allowed use:
 
 Owned by:
 - `components/ui/labeled-heading.tsx`
+- `components/ui/page-intro-header.tsx`
 - `components/ui/section-heading.tsx`
 - `components/ui/today-block-heading.tsx`
 
@@ -46,11 +47,13 @@ Contract:
 - Repeated label + heading stacks should use one shared heading primitive.
 - Standard section headers on profile and packet surfaces should use the shared section-heading wrapper so the shell classes stay consistent.
 - Left-rail `today-block` heading stacks should use the shared rail-heading wrapper instead of hand-written `panel-label + h2` markup.
+- Non-job route intro blocks should use the shared page-intro wrapper over the existing `queue-meta` shell.
 - Preserve the existing wrapper structure used by route CSS:
   - section headers keep their stack wrapper
   - tab panel headers keep their inner wrapper
   - disclosure summaries keep the nested block expected by settings selectors
   - rail blocks keep `.today-block-heading`
+  - page intro blocks keep `.queue-meta` and `.queue-meta-heading`
 - This primitive is for structure reuse only. It must not introduce new visual styles.
 
 ### 2. Overlay option fields

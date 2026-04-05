@@ -2,6 +2,7 @@ import { OperatorAccessForm } from '@/components/operators/operator-access-form'
 import { OperatorCreateForm } from '@/components/operators/operator-create-form'
 import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
 import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
+import { PageIntroHeader } from '@/components/ui/page-intro-header'
 import { getOperatorSessionState } from '@/lib/data/operators'
 
 export const dynamic = 'force-dynamic'
@@ -19,15 +20,12 @@ export default async function OperatorsPage() {
           </WorkspaceRailShell>
         }
       >
-          <section className="queue-meta operator-page-header">
-            <div className="queue-meta-heading">
-              <div>
-                <p className="panel-label">Accounts</p>
-                <h1>Choose an account</h1>
-              </div>
-            </div>
-            <p>Select the active workspace for this browser session.</p>
-          </section>
+          <PageIntroHeader
+            className="operator-page-header"
+            label="Accounts"
+            note="Select the active workspace for this browser session."
+            title="Choose an account"
+          />
 
           {session.issue ? (
             <section className="panel">

@@ -1,6 +1,7 @@
 import { ProfileForm } from '@/components/profile/profile-form'
 import { ProfileSaveMessageRootProvider } from '@/components/profile/profile-save-message-root'
 import { ProfileSettingsRail } from '@/components/profile/profile-settings-rail'
+import { PageIntroHeader } from '@/components/ui/page-intro-header'
 import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
 import { getOperatorProfile } from '@/lib/data/operator-profile'
@@ -22,15 +23,12 @@ export default async function ProfilePage() {
         <WorkspaceSurface
           rail={<ProfileSettingsRail formId="profile-workspace-form" workspace={workspace} />}
         >
-            <div className="queue-meta settings-page-header">
-              <div className="queue-meta-heading">
-                <div>
-                  <p className="panel-label">Profile</p>
-                  <h1>Profile</h1>
-                </div>
-              </div>
-              <p>Manage the source documents, profile facts, and matching preferences used across the site.</p>
-            </div>
+            <PageIntroHeader
+              className="settings-page-header"
+              label="Profile"
+              note="Manage the source documents, profile facts, and matching preferences used across the site."
+              title="Profile"
+            />
 
             <ProfileForm workspace={workspace} />
         </WorkspaceSurface>

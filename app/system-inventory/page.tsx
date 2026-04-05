@@ -2,6 +2,7 @@ import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell
 import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
 import { ProfileSaveMessageRootProvider } from '@/components/profile/profile-save-message-root'
 import { SystemInventoryPage } from '@/components/system/system-inventory-page'
+import { PageIntroHeader } from '@/components/ui/page-intro-header'
 import { TodayBlockHeading } from '@/components/ui/today-block-heading'
 
 export const dynamic = 'force-dynamic'
@@ -42,15 +43,12 @@ export default function SystemInventoryRoute() {
     <main className="page-stack workspace-surface settings-page">
       <ProfileSaveMessageRootProvider initialApplicationTitleTags={[]}>
         <WorkspaceSurface rail={<SystemInventoryRail />}>
-          <div className="queue-meta settings-page-header">
-            <div className="queue-meta-heading">
-              <div>
-                <p className="panel-label">Internal</p>
-                <h1>System inventory</h1>
-              </div>
-            </div>
-            <p>Use this page to inspect shared UI primitives without changing the live product surfaces.</p>
-          </div>
+          <PageIntroHeader
+            className="settings-page-header"
+            label="Internal"
+            note="Use this page to inspect shared UI primitives without changing the live product surfaces."
+            title="System inventory"
+          />
 
           <SystemInventoryPage />
         </WorkspaceSurface>
