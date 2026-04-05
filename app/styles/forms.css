@@ -288,6 +288,8 @@
 }
 
 .tag-input-container--square {
+  --overlay-option-surface: var(--settings-field-surface, var(--bg));
+  --overlay-option-offset: 4px;
   align-items: center;
   border-bottom: none;
   position: relative;
@@ -437,6 +439,7 @@
 
 .overlay-option-field {
   --overlay-option-surface: var(--settings-field-surface, var(--bg));
+  --overlay-option-offset: 8px;
   position: relative;
   width: 100%;
   min-width: 0;
@@ -660,7 +663,7 @@
 .overlay-option-panel,
 .tag-input-square-suggestion-panel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + var(--overlay-option-offset, 8px));
   left: 0;
   right: 0;
   width: auto;
@@ -668,13 +671,13 @@
   z-index: 6;
   border: 1px solid var(--text);
   box-sizing: border-box;
-  background: var(--overlay-option-surface);
+  background: var(--overlay-option-surface, var(--settings-field-surface, var(--bg)));
 }
 
 .overlay-option-panel.is-above,
 .tag-input-square-suggestion-panel.is-above {
   top: auto;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + var(--overlay-option-offset, 8px));
 }
 
 .overlay-option-item {
