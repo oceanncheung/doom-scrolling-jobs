@@ -43,6 +43,7 @@ The goal is to preserve the current Swiss/editorial visual direction while answe
 | [07 Phase D Quality Protections](./07-phase-d-quality-protections.md) | Defines smoke checks, screenshot baselines, keyboard/focus QA, and copy QA expectations. |
 | [08 Responsive Breakpoint Contract](./08-responsive-breakpoint-contract.md) | Locks the desktop baseline, the four breakpoint system, and route-level responsive behavior rules. |
 | [09 Screenshot Baseline Manifest](./09-screenshot-baseline-manifest.md) | Lists the lightweight baseline captures that should be maintained for the core routes. |
+| [10 Responsive Route Audit and Implementation Plan](./10-responsive-route-audit-and-implementation-plan.md) | Documents the current responsive pressure points by surface and sequences the four-breakpoint implementation plan. |
 
 ## Top Findings
 
