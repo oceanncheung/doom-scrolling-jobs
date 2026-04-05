@@ -6,10 +6,12 @@ import { TodayBlockHeading } from '@/components/ui/today-block-heading'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
 import { getApplyNextJob, getDashboardQueues, getMatchReason } from '@/lib/jobs/dashboard-queue'
 import { getApplyNextAction, getJobReviewHref } from '@/lib/jobs/review-navigation'
+import type { ProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 
 interface WorkspaceTodayRailProps {
   actionsEnabled: boolean
   jobs: QualifiedJobRecord[]
+  readinessPresentation?: ProfileReadinessPresentation | null
   screeningLocked?: boolean
 }
 
@@ -20,6 +22,7 @@ function getNewTodayCount(jobs: QualifiedJobRecord[]) {
 export function WorkspaceTodayRail({
   actionsEnabled,
   jobs,
+  readinessPresentation,
   screeningLocked = false,
 }: WorkspaceTodayRailProps) {
   const { preparedJobs, savedJobs } = getDashboardQueues(jobs)
@@ -34,8 +37,8 @@ export function WorkspaceTodayRail({
 
         {screeningLocked ? (
           <div className="today-empty">
-            <p>Complete your profile draft to unlock the queue.</p>
-            <p>Upload your resume in Settings, generate the draft, review the extracted sections, then save.</p>
+            <p>{readinessPresentation?.todayRailLines[0] ?? 'Complete your profile draft to unlock the queue.'}</p>
+            <p>{readinessPresentation?.todayRailLines[1] ?? 'Upload your resume in Settings, generate the draft, review the extracted sections, then save.'}</p>
           </div>
         ) : applyNextJob ? (
           <div className="today-apply-next">

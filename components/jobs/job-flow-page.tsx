@@ -4,6 +4,7 @@ import { JobOverviewSection } from '@/components/jobs/job-overview-section'
 import type { ApplicationPacketRecord, OperatorProfileRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
 import { buildJobFlowPageViewModel } from '@/lib/jobs/job-flow-view-model'
+import type { ProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 
 interface JobFlowPageProps {
   canSave: boolean
@@ -13,6 +14,7 @@ interface JobFlowPageProps {
   prepOpen: boolean
   profile: OperatorProfileRecord
   profileMaterialReady: boolean
+  readinessPresentation?: ProfileReadinessPresentation | null
   screeningLocked?: boolean
 }
 
@@ -24,6 +26,7 @@ export function JobFlowPage({
   prepOpen,
   profile,
   profileMaterialReady,
+  readinessPresentation,
   screeningLocked = false,
 }: JobFlowPageProps) {
   const viewModel = buildJobFlowPageViewModel({
@@ -32,6 +35,7 @@ export function JobFlowPage({
     job,
     prepOpen,
     profile,
+    readinessPresentation,
     screeningLocked,
   })
 
@@ -57,6 +61,7 @@ export function JobFlowPage({
             job={job}
             packet={packet}
             profileMaterialReady={profileMaterialReady}
+            readinessPresentation={readinessPresentation}
             screeningLocked={screeningLocked}
           />
         </div>

@@ -12,6 +12,7 @@ import { type ApplicationPacketRecord } from '@/lib/domain/types'
 import type { RankedJobRecord } from '@/lib/jobs/contracts'
 import { getPacketLifecycle } from '@/lib/jobs/packet-lifecycle'
 import { buildPacketMaterialsViewModel } from '@/lib/jobs/packet-view-model'
+import type { ProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 
 const initialState: ApplicationPacketActionState = {
   message: '',
@@ -24,6 +25,7 @@ interface ApplicationPacketFormProps {
   job: RankedJobRecord
   packet: ApplicationPacketRecord
   profileMaterialReady: boolean
+  readinessPresentation?: ProfileReadinessPresentation | null
   screeningLocked?: boolean
 }
 
@@ -31,6 +33,7 @@ export function ApplicationPacketForm({
   job,
   packet,
   profileMaterialReady,
+  readinessPresentation,
   screeningLocked = false,
 }: ApplicationPacketFormProps) {
   const [state, formAction] = useActionState(saveApplicationPacket, initialState)
@@ -58,6 +61,7 @@ export function ApplicationPacketForm({
         <PacketPreGenerationSection
           packet={packet}
           profileMaterialReady={profileMaterialReady}
+          readinessPresentation={readinessPresentation}
           screeningLocked={screeningLocked}
         />
       )}

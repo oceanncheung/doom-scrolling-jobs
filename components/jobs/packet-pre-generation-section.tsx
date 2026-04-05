@@ -5,22 +5,26 @@ import {
 import { SectionHeading } from '@/components/ui/section-heading'
 import type { ApplicationPacketRecord } from '@/lib/domain/types'
 import { buildPacketPreGenerationViewModel } from '@/lib/jobs/packet-view-model'
+import type { ProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 
 interface PacketPreGenerationSectionProps {
   packet: Pick<ApplicationPacketRecord, 'answers' | 'generationError' | 'generationStatus' | 'packetStatus' | 'questionSnapshotStatus'>
   /** When false, incomplete-ATS failures should not use the profile remediation callout (user has Settings material + resume source). */
   profileMaterialReady: boolean
+  readinessPresentation?: ProfileReadinessPresentation | null
   screeningLocked?: boolean
 }
 
 export function PacketPreGenerationSection({
   packet,
   profileMaterialReady,
+  readinessPresentation,
   screeningLocked = false,
 }: PacketPreGenerationSectionProps) {
   const viewModel = buildPacketPreGenerationViewModel({
     packet,
     profileMaterialReady,
+    readinessPresentation,
     screeningLocked,
   })
 

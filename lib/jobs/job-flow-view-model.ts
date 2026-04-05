@@ -2,6 +2,7 @@ import type {
   OperatorProfileRecord,
 } from '@/lib/domain/types'
 import { hasOpenAIEnv } from '@/lib/env'
+import type { ProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
 import { getLocationDisplay, getSalaryDisplay } from '@/lib/jobs/display'
 import { formatDateLabel, formatWorkflowLabel } from '@/lib/jobs/presentation'
@@ -97,6 +98,7 @@ export function buildJobFlowPageViewModel({
   job,
   prepOpen,
   profile,
+  readinessPresentation,
   screeningLocked,
 }: {
   canSave: boolean
@@ -104,13 +106,15 @@ export function buildJobFlowPageViewModel({
   job: QualifiedJobRecord
   prepOpen: boolean
   profile: OperatorProfileRecord
+  readinessPresentation?: ProfileReadinessPresentation | null
   screeningLocked: boolean
 }): JobFlowPageViewModel {
   const canGenerate = canSave && !screeningLocked && hasOpenAIEnv()
   const generationDisabledReason = !canSave
     ? issue
     : screeningLocked
-      ? 'Complete your profile draft in Settings before preparing applications.'
+      ? readinessPresentation?.generationDisabledReason ??
+        'Complete your profile draft in Settings before preparing applications.'
       : !canGenerate
         ? 'Add the OpenAI server environment before generating application materials.'
         : issue

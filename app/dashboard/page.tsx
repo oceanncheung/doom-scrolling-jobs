@@ -19,6 +19,7 @@ import {
   getQueueView,
   type QueueView,
 } from '@/lib/jobs/dashboard-queue'
+import { buildProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   ])
   const isScreeningLocked = Boolean(screeningLocked)
   const actionsEnabled = source === 'database' && !isScreeningLocked
+  const readinessPresentation = buildProfileReadinessPresentation(workspace.status)
 
   const { appliedJobs, archivedJobs, counts, potentialJobs, preparedJobs, savedJobs, screeningPool } =
     getDashboardQueues(jobs)
@@ -52,7 +54,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           />
         ))
       ) : (
-        <StageEmpty {...getQueueEmptyState('applied', isScreeningLocked)} />
+        <StageEmpty {...getQueueEmptyState('applied', isScreeningLocked, readinessPresentation?.queueEmptyMessage)} />
       ),
     archive:
       archivedJobs.length > 0 ? (
@@ -66,7 +68,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           />
         ))
       ) : (
-        <StageEmpty {...getQueueEmptyState('archive', isScreeningLocked)} />
+        <StageEmpty {...getQueueEmptyState('archive', isScreeningLocked, readinessPresentation?.queueEmptyMessage)} />
       ),
     potential:
       potentialJobs.length > 0 ? (
@@ -79,7 +81,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           />
         ))
       ) : (
-        <StageEmpty {...getQueueEmptyState('potential', isScreeningLocked)} />
+        <StageEmpty {...getQueueEmptyState('potential', isScreeningLocked, readinessPresentation?.queueEmptyMessage)} />
       ),
     prepared:
       preparedJobs.length > 0 ? (
@@ -93,7 +95,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           />
         ))
       ) : (
-        <StageEmpty {...getQueueEmptyState('prepared', isScreeningLocked)} />
+        <StageEmpty {...getQueueEmptyState('prepared', isScreeningLocked, readinessPresentation?.queueEmptyMessage)} />
       ),
     saved:
       savedJobs.length > 0 ? (
@@ -107,7 +109,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           />
         ))
       ) : (
-        <StageEmpty {...getQueueEmptyState('saved', isScreeningLocked)} />
+        <StageEmpty {...getQueueEmptyState('saved', isScreeningLocked, readinessPresentation?.queueEmptyMessage)} />
       ),
   }
 
@@ -118,6 +120,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <WorkspaceTodayRail
             actionsEnabled={actionsEnabled}
             jobs={jobs}
+            readinessPresentation={readinessPresentation}
             screeningLocked={isScreeningLocked}
           />
         }

@@ -60,7 +60,11 @@ export function getQueueMetaViewModel({
   }
 }
 
-export function getQueueEmptyState(activeView: QueueView, screeningLocked: boolean): QueueEmptyStateViewModel {
+export function getQueueEmptyState(
+  activeView: QueueView,
+  screeningLocked: boolean,
+  lockedMessage?: string,
+): QueueEmptyStateViewModel {
   switch (activeView) {
     case 'applied':
       return {
@@ -75,7 +79,7 @@ export function getQueueEmptyState(activeView: QueueView, screeningLocked: boole
     case 'potential':
       return {
         message: screeningLocked
-          ? 'Complete your profile draft in Settings to unlock Potential.'
+          ? lockedMessage ?? 'Complete your profile draft in Settings to unlock Potential.'
           : 'No active screening jobs are available right now.',
         title: 'Potential',
       }

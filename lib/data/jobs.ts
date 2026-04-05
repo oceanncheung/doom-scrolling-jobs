@@ -14,6 +14,7 @@ import { ensurePrimaryImportedJobs } from '@/lib/jobs/real-feed'
 import { buildRemoteSourceJobUrl } from '@/lib/jobs/remote-source'
 import { normalizeStoredSalaryPeriod } from '@/lib/jobs/source-parsing'
 import { isScreeningWorkflowStatus } from '@/lib/jobs/workflow-state'
+import { buildProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 import {
   isImportedSourceName,
   saveSourceQueueCoverage,
@@ -641,7 +642,8 @@ export const getRankedJobs = cache(async function getRankedJobs(): Promise<Ranke
       candidatePoolCount: learnedJobs.length,
       issue:
         qualificationResult.screeningLocked
-          ? 'Complete your profile draft in Settings to unlock the Potential queue.'
+          ? buildProfileReadinessPresentation(workspace.status)?.jobsIssue ??
+            'Complete your profile draft in Settings to unlock the Potential queue.'
           : importResult.importedCount > 0
             ? `Imported ${importResult.importedCount} jobs into the primary ranked feed.${diagnosticsSummary ? ` ${diagnosticsSummary}.` : ''}`
             : undefined,

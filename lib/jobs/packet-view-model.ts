@@ -5,6 +5,7 @@ import {
   isIncompleteAtsGenerationError,
 } from '@/lib/jobs/packet-generation-copy'
 import { getPacketLifecycle } from '@/lib/jobs/packet-lifecycle'
+import type { ProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 
 function getFirstFilledText(...values: Array<string | null | undefined>) {
   return values.find((value) => value?.trim())?.trim() ?? ''
@@ -76,10 +77,12 @@ export function buildPacketMaterialsViewModel(packet: ApplicationPacketRecord): 
 export function buildPacketPreGenerationViewModel({
   packet,
   profileMaterialReady,
+  readinessPresentation,
   screeningLocked,
 }: {
   packet: Pick<ApplicationPacketRecord, 'answers' | 'generationError' | 'generationStatus' | 'packetStatus' | 'questionSnapshotStatus'>
   profileMaterialReady: boolean
+  readinessPresentation?: ProfileReadinessPresentation | null
   screeningLocked: boolean
 }): PacketPreGenerationViewModel {
   const lifecycle = getPacketLifecycle(packet)
@@ -90,13 +93,13 @@ export function buildPacketPreGenerationViewModel({
 
   if (screeningLocked) {
     return {
-      actionHref: '/profile',
-      actionLabel: 'Open Profile',
-      label: 'Profile not ready',
-      lines: ['Complete your profile in Profile before generating application materials.'],
+      actionHref: readinessPresentation?.actionHref ?? '/profile',
+      actionLabel: readinessPresentation?.actionLabel ?? 'Open Profile',
+      label: readinessPresentation?.packetLabel ?? 'Profile not ready',
+      lines: readinessPresentation?.packetLines ?? ['Complete your profile in Profile before generating application materials.'],
       mode: 'locked',
-      note: 'Use Profile to upload your resume, generate the profile draft, review the extracted sections, and save once the required fields are ready. The application packet unlocks once your profile is ready.',
-      title: 'Complete your profile before preparing this packet.',
+      note: readinessPresentation?.packetNote ?? 'Use Profile to upload your resume, generate the profile draft, review the extracted sections, and save once the required fields are ready. The application packet unlocks once your profile is ready.',
+      title: readinessPresentation?.packetTitle ?? 'Complete your profile before preparing this packet.',
     }
   }
 

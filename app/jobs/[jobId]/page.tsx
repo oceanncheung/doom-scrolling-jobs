@@ -8,6 +8,7 @@ import { getRankedJobs } from '@/lib/data/jobs'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
 import { computeProfileMaterialReady } from '@/lib/jobs/profile-material'
 import { isJobPrepOpen } from '@/lib/jobs/review-navigation'
+import { buildProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +31,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
   }
 
   const profileMaterialReady = computeProfileMaterialReady(packet, workspace)
+  const readinessPresentation = buildProfileReadinessPresentation(workspace.status)
 
   return (
     <main className="page-stack workspace-surface">
@@ -38,6 +40,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
           <WorkspaceTodayRail
             actionsEnabled={source === 'database' && !screeningLocked}
             jobs={jobs}
+            readinessPresentation={readinessPresentation}
             screeningLocked={screeningLocked}
           />
         }
@@ -50,6 +53,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
           prepOpen={isJobPrepOpen(job.workflowStatus)}
           profile={workspace.profile}
           profileMaterialReady={profileMaterialReady}
+          readinessPresentation={readinessPresentation}
           screeningLocked={Boolean(screeningLocked)}
         />
       </WorkspaceSurface>
