@@ -1,0 +1,578 @@
+.settings-action-disclosure {
+  display: grid;
+  gap: 0;
+  margin-top: 0;
+}
+
+/* Full-bleed always (open + closed) so width/layout doesn’t jump; only [open] adds grey body below */
+.settings-main > section.panel.settings-section .settings-action-disclosure {
+  margin-left: calc(-1 * var(--queue-column-pad));
+  margin-right: calc(-1 * var(--settings-section-pad-right));
+  width: calc(100% + var(--queue-column-pad) + var(--settings-section-pad-right));
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.settings-main > section.panel.settings-section .settings-action-disclosure[open] {
+  background-color: transparent;
+  padding-bottom: 0;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+}
+
+.settings-main .disclosure-body > .settings-tab-shell {
+  margin-top: 0;
+}
+
+.settings-action-summary {
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+  margin: 0;
+  padding-bottom: 0;
+  list-style: none;
+  cursor: pointer;
+}
+
+.settings-action-summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-action-toggle {
+  border-left: 1px solid var(--line);
+  top: 0;
+}
+
+.settings-action-toggle,
+.settings-tab-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px 18px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-sizing: border-box;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.settings-action-toggle::-moz-focus-inner,
+.settings-tab-button::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+/* Avoid native :active inset / padding shift (1px text “wiggle”) on press */
+.settings-action-toggle:active,
+.settings-tab-button:active {
+  transform: none;
+  padding: 10px 18px;
+}
+
+/* Tab chip: never a black bottom edge (open or closed); line comes from content top + white band to the right */
+.settings-action-toggle {
+  border-bottom: none;
+}
+
+.settings-main > section.panel.settings-section .settings-action-disclosure .settings-action-toggle {
+  margin-bottom: -1px;
+  z-index: 2;
+}
+
+.settings-action-toggle:hover,
+.settings-tab-button:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.settings-tab-button-label {
+  white-space: nowrap;
+}
+
+.settings-action-toggle-icon,
+.settings-tab-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  opacity: 0.7;
+  transition: transform 200ms ease, color 200ms ease, opacity 200ms ease;
+}
+
+.settings-action-disclosure[open] .settings-action-toggle-icon {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* Open chip: grey fill + L/T/R outline; grey sits 1px over content’s black top so the line only shows right of tab */
+.settings-main > section.panel.settings-section .settings-action-disclosure[open] .settings-action-toggle {
+  background: var(--surface-soft);
+  color: var(--text);
+  border-color: var(--line);
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-bottom: none;
+  box-shadow: none;
+}
+
+.settings-main > section.panel.settings-section .settings-action-disclosure[open] .settings-action-toggle:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  border-bottom: none;
+}
+
+.settings-main > section.panel.settings-section .settings-action-disclosure .settings-action-summary {
+  border: 0;
+  outline: 0;
+  background-color: var(--bg);
+  padding-left: var(--queue-column-pad);
+  padding-right: var(--settings-section-pad-right);
+  box-sizing: border-box;
+}
+
+.settings-action-body {
+  --settings-field-surface: var(--surface-soft);
+  display: grid;
+  gap: 24px;
+  padding: 24px 0;
+  box-sizing: border-box;
+}
+
+.settings-tab-shell {
+  display: grid;
+  gap: 0;
+  position: relative;
+}
+
+/* Collapsed: line is drawn on the experience toolbar only (see disclosure-experience rules) so chips can overlap one rule */
+.settings-tab-shell:not(.has-selection) {
+  border-bottom: 0;
+}
+
+/* Experience tabs: grey panel tail (bleed comes from `.disclosure-experience > .settings-tab-shell`) */
+.settings-main section.panel.disclosure .settings-tab-shell.has-selection {
+  background-color: var(--surface-soft);
+  padding-bottom: 48px;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+}
+
+/* Grey content only: black top rule full width; chip overlap hides segment under Additional filters */
+.settings-main > section.panel.settings-section .settings-action-disclosure[open] .settings-action-body {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+  max-width: none;
+  padding: 24px var(--settings-section-pad-right) calc(24px + 48px) var(--queue-column-pad);
+  border: 0;
+  border-top: 1px solid var(--line);
+  color-scheme: light;
+  background: var(--surface-soft);
+  color: var(--text);
+  position: relative;
+  z-index: 1;
+}
+
+.settings-tab-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0;
+  margin: 0;
+  align-items: stretch;
+  padding-bottom: 0;
+  border: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.settings-tab-shell.has-selection .settings-tab-toolbar {
+  background: var(--bg);
+  box-sizing: border-box;
+  padding-left: var(--queue-column-pad);
+  padding-right: var(--settings-section-pad-right);
+  /* Stack above the panel so its border-top does not paint over the active chip overlap */
+  position: relative;
+  z-index: 2;
+}
+
+.settings-tab-button {
+  border-left: 1px solid var(--line);
+  top: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+.settings-tab-button + .settings-tab-button {
+  border-left: 0;
+}
+
+/*
+ * Experience background tabs: mirror Job targets `.settings-action-summary` + `.settings-action-toggle`
+ * (those rules are scoped to `section.panel.settings-section`, so disclosure experience needs its own copy).
+ */
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-toolbar,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-toolbar {
+  background-color: var(--bg);
+  padding-left: var(--queue-column-pad);
+  padding-right: var(--settings-section-pad-right);
+  box-sizing: border-box;
+}
+
+/*
+ * Closed: no toolbar border — `settings-main` has gap:0, so a rule here stacks with the next
+ * `section.panel.disclosure::before` (e.g. Advanced filters) and reads as a 2px stripe.
+ * The following section’s top hairline is the single separator under the chip row.
+ */
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell:not(.has-selection) .settings-tab-toolbar,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell:not(.has-selection) .settings-tab-toolbar {
+  border-bottom: none;
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-toolbar .settings-tab-button:not(.is-active),
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-toolbar .settings-tab-button:not(.is-active) {
+  margin-bottom: 0;
+  z-index: 1;
+}
+
+.settings-tab-shell.has-selection .settings-tab-button:not(.is-active) {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--line-soft);
+}
+
+.settings-tab-shell.has-selection .settings-tab-button:not(.is-active):hover {
+  background: color-mix(in srgb, var(--text) 6%, var(--surface-soft));
+  color: var(--text);
+  border-color: var(--line);
+  opacity: 1;
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:not(.is-active),
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button:not(.is-active) {
+  color: var(--text);
+  border-color: var(--line);
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:not(.is-active):hover,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button:not(.is-active):hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  opacity: 1;
+}
+
+.settings-tab-button.is-active {
+  border-color: var(--line);
+  border-bottom: 0;
+}
+
+.settings-tab-shell.has-selection .settings-tab-button.is-active {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--line);
+  border-bottom: none;
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Open disclosure chip: grey L/T/R, no bottom; overlaps `.settings-tab-panel` border-top like `.settings-action-body` */
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active {
+  background: var(--surface-soft);
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-bottom: none;
+  box-shadow: none;
+}
+
+/*
+ * Inactive chips keep a right border; the active chip restores border-left (beats `+ .settings-tab-button { border-left: 0 }`).
+ * That stacks two 1px edges — drop the previous sibling’s right edge only at the seam.
+ */
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:has(+ .settings-tab-button.is-active),
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button:has(+ .settings-tab-button.is-active) {
+  border-right: none;
+}
+
+.settings-tab-shell.has-selection .settings-tab-button {
+  border-bottom: none;
+}
+
+.settings-tab-shell.has-selection .settings-tab-button.is-active:hover {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--line);
+  opacity: 1;
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active:hover,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  border-bottom: none;
+  opacity: 1;
+}
+
+.settings-tab-button.is-active .settings-tab-button-icon,
+.settings-tab-button:hover .settings-tab-button-icon {
+  transform: rotate(180deg);
+  color: currentColor;
+  opacity: 1;
+}
+
+.settings-tab-button-state {
+  margin-left: 8px;
+}
+
+/* Match Roles tab row: hover anywhere on the summary row rotates the chevron */
+.settings-main > section.panel.settings-section .settings-action-disclosure .settings-action-summary:hover .settings-action-toggle-icon,
+.settings-main > section.panel.settings-section .settings-action-disclosure .settings-action-toggle:hover .settings-action-toggle-icon {
+  transform: rotate(180deg);
+  color: currentColor;
+  opacity: 1;
+}
+
+.settings-tab-panel {
+  --settings-field-surface: var(--surface-soft);
+  display: grid;
+  gap: 24px;
+  padding-top: 16px;
+}
+
+.settings-tab-panel-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-tab-panel-header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-tab-panel-header h3 {
+  font-family: var(--font-body), sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.3;
+  margin: 0;
+}
+
+/* One black rule under the chips (like Additional filters body); active tab overlaps via margin-bottom */
+.settings-tab-shell.has-selection .settings-tab-panel {
+  color-scheme: light;
+  margin: 0;
+  padding: 24px var(--settings-section-pad-right) 24px var(--queue-column-pad);
+  border: 0;
+  border-top: 1px solid var(--line);
+  box-sizing: border-box;
+  background: var(--surface-soft);
+  color: var(--text);
+  position: relative;
+  /* Below toolbar so border-top is not painted over the chip overlap */
+  z-index: 0;
+}
+
+.settings-tab-shell.has-selection .settings-tab-panel .repeat-card {
+  /* No hairline between cards — separation comes from padding (see .repeat-card). */
+  border-top: 0;
+}
+
+.settings-section-header {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.settings-section-title-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.settings-section-title-stack > .panel-label,
+.settings-section-title-stack > h2,
+.settings-section-title-stack > .settings-section-note {
+  margin: 0;
+}
+
+.settings-section-header h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.settings-section-note {
+  max-width: 44rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  letter-spacing: 0.16px;
+  line-height: 1.5;
+}
+
+@keyframes settings-save-button-flash {
+  0%,
+  100% {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  15%,
+  35%,
+  55% {
+    background: var(--accent);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  25%,
+  45%,
+  65% {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+}
+
+.settings-section-state-shell {
+  display: grid;
+  gap: var(--settings-stack-gap);
+}
+
+.settings-section-state-content {
+  display: grid;
+  gap: var(--settings-stack-gap);
+}
+
+.settings-section-state-shell.is-locked .settings-section-state-content {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.settings-section-lock-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  letter-spacing: 0.16px;
+  line-height: 1.5;
+  max-width: 34rem;
+}
+
+.settings-section .button,
+.settings-profile .button,
+.profile-card .button {
+  padding: 10px 20px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--text);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.settings-section .button:hover,
+.settings-profile .button:hover,
+.profile-card .button:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.upload-slot {
+  display: grid;
+  gap: 8px;
+}
+
+.system-inventory-main {
+  display: grid;
+  gap: 24px;
+  align-content: start;
+}
+
+.system-inventory-panel {
+  display: grid;
+  gap: 24px;
+  padding-top: 24px;
+  padding-right: var(--queue-column-pad);
+  box-sizing: border-box;
+}
+
+.system-inventory-heading {
+  display: grid;
+  gap: 8px;
+}
+
+.system-inventory-heading h2 {
+  margin: 0;
+}
+
+.system-inventory-note {
+  margin: 0;
+  max-width: 56rem;
+}
+
+.system-inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.system-inventory-stack {
+  display: grid;
+  gap: 24px;
+  align-content: start;
+}
+
+.system-inventory-tab-panel {
+  padding-top: 24px;
+}
+
+.system-inventory-upload-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+
+.system-inventory-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  min-height: 40px;
+}

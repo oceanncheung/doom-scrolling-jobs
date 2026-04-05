@@ -1,0 +1,262 @@
+.settings-main {
+  --settings-section-pad-right: var(--queue-column-pad);
+  /* One rhythm: helper/small → next control row (uploads, Additional filters, tab bar) */
+  --settings-stack-gap: 24px;
+  /* Disclosure h2 → tab toolbar: wider than a single stack gap (reads narrow at 24px next to Job targets) */
+  --settings-disclosure-heading-to-toolbar-gap: calc(var(--settings-stack-gap) * 2);
+  display: grid;
+  gap: 0;
+  align-content: start;
+}
+
+.settings-page-header .queue-meta-heading {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.profile-testing-reset {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9;
+  display: grid;
+  gap: 8px;
+  width: min(22rem, calc(100vw - 32px));
+}
+
+.profile-testing-reset-button {
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 0;
+  background: #111;
+  color: #fff;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.profile-testing-reset-button:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.profile-testing-reset-button:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+
+.profile-testing-reset-message {
+  margin: 0;
+  padding: 12px 14px;
+  background: rgba(17, 17, 17, 0.92);
+  color: #fff;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.profile-testing-reset-message--error {
+  background: #5a1f1f;
+}
+
+.settings-main > .queue-meta {
+  padding-right: var(--settings-section-pad-right);
+  box-sizing: border-box;
+  padding-bottom: 0;
+}
+
+.settings-main > section.panel.settings-section,
+.settings-main > section.panel.disclosure {
+  position: relative;
+  padding-top: 24px;
+  padding-right: var(--settings-section-pad-right);
+  border-top: 0;
+  box-sizing: border-box;
+  gap: var(--settings-stack-gap);
+}
+
+/* Bottom tail on disclosure sections only — not on job targets section (avoids white band under closed Additional filters) */
+.settings-main > section.panel.disclosure {
+  display: grid;
+  padding-bottom: 48px;
+}
+
+/*
+ * Cover letter: larger gap from disclosure heading → tab toolbar (no body in between).
+ * Experience: match Job targets — section header h2 → first field label uses one stack gap (24px).
+ */
+.settings-main > section.panel.disclosure.disclosure-experience {
+  display: flex;
+  flex-direction: column;
+  gap: var(--settings-stack-gap);
+  padding-bottom: 0;
+}
+
+.settings-main > section.panel.disclosure.disclosure-cover-letter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--settings-disclosure-heading-to-toolbar-gap);
+  padding-bottom: 0;
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience > .disclosure-summary,
+.settings-main > section.panel.disclosure.disclosure-cover-letter > .disclosure-summary {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  align-items: start;
+  justify-content: start;
+}
+
+/* unwrapBody: summary + strengths grid + tab shell are direct children of section */
+.settings-main > section.panel.disclosure.disclosure-experience > .settings-section-state-shell,
+.settings-main > section.panel.disclosure.disclosure-cover-letter > .settings-section-state-shell {
+  flex-shrink: 0;
+  gap: var(--settings-stack-gap);
+}
+
+/* Same horizontal bleed as Job targets `.settings-action-disclosure` so chips align with Additional filters */
+.settings-main > section.panel.disclosure.disclosure-experience > .settings-section-state-shell > .settings-section-state-content > .settings-tab-shell,
+.settings-main > section.panel.disclosure.disclosure-cover-letter > .settings-section-state-shell > .settings-section-state-content > .settings-tab-shell {
+  flex-shrink: 0;
+  margin-left: calc(-1 * var(--queue-column-pad));
+  margin-right: calc(-1 * var(--settings-section-pad-right));
+  width: calc(100% + var(--queue-column-pad) + var(--settings-section-pad-right));
+  max-width: none;
+  box-sizing: border-box;
+}
+
+/*
+ * Same vertical rhythm as Cover letter h2 → tab toolbar (48px, --settings-disclosure-heading-to-toolbar-gap):
+ * — Experience: professional summary block → background tab toolbar
+ * — Job targets: “Good roles…” → Additional filters summary
+ */
+.settings-main > section.panel.disclosure.disclosure-experience .settings-section-state-content,
+.settings-main > section.panel.settings-section:has(.settings-search-brief) .settings-section-state-content {
+  gap: var(--settings-disclosure-heading-to-toolbar-gap);
+}
+
+/* Profile queue column: form fills space below header so experience section can grow and pin tab toolbar */
+.settings-page .dashboard-workspace .queue-column {
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+}
+
+.settings-page .dashboard-workspace .queue-column > form.settings-main.profile-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.settings-main > section.panel.settings-section::before,
+.settings-main > section.panel.disclosure::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--queue-column-pad));
+  width: calc(100% + var(--queue-column-pad));
+  height: 1px;
+  background: var(--line);
+}
+
+.settings-main > section.panel.settings-section#source-files {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* profile-note → upload row: match 48px (section gap 24px + extra 24px) */
+.settings-main > section.panel.settings-section#source-files .settings-source-uploads-row.settings-source-uploads-row--materials {
+  margin-top: var(--settings-stack-gap);
+}
+
+.settings-main > section.panel.settings-section#source-files::before {
+  display: none;
+}
+
+.settings-main > section.panel.settings-section#source-files.is-standalone {
+  padding-bottom: 0;
+}
+
+.settings-main > section.panel.settings-section#source-files.is-standalone::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: calc(-1 * var(--queue-column-pad));
+  width: calc(100% + var(--queue-column-pad));
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.settings-section {
+  gap: 16px;
+}
+
+.settings-main > section.panel.disclosure > .disclosure-summary {
+  gap: 16px;
+}
+
+.settings-main > section.panel.disclosure > .disclosure-summary > div {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-main > section.panel.disclosure > .disclosure-summary h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* Match Job targets rhythm: no faint top rule on disclosure content */
+.settings-main > section.panel.disclosure > .disclosure-body {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+  gap: var(--settings-stack-gap);
+}
+
+.settings-main > section.panel.disclosure .strengths-experience-grid {
+  grid-template-columns: 1fr;
+}
+
+.settings-section .disclosure {
+  margin-top: 16px;
+  padding-top: 0;
+  gap: 8px;
+}
+
+.settings-section .disclosure-body {
+  gap: 24px;
+  margin-top: 8px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.settings-section .disclosure-summary {
+  gap: 8px;
+}
+
+.settings-section .disclosure-summary > div {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-section .disclosure-summary h2 {
+  font-family: var(--font-body), sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.settings-section .disclosure-summary .panel-label {
+  margin: 0;
+}
+

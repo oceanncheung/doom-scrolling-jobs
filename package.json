@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run build",
     "smoke:packet": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/smoke-test-packet.mts",
+    "smoke:routes": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/smoke-routes.mts",
     "backfill:job-review-copy": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/backfill-job-review-copy.mts",
     "cleanup:packet-generation": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/clear-packet-generation.mts"
   },

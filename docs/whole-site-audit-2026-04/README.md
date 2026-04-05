@@ -40,6 +40,9 @@ The goal is to preserve the current Swiss/editorial visual direction while answe
 | [04 Logic and State Machine Audit](./04-logic-and-state-machine-audit.md) | Separates truth, preferences, generated artifacts, and UI state; defines target state models. |
 | [05 Prioritized Remediation Roadmap](./05-prioritized-remediation-roadmap.md) | Sequences the work into executable phases with ownership and thresholds. |
 | [06 Phase B UI System Contracts](./06-phase-b-ui-system-contracts.md) | Locks the no-visual-diff primitive rules for the current UI system cleanup. |
+| [07 Phase D Quality Protections](./07-phase-d-quality-protections.md) | Defines smoke checks, screenshot baselines, keyboard/focus QA, and copy QA expectations. |
+| [08 Responsive Breakpoint Contract](./08-responsive-breakpoint-contract.md) | Locks the desktop baseline, the four breakpoint system, and route-level responsive behavior rules. |
+| [09 Screenshot Baseline Manifest](./09-screenshot-baseline-manifest.md) | Lists the lightweight baseline captures that should be maintained for the core routes. |
 
 ## Top Findings
 

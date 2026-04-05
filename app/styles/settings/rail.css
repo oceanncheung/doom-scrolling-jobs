@@ -1,0 +1,161 @@
+.profile-form-portfolio-preserve {
+  display: none !important;
+}
+
+.profile-form-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-profile {
+  padding-top: 24px;
+}
+
+.settings-profile-rail {
+  --today-rail-pad-left: 24px;
+  --today-rail-pad-right: 24px;
+  align-self: stretch;
+  align-content: stretch;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 0;
+}
+
+.settings-profile-rail .today-block {
+  gap: 24px;
+}
+
+.settings-rail-actions,
+.settings-rail-actions form {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-rail-actions form {
+  margin: 0;
+}
+
+.settings-rail-heading-with-status {
+  display: grid;
+  /* Match `.settings-profile-rail .today-block` gap (heading → first row below, e.g. Public links → MAIN PORTFOLIO LINK). */
+  gap: 24px;
+  min-width: 0;
+}
+
+.settings-rail-updated-at {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  min-width: 0;
+}
+
+.settings-rail-updated-at-label {
+  flex: 1 1 auto;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.settings-rail-updated-at-value {
+  flex: 0 0 auto;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.settings-profile-rail-footer {
+  flex-shrink: 0;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-left: calc(-1 * var(--today-rail-pad-left));
+  padding-left: var(--today-rail-pad-left);
+  padding-right: var(--today-rail-pad-right);
+  width: calc(100% + var(--today-rail-pad-left) + var(--today-rail-pad-right));
+  box-sizing: border-box;
+  padding-top: 24px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid var(--line);
+  border-bottom: none;
+}
+
+/* Footer block is a .today-block:first-child; kill global bottom rule (buttons keep their own borders) */
+.settings-profile-rail-footer > .today-block:first-child {
+  border-bottom: none;
+}
+
+.settings-rail-actions-block {
+  margin-top: 0;
+}
+
+/* Match today-rail PREPARE (primary): solid hover, full opacity (not .button:hover fade) */
+.settings-profile-rail-footer .today-block .button.button-primary:hover:not(:disabled),
+.settings-profile-rail-footer .today-block .button.button-primary:focus-visible {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  opacity: 1;
+}
+
+.settings-profile-rail-footer .today-block .button.settings-save-button.is-attention-flash-a,
+.settings-profile-rail-footer .today-block .button.settings-save-button.is-attention-flash-b {
+  animation: settings-save-button-flash 2.2s ease-in-out 1;
+}
+
+/* Log out: same muted hover as Skip in Apply next */
+.settings-profile-rail-footer .today-block .button.button-secondary:hover:not(:disabled),
+.settings-profile-rail-footer .today-block .button.button-secondary:focus-visible {
+  background: var(--muted);
+  color: var(--bg);
+  border-color: var(--muted);
+  opacity: 1;
+}
+
+.profile-card {
+  display: grid;
+  gap: 24px;
+}
+
+.profile-fields {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-profile-rail .profile-fields .field > input:not([type='checkbox']):not([type='radio']),
+.settings-profile-rail .profile-fields .field .list-input-shell input[list] {
+  line-height: 1.5;
+}
+
+/* One rail grid row: TagInput + hidden field for form association */
+.profile-fields-headline-tags {
+  min-width: 0;
+}
+
+/* Same rail field placeholder as profile workspace (phone, etc.) */
+.settings-profile-rail .profile-fields .field input::placeholder,
+.settings-profile-rail .profile-fields .field textarea::placeholder,
+.operator-create-rail-block .profile-fields .field input::placeholder,
+.operator-create-rail-block .profile-fields .field textarea::placeholder {
+  color: var(--line-soft);
+  opacity: 1;
+}
+
+.profile-note {
+  font-size: 0.875rem;
+  color: var(--muted);
+  letter-spacing: 0.16px;
+  line-height: 1.5;
+  margin: 0;
+}
+
