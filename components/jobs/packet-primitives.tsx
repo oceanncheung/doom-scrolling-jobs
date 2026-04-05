@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
+import { ChevronDownIcon } from '@/components/ui/icons/chevron-down-icon'
 import { StatusIndicator } from '@/components/ui/status-indicator'
 
 interface PacketStatusProps {
@@ -56,15 +57,7 @@ export function PacketRemediationCallout({
 export function PacketDisclosureCaret() {
   return (
     <span className="disclosure-caret" aria-hidden="true">
-      <svg fill="none" height="14" viewBox="0 0 16 16" width="14">
-        <path
-          d="M4 6l4 4 4-4"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.25"
-        />
-      </svg>
+      <ChevronDownIcon />
     </span>
   )
 }
