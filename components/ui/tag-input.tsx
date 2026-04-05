@@ -3,7 +3,7 @@
 import type { KeyboardEvent } from 'react'
 import { useId, useRef, useState } from 'react'
 
-import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
+import { FieldLabelRow } from '@/components/ui/field-label-row'
 import { ChevronDownIcon } from '@/components/ui/icons/chevron-down-icon'
 import { PlusIcon } from '@/components/ui/icons/plus-icon'
 import { getOverlayPlacement, type OverlayPlacement } from '@/lib/profile/overlay-placement'
@@ -224,10 +224,7 @@ export function TagInput({
     <div
       className={`field tag-input-field${needsInput ? ' field--needs-input' : ''}${reviewState ? ` field--${reviewState}` : ''}`}
     >
-      <span className="field-label-row">
-        <span>{label}</span>
-        {reviewState ? <ReviewStateIndicator state={reviewState} /> : null}
-      </span>
+      <FieldLabelRow reviewState={reviewState}>{label}</FieldLabelRow>
       <div
         className={`tag-input-container${isSquare ? ' tag-input-container--square' : ''}`}
         ref={containerRef}

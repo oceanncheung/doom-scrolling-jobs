@@ -2,7 +2,7 @@ import { clearActiveOperatorSelection } from '@/app/operators/actions'
 import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
 import { ProfileHeadlineTagField } from '@/components/profile/profile-headline-tag-field'
 import { ProfileSaveButton } from '@/components/profile/profile-save-button'
-import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
+import { FieldLabelRow } from '@/components/ui/field-label-row'
 import { OverlayOptionField } from '@/components/ui/overlay-option-field'
 import type { OperatorWorkspaceRecord } from '@/lib/domain/types'
 import { LOCATION_SUGGESTIONS } from '@/lib/profile/autocomplete-options'
@@ -140,10 +140,7 @@ export function ProfileSettingsRail({ formId, workspace }: ProfileSettingsRailPr
               />
             </label>
             <label className={`field field--${locationReviewState}`}>
-              <span className="field-label-row">
-                <span>Current location</span>
-                <ReviewStateIndicator state={locationReviewState} />
-              </span>
+              <FieldLabelRow reviewState={locationReviewState}>Current location</FieldLabelRow>
               <OverlayOptionField
                 ariaLabel="Current location"
                 defaultValue={workspace.profile.locationLabel}

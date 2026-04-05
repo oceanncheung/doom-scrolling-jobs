@@ -10,9 +10,9 @@ import {
   SectionLockFrame,
   SettingsTabButton,
 } from '@/components/profile/profile-form-controls'
-import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
 import { AutoSizeTextarea } from '@/components/ui/auto-size-textarea'
 import { BulletTextarea } from '@/components/ui/bullet-textarea'
+import { FieldLabelRow } from '@/components/ui/field-label-row'
 import { TagInput } from '@/components/ui/tag-input'
 import type { ReviewState } from '@/lib/profile/master-assets'
 
@@ -104,10 +104,9 @@ export function CoverLetterStrategySection({
                 </div>
               </div>
               <label className={`field settings-field-autosize field--${positioningReviewState}`}>
-                <span className="field-label-row">
-                  <span>Positioning / design philosophy</span>
-                  <ReviewStateIndicator state={positioningReviewState} />
-                </span>
+                <FieldLabelRow reviewState={positioningReviewState}>
+                  Positioning / design philosophy
+                </FieldLabelRow>
                 <AutoSizeTextarea
                   name="coverLetterPositioningPhilosophy"
                   onChange={(event) => setPositioningPhilosophy(event.target.value)}

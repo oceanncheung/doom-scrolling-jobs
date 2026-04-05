@@ -1,6 +1,6 @@
 'use client'
 
-import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
+import { FieldLabelRow } from '@/components/ui/field-label-row'
 import type { ReviewState } from '@/lib/profile/master-assets'
 
 interface TagToggleGroupOption {
@@ -38,10 +38,7 @@ export function TagToggleGroup({
 
   return (
     <div className={`field tag-input-field${reviewState ? ` field--${reviewState}` : ''}`}>
-      <span className="field-label-row">
-        <span>{label}</span>
-        {reviewState ? <ReviewStateIndicator state={reviewState} /> : null}
-      </span>
+      <FieldLabelRow reviewState={reviewState}>{label}</FieldLabelRow>
       <div className="tag-toggle-group">
         {options.map((option) => {
           const isSelected = selectedValues.has(option.value)

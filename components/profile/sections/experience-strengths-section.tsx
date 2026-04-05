@@ -14,9 +14,9 @@ import {
   SectionLockFrame,
   SettingsTabButton,
 } from '@/components/profile/profile-form-controls'
-import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
 import { AutoSizeTextarea } from '@/components/ui/auto-size-textarea'
 import { BulletTextarea } from '@/components/ui/bullet-textarea'
+import { FieldLabelRow } from '@/components/ui/field-label-row'
 import { TagInput } from '@/components/ui/tag-input'
 import type { ReviewState } from '@/lib/profile/master-assets'
 
@@ -99,10 +99,9 @@ export function ExperienceStrengthsSection({
       <SectionLockFrame lockedMessage={lockedMessage}>
         <div className="strengths-experience-grid">
           <label className={`upload-slot strengths-pro-summary-slot field--${summaryReviewState}`}>
-            <span className="field-label-row">
-              <span className="upload-slot-label">Professional summary</span>
-              <ReviewStateIndicator state={summaryReviewState} />
-            </span>
+            <FieldLabelRow labelClassName="upload-slot-label" reviewState={summaryReviewState}>
+              Professional summary
+            </FieldLabelRow>
             <AutoSizeTextarea
               name="bioSummary"
               onChange={(event) => setBioSummary(event.target.value)}

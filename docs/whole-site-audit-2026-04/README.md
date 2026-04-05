@@ -39,6 +39,7 @@ The goal is to preserve the current Swiss/editorial visual direction while answe
 | [03 UI Primitive Inventory](./03-ui-primitive-inventory.md) | Defines the shared UI system, primitive families, and inconsistency fixes. |
 | [04 Logic and State Machine Audit](./04-logic-and-state-machine-audit.md) | Separates truth, preferences, generated artifacts, and UI state; defines target state models. |
 | [05 Prioritized Remediation Roadmap](./05-prioritized-remediation-roadmap.md) | Sequences the work into executable phases with ownership and thresholds. |
+| [06 Phase B UI System Contracts](./06-phase-b-ui-system-contracts.md) | Locks the no-visual-diff primitive rules for the current UI system cleanup. |
 
 ## Top Findings
 

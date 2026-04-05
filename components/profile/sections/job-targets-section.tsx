@@ -4,9 +4,9 @@ import type { Dispatch, SetStateAction } from 'react'
 
 import { SectionLockFrame } from '@/components/profile/profile-form-controls'
 import { AutoSizeTextarea } from '@/components/ui/auto-size-textarea'
+import { FieldLabelRow } from '@/components/ui/field-label-row'
 import { ChevronDownIcon } from '@/components/ui/icons/chevron-down-icon'
 import { OverlayOptionField } from '@/components/ui/overlay-option-field'
-import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
 import { TagToggleGroup } from '@/components/ui/tag-toggle-group'
 import { TagInput } from '@/components/ui/tag-input'
 import { REGION_SUGGESTIONS } from '@/lib/profile/autocomplete-options'
@@ -71,10 +71,7 @@ export function JobTargetsSection({
       <SectionLockFrame lockedMessage={lockedMessage}>
         <div className="settings-core-grid">
           <label className={`field settings-field-wide settings-search-brief field--${searchBriefReviewState}`}>
-            <span className="field-label-row">
-              <span>Good roles to prioritize</span>
-              <ReviewStateIndicator state={searchBriefReviewState} />
-            </span>
+            <FieldLabelRow reviewState={searchBriefReviewState}>Good roles to prioritize</FieldLabelRow>
             <AutoSizeTextarea
               name="searchBrief"
               onChange={(event) => setSearchBrief(event.target.value)}
