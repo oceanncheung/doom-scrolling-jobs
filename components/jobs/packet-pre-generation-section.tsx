@@ -26,7 +26,7 @@ export function PacketPreGenerationSection({
   const showRemediationCallout = isFailed && Boolean(userFacingError || remediationHint)
 
   const note = screeningLocked
-    ? 'Add your base resume text or upload source documents in Settings before generating application materials.'
+    ? 'Complete your profile in Profile before generating application materials.'
     : userFacingError || idleNote
 
   return (
@@ -34,15 +34,15 @@ export function PacketPreGenerationSection({
       <div className="packet-section-inner">
         <div className="settings-section-header packet-section-heading">
           <div className="settings-section-title-stack">
-            <p className="panel-label">{screeningLocked ? 'Profile required' : 'Generate content'}</p>
+            <p className="panel-label">{screeningLocked ? 'Profile not ready' : 'Generate content'}</p>
             <h2>
               {screeningLocked
-                ? 'Add source material before preparing this application.'
+                ? 'Complete your profile before preparing this packet.'
                 : 'Create the resume and cover letter for this role.'}
             </h2>
             <p className="settings-section-note">
               {screeningLocked
-                ? 'Use Settings to paste your base resume text or upload source documents first. Application prep unlocks once the workspace has real source material.'
+                ? 'Use Profile to upload your resume, generate the profile draft, review the extracted sections, and save once the required fields are ready. The application packet unlocks once your profile is ready.'
                 : 'Resume and cover letter will appear here after generation. Application questions only show up when the ATS actually asks for them.'}
             </p>
           </div>
@@ -52,7 +52,7 @@ export function PacketPreGenerationSection({
           <div className="packet-remediation-callout">
             <p className="packet-remediation-callout__lead">{note}</p>
             <Link className="button button-secondary button-small packet-remediation-callout__action" href="/profile">
-              Open Profile settings
+              Open Profile
             </Link>
           </div>
         ) : isRunning ? (
@@ -64,7 +64,7 @@ export function PacketPreGenerationSection({
             {userFacingError ? <p className="packet-remediation-callout__lead">{userFacingError}</p> : null}
             {remediationHint ? <p className="packet-remediation-callout__hint">{remediationHint}</p> : null}
             <Link className="button button-secondary button-small packet-remediation-callout__action" href="/profile">
-              Open Profile settings
+              Open Profile
             </Link>
           </div>
         ) : (

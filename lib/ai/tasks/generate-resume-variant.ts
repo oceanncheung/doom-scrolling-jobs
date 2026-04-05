@@ -50,7 +50,10 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
   }
 
   const { packetModel } = getOpenAIEnv()
-  const sourceExperience = input.workspace.resumeMaster.experienceEntries
+  const sourceExperience = [
+    ...input.workspace.resumeMaster.experienceEntries,
+    ...input.workspace.resumeMaster.archivedExperienceEntries,
+  ]
   const experienceCatalog = sourceExperience.map((entry, index) => ({
     id: `experience_${index + 1}`,
     ...entry,
@@ -64,9 +67,12 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
     `Profile headline: ${input.workspace.profile.headline}`,
     `Base resume title: ${input.workspace.resumeMaster.baseTitle}`,
     `Base resume summary: ${input.workspace.resumeMaster.summaryText}`,
+    `Impact highlights: ${input.workspace.resumeMaster.selectedImpactHighlights.join(' | ')}`,
+    `Core expertise: ${input.workspace.resumeMaster.coreExpertise.join(' | ')}`,
     `Profile summary: ${input.workspace.profile.bioSummary}`,
     `Profile skills: ${input.workspace.profile.skills.join(' | ')}`,
     `Resume skills: ${input.workspace.resumeMaster.skillsSection.join(' | ')}`,
+    `Resume tools and platforms: ${input.workspace.resumeMaster.toolsPlatforms.join(' | ')}`,
     `Allowed source experience entries (reuse facts only): ${JSON.stringify(experienceCatalog)}`,
   ].join('\n')
 
@@ -119,7 +125,10 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
       cleanLine(input.workspace.profile.headline),
     highlightedRequirements: asStringArray(response.highlightedRequirements, 5),
     skillsSection: asStringArray(response.skillsSection, 8),
-    summary: cleanLine(response.summary ?? input.workspace.resumeMaster.summaryText),
+    summary:
+      cleanLine(response.summary ?? '') ||
+      cleanLine(input.workspace.resumeMaster.summaryText) ||
+      cleanLine(input.workspace.profile.bioSummary),
     tailoringRationale: cleanLine(response.tailoringRationale ?? ''),
   }
 

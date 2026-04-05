@@ -36,6 +36,7 @@ function normalizeProfileWorkspaceOutput(
     allowedAdjacentRoles: normalizeStringList(value.allowedAdjacentRoles, 8),
     bioSummary: cleanLine(value.bioSummary ?? ''),
     headline: cleanLine(value.headline ?? ''),
+    locationLabel: cleanLine(value.locationLabel ?? ''),
     searchBrief: cleanLine(value.searchBrief ?? ''),
     skills: normalizeStringList(value.skills, 10),
     targetRoles: normalizeStringList(value.targetRoles, 8),
@@ -52,18 +53,16 @@ export async function generateProfileWorkspace(
   }
 
   const sourceSections = [
-    ['Source resume markdown', input.sourceResumeMarkdown],
-    ['Source cover letter markdown', input.sourceCoverLetterMarkdown],
+    ['Master resume markdown', input.masterResumeMarkdown],
+    ['Master cover letter markdown', input.masterCoverLetterMarkdown ?? ''],
   ]
     .map(([label, value]) => [label, value.trim()] as const)
     .filter(([, value]) => value.length > 0)
 
   const sourceText = sourceSections.map(([label, value]) => `${label}:\n${value}`).join('\n\n---\n\n')
 
-  if (!input.sourceResumeMarkdown.trim() || !input.sourceCoverLetterMarkdown.trim()) {
-    throw new Error(
-      'Upload both source markdown files before generating a profile.',
-    )
+  if (!input.masterResumeMarkdown.trim()) {
+    throw new Error('Upload a resume and generate the profile draft first.')
   }
 
   const { packetModel } = getOpenAIEnv()
@@ -80,6 +79,8 @@ export async function generateProfileWorkspace(
   if (!normalized.headline || !normalized.searchBrief) {
     throw new Error('Profile generation returned incomplete workspace content.')
   }
+
+  normalized.locationLabel = cleanLine(normalized.locationLabel)
 
   return normalized
 }

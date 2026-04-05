@@ -22,7 +22,7 @@ export function formatCompactFileName(fileName: string, maxLength = 30) {
   }
 
   const { baseName, extension } = splitExtension(trimmed)
-  const ellipsis = '…'
+  const ellipsis = '...'
   const availableLength = Math.max(6, maxLength - extension.length - ellipsis.length)
   const startLength = Math.max(4, Math.ceil(availableLength * 0.55))
   const endLength = Math.max(3, availableLength - startLength)

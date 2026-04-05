@@ -16,7 +16,7 @@ export function getPacketGenerationRemediationHint(error?: string) {
   const message = error?.trim() ?? ''
 
   if (message.includes('Resume generation returned incomplete ATS content.')) {
-    return 'Update the base resume text, base cover letter text, uploaded files, or structured experience in Profile, then try generating again.'
+    return 'Update the profile fields marked for review in Profile, save, then try generating again.'
   }
 
   if (!message) {

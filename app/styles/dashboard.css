@@ -636,6 +636,8 @@ main.jobs-index .queue-list .stage-disclosure {
   line-height: 1;
   background: transparent;
   color: var(--text);
+  position: relative;
+  z-index: 0;
   transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, opacity 200ms ease;
 }
 
@@ -658,31 +660,39 @@ main.jobs-index .queue-list .stage-disclosure {
   white-space: nowrap;
   background: transparent;
   color: var(--text);
+  position: relative;
+  z-index: 0;
   transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, opacity 200ms ease;
 }
 
-.stage-actions-bar .stage-action-slot + .stage-action-slot .button {
-  border-left: 0;
+.stage-actions-bar .stage-action-slot + .stage-action-slot {
+  margin-left: calc(-1 * var(--adjacent-control-overlap));
 }
 
-.screening-action-slot + .screening-action-slot .button {
-  border-left: 0;
+.screening-action-slot + .screening-action-slot {
+  margin-left: calc(-1 * var(--adjacent-control-overlap));
 }
 
-.screening-actions-bar .button:hover:not(:disabled) {
+.screening-actions-bar .button:hover:not(:disabled),
+.screening-actions-bar .button:focus-visible:not(:disabled) {
   background: var(--text);
   color: var(--bg);
   opacity: 1;
+  z-index: 1;
 }
 
-.stage-actions-bar .button:hover:not(:disabled) {
+.stage-actions-bar .button:hover:not(:disabled),
+.stage-actions-bar .button:focus-visible:not(:disabled) {
   background: var(--text);
   color: var(--bg);
   opacity: 1;
+  z-index: 1;
 }
 
 .screening-actions-bar .button-primary {
   font-weight: 600;
+  /* Above adjacent secondary so the 1px overlap doesn’t hide the black rule between Save and Skip. */
+  z-index: 1;
 }
 
 .stage-actions-bar .button-primary {
@@ -693,6 +703,7 @@ main.jobs-index .queue-list .stage-disclosure {
   font-weight: 500;
   color: var(--muted);
   border-color: var(--line-soft);
+  z-index: 0;
 }
 
 .stage-actions-bar .button-secondary,
@@ -1235,11 +1246,13 @@ details[open].disclosure .disclosure-caret {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1;
+  position: relative;
+  z-index: 0;
 }
 
-.packet-page-actions > *:not(:first-child) .button,
-.job-flow-actions > *:not(:first-child) .button {
-  border-left: 0;
+.packet-page-actions > *:not(:first-child),
+.job-flow-actions > *:not(:first-child) {
+  margin-left: calc(-1 * var(--adjacent-control-overlap));
 }
 
 .packet-page-actions .button-secondary,
@@ -1251,10 +1264,13 @@ details[open].disclosure .disclosure-caret {
 }
 
 .packet-page-actions .button:hover:not(:disabled),
-.job-flow-actions .button:hover:not(:disabled) {
+.packet-page-actions .button:focus-visible:not(:disabled),
+.job-flow-actions .button:hover:not(:disabled),
+.job-flow-actions .button:focus-visible:not(:disabled) {
   background: var(--text);
   color: var(--bg);
   border-color: var(--text);
+  z-index: 1;
 }
 
 .packet-page-actions .button:disabled,
@@ -1431,8 +1447,4 @@ details[open].disclosure .disclosure-caret {
 
 .job-overview-actions--single-right .screening-actions-cluster {
   grid-template-columns: minmax(0, 1fr);
-}
-
-.job-overview-actions--single-right .button {
-  border-right: none;
 }

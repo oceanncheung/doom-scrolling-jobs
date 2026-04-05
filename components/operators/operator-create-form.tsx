@@ -24,17 +24,19 @@ export function OperatorCreateForm({ hasOperators }: { hasOperators: boolean }) 
       </p>
 
       <form action={formAction} className="operator-setup-form operator-setup-form--rail">
-        <label className="field">
-          <span>Display name</span>
-          <input name="displayName" placeholder="Ocean" required type="text" />
-        </label>
+        <div className="profile-fields">
+          <label className="field">
+            <span>Display name</span>
+            <input name="displayName" placeholder="Ocean" required type="text" />
+          </label>
 
-        <label className="field">
-          <span>Email</span>
-          <input name="email" placeholder="ocean@example.com" required type="email" />
-        </label>
+          <label className="field">
+            <span>Email</span>
+            <input name="email" placeholder="ocean@example.com" required type="email" />
+          </label>
+        </div>
 
-        <button className="button button-secondary" disabled={isPending} type="submit">
+        <button className="button button-primary" disabled={isPending} type="submit">
           {isPending ? 'Saving...' : 'Create Account'}
         </button>
 

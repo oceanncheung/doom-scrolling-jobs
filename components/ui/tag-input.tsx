@@ -3,14 +3,21 @@
 import type { KeyboardEvent } from 'react'
 import { useId, useRef, useState } from 'react'
 
+import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
+import { getOverlayPlacement, type OverlayPlacement } from '@/lib/profile/overlay-placement'
+import type { ReviewState } from '@/lib/profile/master-assets'
+
 interface TagInputProps {
   helper?: string
   label: string
   onChange: (tags: string[]) => void
   placeholder?: string
   preserveCase?: boolean
+  reviewState?: ReviewState
   suggestions?: string[]
   tags: string[]
+  /** `square`: 30×30 cells (+ becomes caret-ready input; new cell after each Enter). `field`: full-width underline input. */
+  variant?: 'field' | 'square'
 }
 
 export function TagInput({
@@ -19,12 +26,20 @@ export function TagInput({
   onChange,
   placeholder,
   preserveCase = false,
+  reviewState,
   suggestions,
   tags,
+  variant = 'field',
 }: TagInputProps) {
+  const isSquare = variant === 'square'
   const [input, setInput] = useState('')
   const [isEditing, setIsEditing] = useState(false)
+  const [showAllSquareSuggestions, setShowAllSquareSuggestions] = useState(false)
+  const [squareSuggestionPlacement, setSquareSuggestionPlacement] =
+    useState<OverlayPlacement>('below')
+  const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const suggestionsId = useId()
   const availableSuggestions =
     suggestions?.filter(
@@ -52,6 +67,8 @@ export function TagInput({
     }
 
     setInput('')
+    setSquareSuggestionPlacement('below')
+    setShowAllSquareSuggestions(false)
 
     return !duplicate
   }
@@ -59,16 +76,17 @@ export function TagInput({
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Escape' && !input.trim()) {
       setIsEditing(false)
+      setShowAllSquareSuggestions(false)
+
       return
     }
 
     if ((e.key === 'Enter' || e.key === ',') && input.trim()) {
       e.preventDefault()
       commitTag(input)
-      requestAnimationFrame(() => {
-        inputRef.current?.focus()
-      })
+      setIsEditing(false)
     }
+
     if (e.key === 'Backspace' && !input && tags.length > 0) {
       onChange(tags.slice(0, -1))
     }
@@ -80,99 +98,248 @@ export function TagInput({
 
   function beginEditing() {
     setIsEditing(true)
+    setShowAllSquareSuggestions(false)
 
     requestAnimationFrame(() => {
       inputRef.current?.focus()
     })
   }
 
+  function toggleSquareSuggestions() {
+    const nextShowAll = !showAllSquareSuggestions
+    setShowAllSquareSuggestions(nextShowAll)
+
+    if (!isEditing) {
+      setIsEditing(true)
+    }
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus()
+    })
+  }
+
+  const needsInput = tags.length === 0
+  /** Idle trailing slot: + control; click → type → Enter → back to + for the next item */
+  const showAddButton = !isEditing && !input.trim()
+  const hasDatalist = availableSuggestions.length > 0
+  const showSquareSuggestionField = isSquare && hasDatalist && !showAddButton
+  const filteredSquareSuggestions = showSquareSuggestionField
+    ? input.trim()
+      ? availableSuggestions.filter((suggestion) =>
+          suggestion.toLowerCase().includes(input.trim().toLowerCase()),
+        )
+      : showAllSquareSuggestions
+        ? availableSuggestions
+        : []
+    : []
+  const showSquareSuggestionPanel =
+    showSquareSuggestionField && filteredSquareSuggestions.length > 0
+
+  function handleSquareSuggestionPanelRef(node: HTMLDivElement | null) {
+    panelRef.current = node
+
+    if (!node || !containerRef.current) {
+      if (squareSuggestionPlacement !== 'below') {
+        setSquareSuggestionPlacement('below')
+      }
+      return
+    }
+
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const panelRect = node.getBoundingClientRect()
+    const nextPlacement = getOverlayPlacement(
+      containerRect,
+      panelRect.height,
+      window.innerHeight,
+    )
+
+    if (nextPlacement !== squareSuggestionPlacement) {
+      setSquareSuggestionPlacement(nextPlacement)
+    }
+  }
+
+  const tagInputEl = (
+    <input
+      aria-label={
+        tags.length > 0 ? `Add another ${label.toLowerCase()}` : `Add ${label.toLowerCase()}`
+      }
+      className={isSquare ? 'tag-input tag-input-square' : 'tag-input'}
+      list={hasDatalist && !isSquare ? suggestionsId : undefined}
+      onBlur={() => {
+        requestAnimationFrame(() => {
+          if (containerRef.current?.contains(document.activeElement)) {
+            return
+          }
+
+          if (!input.trim()) {
+            setIsEditing(false)
+            setShowAllSquareSuggestions(false)
+
+            return
+          }
+
+          const exactSuggestion = availableSuggestions.find(
+            (suggestion) => suggestion.toLowerCase() === input.trim().toLowerCase(),
+          )
+
+          if (exactSuggestion) {
+            commitTag(exactSuggestion)
+            setIsEditing(false)
+            return
+          }
+        })
+      }}
+      onChange={(e) => {
+        const nextValue = e.target.value
+        setInput(nextValue)
+        setShowAllSquareSuggestions(false)
+
+        const exactSuggestion = availableSuggestions.find(
+          (suggestion) => suggestion.toLowerCase() === nextValue.trim().toLowerCase(),
+        )
+
+        if (exactSuggestion) {
+          commitTag(exactSuggestion)
+          setIsEditing(false)
+        }
+      }}
+      onKeyDown={handleKeyDown}
+      placeholder={
+        isSquare
+          ? ''
+          : tags.length > 0
+            ? 'Add another…'
+            : (placeholder ?? 'Type and press Enter')
+      }
+      ref={inputRef}
+      size={isSquare ? Math.max(1, Math.min(80, input.length + 1)) : undefined}
+      type="text"
+      value={input}
+    />
+  )
+
   return (
-    <div className="field tag-input-field">
-      <span>{label}</span>
-      <div className="tag-input-container">
-        {tags.length > 0 ? (
-          <div className="tag-list">
-            {tags.map((tag, i) => (
+    <div
+      className={`field tag-input-field${needsInput ? ' field--needs-input' : ''}${reviewState ? ` field--${reviewState}` : ''}`}
+    >
+      <span className="field-label-row">
+        <span>{label}</span>
+        {reviewState ? <ReviewStateIndicator state={reviewState} /> : null}
+      </span>
+      <div
+        className={`tag-input-container${isSquare ? ' tag-input-container--square' : ''}`}
+        ref={containerRef}
+      >
+        <div className="tag-list">
+          {tags.map((tag, i) => (
+            <button
+              aria-label={`Remove ${tag}`}
+              className="tag-chip"
+              key={`${i}-${tag}`}
+              onClick={() => removeTag(i)}
+              type="button"
+            >
+              {tag}
+              <span aria-hidden className="tag-chip-x">
+                ×
+              </span>
+            </button>
+          ))}
+          {showAddButton ? (
+            <button
+              aria-label={
+                tags.length > 0
+                  ? `Add another ${label.toLowerCase()}`
+                  : `Add ${label.toLowerCase()}`
+              }
+              className="tag-add-trigger"
+              onClick={beginEditing}
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                className="tag-add-icon"
+                fill="none"
+                height="14"
+                viewBox="0 0 14 14"
+                width="14"
+              >
+                <path d="M7 3V11" stroke="currentColor" strokeLinecap="square" strokeWidth="1.2" />
+                <path d="M3 7H11" stroke="currentColor" strokeLinecap="square" strokeWidth="1.2" />
+              </svg>
+            </button>
+          ) : showSquareSuggestionField ? (
+            <span className="tag-input-square-trigger">
+              {tagInputEl}
               <button
-                aria-label={`Remove ${tag}`}
-                className="tag-chip"
-                key={`${i}-${tag}`}
-                onClick={() => removeTag(i)}
+                aria-label={`Show all ${label.toLowerCase()} options`}
+                className="tag-input-square-trigger__button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                }}
+                onClick={toggleSquareSuggestions}
                 type="button"
               >
-                {tag}
-                <span aria-hidden className="tag-chip-x">
-                  ×
+                <span aria-hidden className="tag-input-square-trigger__chevron">
+                  <svg fill="none" height="12" viewBox="0 0 12 12" width="12">
+                    <path
+                      d="M3.25 4.5 6 7.25 8.75 4.5"
+                      stroke="currentColor"
+                      strokeLinecap="square"
+                      strokeWidth="1.2"
+                    />
+                  </svg>
                 </span>
+              </button>
+            </span>
+          ) : hasDatalist && !isSquare ? (
+            <span className="list-input-shell tag-input-datalist-wrap tag-input-datalist-wrap--field">
+              {tagInputEl}
+              <span aria-hidden className="list-input-shell__chevron">
+                <svg fill="none" height="12" viewBox="0 0 12 12" width="12">
+                  <path
+                    d="M3.25 4.5 6 7.25 8.75 4.5"
+                    stroke="currentColor"
+                    strokeLinecap="square"
+                    strokeWidth="1.2"
+                  />
+                </svg>
+              </span>
+            </span>
+          ) : (
+            tagInputEl
+          )}
+        </div>
+        {showSquareSuggestionPanel ? (
+          <div
+            className={`overlay-option-panel${squareSuggestionPlacement === 'above' ? ' is-above' : ''}`}
+            ref={handleSquareSuggestionPanelRef}
+            role="listbox"
+          >
+            {filteredSquareSuggestions.map((suggestion) => (
+              <button
+                className="overlay-option-item"
+                key={suggestion}
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  commitTag(suggestion)
+                  setIsEditing(false)
+                }}
+                type="button"
+              >
+                {suggestion}
               </button>
             ))}
           </div>
         ) : null}
-        {isEditing || input ? (
-          <input
-            className="tag-input"
-            onBlur={() => {
-              if (!input.trim()) {
-                setIsEditing(false)
-                return
-              }
-
-              const exactSuggestion = availableSuggestions.find(
-                (suggestion) => suggestion.toLowerCase() === input.trim().toLowerCase(),
-              )
-
-              if (exactSuggestion) {
-                commitTag(exactSuggestion)
-                setIsEditing(false)
-              }
-            }}
-            list={availableSuggestions.length > 0 ? suggestionsId : undefined}
-            onChange={(e) => {
-              const nextValue = e.target.value
-              setInput(nextValue)
-
-              const exactSuggestion = availableSuggestions.find(
-                (suggestion) => suggestion.toLowerCase() === nextValue.trim().toLowerCase(),
-              )
-
-              if (exactSuggestion) {
-                commitTag(exactSuggestion)
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder ?? 'Type and press Enter'}
-            ref={inputRef}
-            type="text"
-            value={input}
-          />
-        ) : (
-          <button
-            aria-label={`Add ${label.toLowerCase()}`}
-            className="tag-add-trigger"
-            onClick={beginEditing}
-            type="button"
-          >
-            <svg
-              aria-hidden="true"
-              className="tag-add-icon"
-              fill="none"
-              height="14"
-              viewBox="0 0 14 14"
-              width="14"
-            >
-              <path d="M7 3V11" stroke="currentColor" strokeLinecap="square" strokeWidth="1.2" />
-              <path d="M3 7H11" stroke="currentColor" strokeLinecap="square" strokeWidth="1.2" />
-            </svg>
-          </button>
-        )}
-        {availableSuggestions.length > 0 ? (
-          <datalist id={suggestionsId}>
-            {availableSuggestions.map((suggestion) => (
-              <option key={suggestion} value={suggestion} />
-            ))}
-          </datalist>
-        ) : null}
       </div>
+      {hasDatalist ? (
+        <datalist id={suggestionsId}>
+          {availableSuggestions.map((suggestion) => (
+            <option key={suggestion} value={suggestion} />
+          ))}
+        </datalist>
+      ) : null}
       {helper ? <small>{helper}</small> : null}
     </div>
   )

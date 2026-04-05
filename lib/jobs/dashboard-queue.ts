@@ -41,7 +41,18 @@ export interface DashboardQueues {
 
 export function getQueueView(value: string | string[] | undefined): QueueView {
   const selected = Array.isArray(value) ? value[0] : value
+  if (selected === 'ready') {
+    return 'prepared'
+  }
   return queueViews.find((view) => view === selected) ?? 'potential'
+}
+
+export function getQueueViewHref(view: QueueView) {
+  if (view === 'potential') {
+    return '/dashboard'
+  }
+
+  return `/dashboard?view=${view === 'prepared' ? 'ready' : view}`
 }
 
 function isGenericMatchReason(reason: string) {

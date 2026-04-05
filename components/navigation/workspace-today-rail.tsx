@@ -54,8 +54,8 @@ export function WorkspaceTodayRail({
 
         {screeningLocked ? (
           <div className="today-empty">
-            <p>Add source material to unlock the queue.</p>
-            <p>Paste your base resume text or upload source documents in Settings first.</p>
+            <p>Complete your profile draft to unlock the queue.</p>
+            <p>Upload your resume in Settings, generate the draft, review the extracted sections, then save.</p>
           </div>
         ) : applyNextJob ? (
           <div className="today-apply-next">
@@ -115,7 +115,7 @@ export function WorkspaceTodayRail({
             <dd>{screeningLocked ? 0 : newTodayCount}</dd>
           </div>
           <div>
-            <dt>Ready to apply</dt>
+            <dt>Ready</dt>
             <dd>{preparedJobs.length}</dd>
           </div>
           <div>

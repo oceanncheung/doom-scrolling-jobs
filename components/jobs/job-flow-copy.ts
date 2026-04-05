@@ -6,7 +6,7 @@ export function getDetailIntro(job: QualifiedJobRecord) {
   }
 
   if (job.workflowStatus === 'preparing') {
-    return 'Materials are already being prepared. Review the role, then continue when you want.'
+    return 'The application packet is already in progress. Review the role, then continue when you want.'
   }
 
   return ''
@@ -14,7 +14,7 @@ export function getDetailIntro(job: QualifiedJobRecord) {
 
 export function getPrepIntro(job: QualifiedJobRecord) {
   if (job.workflowStatus === 'ready_to_apply') {
-    return 'Your materials are ready. Review the role, then apply when you want to submit.'
+    return 'Your packet is ready. Review the materials, then apply when you want to submit.'
   }
 
   return ''

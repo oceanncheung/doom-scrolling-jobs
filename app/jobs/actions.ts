@@ -174,13 +174,13 @@ function getSuccessMessage(targetStatus: WorkflowStatus) {
     case 'ranked':
       return 'Job returned to the Potential queue.'
     case 'shortlisted':
-      return 'Job shortlisted and saved to the workflow queue.'
+      return 'Job saved to the queue.'
     case 'archived':
       return 'Job dismissed from the active queue.'
     case 'preparing':
       return 'Job moved into packet preparation.'
     case 'ready_to_apply':
-      return 'Job marked ready to apply.'
+      return 'Job marked ready.'
     case 'applied':
       return 'Job marked as applied.'
     case 'follow_up_due':
@@ -674,7 +674,7 @@ export async function saveApplicationPacket(
   return {
     message:
       submitIntent === 'mark-ready'
-        ? 'Draft saved and marked ready to apply.'
+        ? 'Draft saved and marked ready.'
         : submitIntent === 'apply'
           ? 'Application materials saved and marked applied.'
           : `Draft saved with ${applicationAnswers.length} structured answers.`,

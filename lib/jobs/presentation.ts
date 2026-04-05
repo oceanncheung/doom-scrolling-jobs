@@ -54,7 +54,18 @@ export function formatRecommendationLabel(value: RankedJobRecord['recommendation
 }
 
 export function formatWorkflowLabel(value: RankedJobRecord['workflowStatus']) {
-  return value.replaceAll('_', ' ')
+  switch (value) {
+    case 'shortlisted':
+      return 'Saved'
+    case 'preparing':
+      return 'Preparing packet'
+    case 'ready_to_apply':
+      return 'Ready'
+    case 'follow_up_due':
+      return 'Follow-up due'
+    default:
+      return value.replaceAll('_', ' ')
+  }
 }
 
 export function formatQueueSegmentLabel(value: QualifiedJobRecord['queueSegment']) {

@@ -9,7 +9,11 @@ import { ensurePrimaryImportedJobs } from '@/lib/jobs/real-feed'
 function normalizeView(value: FormDataEntryValue | null) {
   const text = String(value ?? '').trim().toLowerCase()
 
-  if (text === 'saved' || text === 'prepared' || text === 'applied' || text === 'archive') {
+  if (text === 'ready' || text === 'prepared') {
+    return 'ready'
+  }
+
+  if (text === 'saved' || text === 'applied' || text === 'archive') {
     return text
   }
 

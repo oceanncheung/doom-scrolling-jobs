@@ -4,19 +4,25 @@ import type { Dispatch, SetStateAction } from 'react'
 
 import type {
   OperatorPortfolioItemRecord,
-  ResumeAchievementRecord,
   ResumeEducationRecord,
   ResumeExperienceRecord,
 } from '@/lib/domain/types'
 
-import { AddRowButton, DisclosureSection, SettingsTabButton } from '@/components/profile/profile-form-controls'
+import {
+  AddRowButton,
+  DisclosureSection,
+  SectionLockFrame,
+  SettingsTabButton,
+} from '@/components/profile/profile-form-controls'
+import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
+import { AutoSizeTextarea } from '@/components/ui/auto-size-textarea'
+import { BulletTextarea } from '@/components/ui/bullet-textarea'
 import { TagInput } from '@/components/ui/tag-input'
-import { highlightLinesFromMultiline } from '@/lib/profile/highlight-lines'
+import type { ReviewState } from '@/lib/profile/master-assets'
 
 export type StrengthsTab =
   | 'certifications'
   | 'education'
-  | 'highlights'
   | 'history'
   | 'skillsTools'
 
@@ -27,23 +33,29 @@ function toTextAreaValue(values: string[]) {
 interface ExperienceStrengthsSectionProps {
   bioSummary: string
   activeStrengthsTab: StrengthsTab | null
+  certificationsReviewState: ReviewState
   setActiveStrengthsTab: Dispatch<SetStateAction<StrengthsTab | null>>
+  setBioSummary: Dispatch<SetStateAction<string>>
   experienceEntries: ResumeExperienceRecord[]
   setExperienceEntries: Dispatch<SetStateAction<ResumeExperienceRecord[]>>
-  achievementBank: ResumeAchievementRecord[]
-  setAchievementBank: Dispatch<SetStateAction<ResumeAchievementRecord[]>>
   educationEntries: ResumeEducationRecord[]
   setEducationEntries: Dispatch<SetStateAction<ResumeEducationRecord[]>>
+  educationReviewState: ReviewState
   portfolioItems: OperatorPortfolioItemRecord[]
   setPortfolioItems: Dispatch<SetStateAction<OperatorPortfolioItemRecord[]>>
+  historyReviewState: ReviewState
   skillsTags: string[]
   setSkillsTags: Dispatch<SetStateAction<string[]>>
   toolsTags: string[]
   setToolsTags: Dispatch<SetStateAction<string[]>>
+  languageTags: string[]
+  setLanguageTags: Dispatch<SetStateAction<string[]>>
+  lockedMessage?: string | null
   certificationTags: string[]
   setCertificationTags: Dispatch<SetStateAction<string[]>>
+  skillsToolsReviewState: ReviewState
+  summaryReviewState: ReviewState
   createExperienceEntry: () => ResumeExperienceRecord
-  createAchievementEntry: () => ResumeAchievementRecord
   createEducationEntry: () => ResumeEducationRecord
   createPortfolioItem: () => OperatorPortfolioItemRecord
 }
@@ -51,23 +63,29 @@ interface ExperienceStrengthsSectionProps {
 export function ExperienceStrengthsSection({
   bioSummary,
   activeStrengthsTab,
+  certificationsReviewState,
   setActiveStrengthsTab,
+  setBioSummary,
   experienceEntries,
   setExperienceEntries,
-  achievementBank,
-  setAchievementBank,
   educationEntries,
   setEducationEntries,
+  educationReviewState,
   portfolioItems,
   setPortfolioItems,
+  historyReviewState,
   skillsTags,
   setSkillsTags,
   toolsTags,
   setToolsTags,
+  languageTags,
+  setLanguageTags,
+  lockedMessage,
   certificationTags,
   setCertificationTags,
+  skillsToolsReviewState,
+  summaryReviewState,
   createExperienceEntry,
-  createAchievementEntry,
   createEducationEntry,
   createPortfolioItem,
 }: ExperienceStrengthsSectionProps) {
@@ -75,86 +93,92 @@ export function ExperienceStrengthsSection({
     <DisclosureSection
       className="disclosure-experience"
       label="Experience and strengths"
-      title="Review what was pulled from your resume."
+      title="Review and refine the experience pulled from your resume."
       unwrapBody
     >
-      <div className="strengths-experience-grid">
-        <div className="upload-slot strengths-pro-summary-slot">
-          <span className="upload-slot-label">Professional summary</span>
-          <textarea
-            defaultValue={bioSummary}
-            name="bioSummary"
-            placeholder="A short summary of the kind of designer you are and the work you do best."
-            rows={8}
-          />
-          <small>
-            This reads like your positioning line — keep it specific enough that the workspace can echo
-            it in tailored drafts.
-          </small>
-        </div>
-      </div>
-
-      <div className={`settings-tab-shell${activeStrengthsTab ? ' has-selection' : ''}`}>
-        <div aria-label="Background sections" className="settings-tab-toolbar" role="tablist">
-          <SettingsTabButton
-            active={activeStrengthsTab === 'history'}
-            count={experienceEntries.length}
-            label="Roles and responsibilities"
-            onClick={() => setActiveStrengthsTab((current) => (current === 'history' ? null : 'history'))}
-          />
-          <SettingsTabButton
-            active={activeStrengthsTab === 'education'}
-            count={educationEntries.length}
-            label="Schools and credentials"
-            onClick={() => setActiveStrengthsTab((current) => (current === 'education' ? null : 'education'))}
-          />
-          <SettingsTabButton
-            active={activeStrengthsTab === 'highlights'}
-            count={achievementBank.length}
-            label="Wins and proof points"
-            onClick={() =>
-              setActiveStrengthsTab((current) => (current === 'highlights' ? null : 'highlights'))
-            }
-          />
-          <SettingsTabButton
-            active={activeStrengthsTab === 'skillsTools'}
-            count={skillsTags.length + toolsTags.length}
-            label="Skills and tools"
-            onClick={() =>
-              setActiveStrengthsTab((current) => (current === 'skillsTools' ? null : 'skillsTools'))
-            }
-          />
-          <SettingsTabButton
-            active={activeStrengthsTab === 'certifications'}
-            count={certificationTags.length}
-            label="Certifications"
-            onClick={() =>
-              setActiveStrengthsTab((current) =>
-                current === 'certifications' ? null : 'certifications',
-              )
-            }
-          />
+      <SectionLockFrame lockedMessage={lockedMessage}>
+        <div className="strengths-experience-grid">
+          <label className={`upload-slot strengths-pro-summary-slot field--${summaryReviewState}`}>
+            <span className="field-label-row">
+              <span className="upload-slot-label">Professional summary</span>
+              <ReviewStateIndicator state={summaryReviewState} />
+            </span>
+            <AutoSizeTextarea
+              name="bioSummary"
+              onChange={(event) => setBioSummary(event.target.value)}
+              placeholder="A short summary of the kind of designer you are and the work you do best."
+              value={bioSummary}
+            />
+            <small>
+              This reads like your positioning line. Keep it specific enough that the workspace can
+              echo it in tailored drafts.
+            </small>
+          </label>
         </div>
 
-        {activeStrengthsTab === 'history' ? (
-          <section className="settings-tab-panel">
+        <div className={`settings-tab-shell${activeStrengthsTab ? ' has-selection' : ''}`}>
+          <div aria-label="Background sections" className="settings-tab-toolbar" role="tablist">
+            <SettingsTabButton
+              active={activeStrengthsTab === 'history'}
+              label="Roles and responsibilities"
+              onClick={() => setActiveStrengthsTab((current) => (current === 'history' ? null : 'history'))}
+              reviewState={historyReviewState}
+            />
+            <SettingsTabButton
+              active={activeStrengthsTab === 'education'}
+              label="Schools and credentials"
+              onClick={() => setActiveStrengthsTab((current) => (current === 'education' ? null : 'education'))}
+              reviewState={educationReviewState}
+            />
+            <SettingsTabButton
+              active={activeStrengthsTab === 'skillsTools'}
+              label="Skills and tools"
+              onClick={() =>
+                setActiveStrengthsTab((current) => (current === 'skillsTools' ? null : 'skillsTools'))
+              }
+              reviewState={skillsToolsReviewState}
+            />
+            <SettingsTabButton
+              active={activeStrengthsTab === 'certifications'}
+              label="Certifications"
+              onClick={() =>
+                setActiveStrengthsTab((current) =>
+                  current === 'certifications' ? null : 'certifications',
+                )
+              }
+              reviewState={certificationsReviewState}
+            />
+          </div>
+
+          {activeStrengthsTab === 'history' || activeStrengthsTab === 'education' ? (
+            <section className="settings-tab-panel">
             <div className="settings-tab-panel-header">
               <div>
-                <p className="panel-label">Work history</p>
-                <h3>Roles and responsibilities</h3>
+                <p className="panel-label">
+                  {activeStrengthsTab === 'history' ? 'Work history' : 'Education'}
+                </p>
+                <h3>
+                  {activeStrengthsTab === 'history'
+                    ? 'Roles and responsibilities'
+                    : 'Schools and credentials'}
+                </h3>
               </div>
-              <span className="settings-tab-meta">{experienceEntries.length} roles</span>
             </div>
             <div className="section-header">
               <AddRowButton
-                label="Add role"
+                label={activeStrengthsTab === 'history' ? 'Add role' : 'Add school'}
                 onClick={() => {
-                  setExperienceEntries((current) => [...current, createExperienceEntry()])
+                  if (activeStrengthsTab === 'history') {
+                    setExperienceEntries((current) => [...current, createExperienceEntry()])
+                  } else {
+                    setEducationEntries((current) => [...current, createEducationEntry()])
+                  }
                 }}
               />
             </div>
             <div className="repeat-list">
-              {experienceEntries.map((entry, index) => (
+              {activeStrengthsTab === 'history'
+                ? experienceEntries.map((entry, index) => (
                 <article className="repeat-card" key={`${entry.companyName}-${entry.roleTitle}-${index}`}>
                   <div className="repeat-card-header">
                     <strong>Experience {index + 1}</strong>
@@ -254,7 +278,7 @@ export function ExperienceStrengthsSection({
                     </div>
                   </div>
                   <div className="field-grid field-grid-2">
-                    <label className="field">
+                    <label className="field field--fixed-scroll">
                       <span>What you did</span>
                       <textarea
                         name="experienceSummary"
@@ -270,65 +294,44 @@ export function ExperienceStrengthsSection({
                       />
                     </label>
                     <label className="field">
-                      <span>Key results · bullets</span>
-                      <textarea
+                      <span>Key results</span>
+                      <BulletTextarea
+                        className="experience-results-textarea"
+                        items={entry.highlights}
                         name="experienceHighlights"
-                        onChange={(event) => {
+                        onItemsChange={(nextHighlights) => {
                           setExperienceEntries((current) =>
                             current.map((item, itemIndex) =>
                               itemIndex === index
-                                ? { ...item, highlights: highlightLinesFromMultiline(event.target.value) }
+                                ? { ...item, highlights: nextHighlights }
                                 : item,
                             ),
                           )
                         }}
-                        placeholder={'• Launched the rebrand\n• Cut review cycles by half'}
                         rows={5}
-                        value={toTextAreaValue(entry.highlights)}
                       />
                     </label>
                   </div>
                 </article>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {activeStrengthsTab === 'education' ? (
-          <section className="settings-tab-panel">
-            <div className="settings-tab-panel-header">
-              <div>
-                <p className="panel-label">Education</p>
-                <h3>Schools and credentials</h3>
-              </div>
-              <span className="settings-tab-meta">{educationEntries.length} schools</span>
-            </div>
-            <div className="section-header">
-              <AddRowButton
-                label="Add school"
-                onClick={() => {
-                  setEducationEntries((current) => [...current, createEducationEntry()])
-                }}
-              />
-            </div>
-            <div className="repeat-list">
-              {educationEntries.map((entry, index) => (
+              ))
+                : educationEntries.map((entry, index) => (
                 <article className="repeat-card" key={`${entry.schoolName}-${entry.credential}-${index}`}>
                   <div className="repeat-card-header">
                     <strong>Education {index + 1}</strong>
-                    {educationEntries.length > 1 ? (
-                      <button
-                        className="button button-ghost button-small"
-                        onClick={() => {
-                          setEducationEntries((current) =>
-                            current.filter((_, itemIndex) => itemIndex !== index),
-                          )
-                        }}
-                        type="button"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
+                    <button
+                      className="button button-ghost button-small"
+                      onClick={() => {
+                        setEducationEntries((current) => {
+                          if (current.length <= 1) {
+                            return [createEducationEntry()]
+                          }
+                          return current.filter((_, itemIndex) => itemIndex !== index)
+                        })
+                      }}
+                      type="button"
+                    >
+                      Remove
+                    </button>
                   </div>
                   <div className="field-grid field-grid-2">
                     <label className="field">
@@ -414,151 +417,71 @@ export function ExperienceStrengthsSection({
               ))}
             </div>
           </section>
-        ) : null}
+          ) : null}
 
-        {activeStrengthsTab === 'highlights' ? (
-          <section className="settings-tab-panel">
-            <div className="settings-tab-panel-header">
-              <div>
-                <p className="panel-label">Highlights</p>
-                <h3>Wins and proof points</h3>
-              </div>
-              <span className="settings-tab-meta">{achievementBank.length} items</span>
-            </div>
-            <div className="section-header">
-              <AddRowButton
-                label="Add highlight"
-                onClick={() => {
-                  setAchievementBank((current) => [...current, createAchievementEntry()])
-                }}
-              />
-            </div>
-            <div className="repeat-list">
-              {achievementBank.map((achievement, index) => (
-                <article className="repeat-card" key={`${achievement.title}-${index}`}>
-                  <div className="repeat-card-header">
-                    <strong>Achievement {index + 1}</strong>
-                    {achievementBank.length > 1 ? (
-                      <button
-                        className="button button-ghost button-small"
-                        onClick={() => {
-                          setAchievementBank((current) =>
-                            current.filter((_, itemIndex) => itemIndex !== index),
-                          )
-                        }}
-                        type="button"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                  </div>
-                  <div className="field-grid field-grid-2">
-                    <label className="field">
-                      <span>Type</span>
-                      <input
-                        name="achievementCategory"
-                        onChange={(event) => {
-                          setAchievementBank((current) =>
-                            current.map((item, itemIndex) =>
-                              itemIndex === index ? { ...item, category: event.target.value } : item,
-                            ),
-                          )
-                        }}
-                        type="text"
-                        value={achievement.category}
-                      />
-                    </label>
-                    <label className="field">
-                      <span>Headline</span>
-                      <input
-                        name="achievementTitle"
-                        onChange={(event) => {
-                          setAchievementBank((current) =>
-                            current.map((item, itemIndex) =>
-                              itemIndex === index ? { ...item, title: event.target.value } : item,
-                            ),
-                          )
-                        }}
-                        type="text"
-                        value={achievement.title}
-                      />
-                    </label>
-                  </div>
-                  <label className="field">
-                    <span>Details</span>
-                    <textarea
-                      name="achievementDetail"
-                      onChange={(event) => {
-                        setAchievementBank((current) =>
-                          current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, detail: event.target.value } : item,
-                          ),
-                        )
-                      }}
-                      rows={4}
-                      value={achievement.detail}
-                    />
-                  </label>
-                </article>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {activeStrengthsTab === 'skillsTools' ? (
-          <section className="settings-tab-panel">
+          {activeStrengthsTab === 'skillsTools' ? (
+            <section className="settings-tab-panel">
             <div className="settings-tab-panel-header">
               <div>
                 <p className="panel-label">Capabilities</p>
                 <h3>Skills and tools</h3>
               </div>
-              <span className="settings-tab-meta">
-                {skillsTags.length} skills · {toolsTags.length} tools
-              </span>
             </div>
             <div className="settings-tag-row field-grid field-grid-2">
               <TagInput
-                helper="Press Enter after each skill."
                 label="Core skills"
                 onChange={setSkillsTags}
                 placeholder="e.g. Brand systems"
                 preserveCase
+                reviewState={skillsToolsReviewState}
                 tags={skillsTags}
+                variant="square"
               />
               <TagInput
-                helper="Press Enter after each tool."
                 label="Tools I use"
                 onChange={setToolsTags}
                 placeholder="e.g. Figma"
                 preserveCase
+                reviewState={skillsToolsReviewState}
                 tags={toolsTags}
+                variant="square"
+              />
+              <TagInput
+                label="Languages"
+                onChange={setLanguageTags}
+                placeholder="e.g. English"
+                preserveCase
+                reviewState={skillsToolsReviewState}
+                tags={languageTags}
+                variant="square"
               />
             </div>
-          </section>
-        ) : null}
+            </section>
+          ) : null}
 
-        {activeStrengthsTab === 'certifications' ? (
-          <section className="settings-tab-panel">
+          {activeStrengthsTab === 'certifications' ? (
+            <section className="settings-tab-panel">
             <div className="settings-tab-panel-header">
               <div>
                 <p className="panel-label">Credentials</p>
                 <h3>Certifications</h3>
               </div>
-              <span className="settings-tab-meta">{certificationTags.length} listed</span>
             </div>
             <div className="settings-tag-row field-grid">
               <TagInput
-                helper="Press Enter after each certification."
                 label="Certifications"
                 onChange={setCertificationTags}
                 placeholder="e.g. AWS Certified"
                 preserveCase
+                reviewState={certificationsReviewState}
                 tags={certificationTags}
+                variant="square"
               />
             </div>
-          </section>
-        ) : null}
-      </div>
+            </section>
+          ) : null}
+        </div>
+      </SectionLockFrame>
 
       <div aria-hidden="true" className="profile-form-portfolio-preserve">
         <div className="section-header">

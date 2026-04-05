@@ -48,8 +48,8 @@ function HeaderFallback({ counts }: { counts?: Partial<Record<QueueView, number>
             <span className="site-workflow-count">{counts.saved}</span>
           ) : null}
         </Link>
-        <Link className="site-workflow-link" href="/dashboard?view=prepared">
-          <span>Prepared</span>
+        <Link className="site-workflow-link" href="/dashboard?view=ready">
+          <span>Ready</span>
           {typeof counts?.prepared === 'number' ? (
             <span className="site-workflow-count">{counts.prepared}</span>
           ) : null}
@@ -61,7 +61,7 @@ function HeaderFallback({ counts }: { counts?: Partial<Record<QueueView, number>
           ) : null}
         </Link>
         <Link className="site-workflow-link" href="/dashboard?view=archive">
-          <span>Archive</span>
+          <span>Archived</span>
           {typeof counts?.archive === 'number' ? (
             <span className="site-workflow-count">{counts.archive}</span>
           ) : null}

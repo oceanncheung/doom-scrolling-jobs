@@ -44,12 +44,12 @@ export function PreparedRow({
           </div>
           <div className="stage-action-slot stage-action-slot--status">
             <Link className="button button-ghost button-small" href={`/jobs/${job.id}/packet`}>
-              Materials
+              Packet
             </Link>
           </div>
         </div>
       }
-      detailLabel="Prepared materials"
+      detailLabel="Ready materials"
       job={job}
       profile={profile}
       showActions={showActions}
@@ -65,7 +65,7 @@ export function PreparedRow({
         </div>
         <div>
           <p className="panel-label">Next step</p>
-          <p>Open the prepared materials if you want one last review, or apply directly from here.</p>
+          <p>Open the packet if you want one last review, or apply directly from here.</p>
         </div>
         <div>
           <p className="panel-label">Before applying</p>

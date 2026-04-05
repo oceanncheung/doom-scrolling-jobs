@@ -31,7 +31,7 @@ export interface RankedJobsResult {
 }
 
 function hasRankingSourceMaterial(workspace: Awaited<ReturnType<typeof getOperatorProfile>>['workspace']) {
-  return workspace.resumeMaster.hasSourceMaterial
+  return workspace.status.rankingEligibilityState === 'ready'
 }
 
 function applyScreeningLock(
@@ -640,7 +640,7 @@ export const getRankedJobs = cache(async function getRankedJobs(): Promise<Ranke
       candidatePoolCount: learnedJobs.length,
       issue:
         qualificationResult.screeningLocked
-          ? 'Add your base resume text or upload source documents to unlock the Potential queue.'
+          ? 'Complete your profile draft in Settings to unlock the Potential queue.'
           : importResult.importedCount > 0
             ? `Imported ${importResult.importedCount} jobs into the primary ranked feed.${diagnosticsSummary ? ` ${diagnosticsSummary}.` : ''}`
             : undefined,

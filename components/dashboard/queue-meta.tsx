@@ -20,7 +20,7 @@ export function QueueMeta({
       note: 'Submitted roles and active follow-up states.',
     },
     archive: {
-      eyebrow: 'Archive',
+      eyebrow: 'Archived',
       label: `${totalCount} archived jobs`,
       note: 'Skipped, rejected, and archived roles live here.',
     },
@@ -33,14 +33,14 @@ export function QueueMeta({
           : 'Save or skip to keep the screening queue moving.',
     },
     prepared: {
-      eyebrow: 'Prepared',
-      label: `${totalCount} prepared jobs`,
-      note: 'Applications that already have materials ready.',
+      eyebrow: 'Ready',
+      label: `${totalCount} ready jobs`,
+      note: 'Saved roles with application materials ready to submit.',
     },
     saved: {
       eyebrow: 'Saved',
       label: `${totalCount} saved jobs`,
-      note: 'Shortlisted roles waiting for review or prep.',
+      note: 'Saved roles waiting for review or packet work.',
     },
   }
 

@@ -24,7 +24,7 @@ function PrepSubmitButton({
       type="submit"
       value={hasDraft ? 'mark-ready' : 'save-review'}
     >
-      {hasDraft ? 'Mark Ready to Apply' : 'Save Review'}
+      {hasDraft ? 'Mark Ready' : 'Save Review'}
     </button>
   )
 }
@@ -132,7 +132,7 @@ export function JobOverviewActions({
           <div className="screening-actions-cluster">
             <div className="screening-action-slot">
               <Link className="button button-primary button-small" href={`/jobs/${job.id}/packet`}>
-                Prepare Application
+                Prepare Packet
               </Link>
             </div>
             <div className="screening-action-slot">
@@ -161,7 +161,7 @@ export function JobOverviewActions({
           <div className="screening-actions-cluster">
             <div className="screening-action-slot">
               <Link className="button button-primary button-small" href={`/jobs/${job.id}/packet`}>
-                Continue Preparation
+                Continue Packet
               </Link>
             </div>
           </div>

@@ -162,6 +162,7 @@ export async function createOperator(
   const operatorId = existingUser?.id ?? crypto.randomUUID()
   const profileId = crypto.randomUUID()
   const resumeMasterId = crypto.randomUUID()
+  const coverLetterMasterId = crypto.randomUUID()
   const slug = await buildUniqueSlug(displayName, email)
 
   const userPayload = {
@@ -184,6 +185,7 @@ export async function createOperator(
     allowed_adjacent_roles: ['marketing designer', 'web designer', 'production designer', 'presentation designer'],
     allowed_remote_regions: ['Canada', 'United States', 'North America'],
     bio_summary: '',
+    canonical_profile_reviewed_at: null,
     education_summary: [],
     experience_summary: [],
     headline: 'Graphic Designer',
@@ -192,6 +194,7 @@ export async function createOperator(
     industries_preferred: [],
     location_label: 'Toronto, Canada',
     operator_id: operatorId,
+    phone_number: '',
     portfolio_primary_url: '',
     preferences_notes: '',
     primary_market: 'Canada',
@@ -206,26 +209,75 @@ export async function createOperator(
     timezone: 'America/Toronto',
     timezone_tolerance_hours: 3,
     tools: ['Figma', 'Adobe Creative Suite'],
+    languages: [],
     user_id: operatorId,
     work_authorization_notes: '',
   }
 
   const resumePayload = {
+    additional_information: [],
     achievement_bank: [],
+    approval_status: 'draft',
+    archived_experience_entries: [],
     base_title: 'Graphic Designer',
     base_cover_letter_text: '',
     certifications: [],
+    contact_snapshot: {
+      email,
+      linkedinUrl: '',
+      location: 'Toronto, Canada',
+      name: displayName,
+      phone: '',
+      portfolioUrl: '',
+      websiteUrl: '',
+    },
+    core_expertise: ['branding', 'visual systems', 'presentation design'],
     education_entries: [],
     experience_entries: [],
+    generation_issues: [],
     id: resumeMasterId,
+    languages: [],
     links: {},
     operator_id: operatorId,
+    raw_source_text: '',
+    rendered_markdown: '',
+    section_provenance: {},
+    selected_impact_highlights: [],
     skills_section: ['branding', 'visual systems', 'presentation design'],
     source_content: {
       createdFrom: 'operator-setup',
     },
     source_format: 'structured_json',
     summary_text: '',
+    tools_platforms: ['Figma', 'Adobe Creative Suite'],
+    user_id: operatorId,
+  }
+
+  const coverLetterPayload = {
+    approval_status: 'draft',
+    capability_disciplines: [],
+    capability_tools: [],
+    contact_snapshot: {
+      location: 'Toronto, Canada',
+      name: displayName,
+      roleTargets: ['graphic designer', 'brand designer', 'visual designer'],
+    },
+    generation_issues: [],
+    id: coverLetterMasterId,
+    key_differentiators: [],
+    operator_id: operatorId,
+    output_constraints: [],
+    positioning_philosophy: '',
+    proof_bank: [],
+    raw_source_text: '',
+    rendered_markdown: '',
+    section_provenance: {},
+    selection_rules: [],
+    source_content: {
+      createdFrom: 'operator-setup',
+    },
+    source_format: 'structured_json',
+    tone_voice: [],
     user_id: operatorId,
   }
 
@@ -247,12 +299,13 @@ export async function createOperator(
     }
   }
 
-  const [profileResult, resumeResult] = await Promise.all([
+  const [profileResult, resumeResult, coverLetterResult] = await Promise.all([
     supabase.from('user_profiles').insert(profilePayload),
     supabase.from('resume_master').insert(resumePayload),
+    supabase.from('cover_letter_master').insert(coverLetterPayload),
   ])
 
-  const failure = profileResult.error ?? resumeResult.error
+  const failure = profileResult.error ?? resumeResult.error ?? coverLetterResult.error
 
   if (failure) {
     return {

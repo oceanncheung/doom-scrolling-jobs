@@ -2,6 +2,9 @@
 
 import type { ReactNode } from 'react'
 
+import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
+import type { ReviewState } from '@/lib/profile/master-assets'
+
 export function AddRowButton({
   label,
   onClick,
@@ -18,14 +21,14 @@ export function AddRowButton({
 
 export function SettingsTabButton({
   active,
-  count,
   label,
   onClick,
+  reviewState,
 }: {
   active: boolean
-  count: number
   label: string
   onClick: () => void
+  reviewState?: ReviewState
 }) {
   return (
     <button
@@ -35,7 +38,9 @@ export function SettingsTabButton({
       type="button"
     >
       <span className="settings-tab-button-label">{label}</span>
-      <span className="settings-tab-button-count">{count}</span>
+      {reviewState ? (
+        <ReviewStateIndicator className="settings-tab-button-state" state={reviewState} />
+      ) : null}
       <span aria-hidden="true" className="settings-tab-button-icon">
         <svg fill="none" height="12" viewBox="0 0 12 12" width="12">
           <path
@@ -47,6 +52,26 @@ export function SettingsTabButton({
         </svg>
       </span>
     </button>
+  )
+}
+
+export function SectionLockFrame({
+  children,
+  lockedMessage,
+}: {
+  children: ReactNode
+  lockedMessage?: string | null
+}) {
+  const isLocked = Boolean(lockedMessage)
+
+  return (
+    <div
+      aria-disabled={isLocked}
+      className={`settings-section-state-shell${isLocked ? ' is-locked' : ''}`}
+    >
+      {lockedMessage ? <p className="settings-section-lock-note">{lockedMessage}</p> : null}
+      <div className="settings-section-state-content">{children}</div>
+    </div>
   )
 }
 

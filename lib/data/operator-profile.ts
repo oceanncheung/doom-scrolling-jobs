@@ -3,16 +3,20 @@ import 'server-only'
 import { defaultOperator } from '@/lib/config/runtime'
 import { getActiveOperatorContext } from '@/lib/data/operators'
 import type {
+  CoverLetterMasterRecord,
   OperatorPortfolioItemRecord,
   OperatorProfileRecord,
   OperatorWorkspaceRecord,
-  ResumeAchievementRecord,
-  ResumeEducationRecord,
-  ResumeExperienceRecord,
-  ResumeMasterRecord,
+  ResumeMasterRecord
 } from '@/lib/domain/types'
 import { hasSupabaseServerEnv } from '@/lib/env'
+import {
+  normalizeCoverLetterMasterRecord,
+  normalizeResumeMasterRecord,
+} from '@/lib/profile/master-assets'
+import { ensureLocationCountryFirst } from '@/lib/profile/location-market'
 import { getTargetSeniorityLevels } from '@/lib/profile/seniority-level'
+import { deriveProfileWorkspaceStatus } from '@/lib/profile/workspace-status'
 import { createClient } from '@/lib/supabase/server'
 
 type ProfileSource = 'seed' | 'database' | 'database-fallback'
@@ -26,153 +30,154 @@ export interface OperatorProfileResult {
 const seededProfile: OperatorProfileRecord = {
   userId: defaultOperator.userId,
   profileId: defaultOperator.profileId,
+  updatedAt: undefined,
   displayName: 'Internal Operator',
   email: 'internal@doomscrollingjobs.local',
+  phoneNumber: '',
   searchBrief: '',
-  headline: 'Graphic Designer',
-  locationLabel: 'Toronto, Canada',
+  headline: '',
+  locationLabel: '',
   timezone: 'America/Toronto',
   remoteRequired: true,
-  primaryMarket: 'Canada',
-  secondaryMarkets: ['United States'],
-  allowedRemoteRegions: ['Canada', 'United States', 'North America'],
-  timezoneToleranceHours: '3',
+  primaryMarket: '',
+  secondaryMarkets: [],
+  allowedRemoteRegions: [],
+  timezoneToleranceHours: '',
   relocationOpen: false,
   salaryFloorCurrency: 'USD',
   salaryFloorAmount: '',
   salaryTargetMin: '',
   salaryTargetMax: '',
-  seniorityLevel: 'senior',
-  targetSeniorityLevels: ['senior'],
-  targetRoles: [
-    'graphic designer',
-    'brand designer',
-    'visual designer',
-    'marketing designer',
-    'presentation designer',
-  ],
-  allowedAdjacentRoles: [
-    'product designer',
-    'motion designer',
-    'art director',
-    'creative lead',
-    'creative director',
-    'content designer',
-    'campaign designer',
-    'ui designer',
-  ],
-  industriesPreferred: ['technology', 'education', 'media'],
-  industriesAvoid: ['gambling', 'crypto scams'],
-  skills: ['visual systems', 'brand identity', 'presentation design', 'campaign design'],
-  tools: ['Figma', 'Adobe Creative Suite', 'Photoshop', 'Illustrator'],
-  workAuthorizationNotes: 'Authorized to work remotely for roles open to Canada-based candidates.',
-  portfolioPrimaryUrl: 'https://portfolio.example.com',
+  seniorityLevel: '',
+  targetSeniorityLevels: [],
+  targetRoles: [],
+  allowedAdjacentRoles: [],
+  industriesPreferred: [],
+  industriesAvoid: [],
+  skills: [],
+  tools: [],
+  languages: [],
+  workAuthorizationNotes: '',
+  portfolioPrimaryUrl: '',
   linkedinUrl: '',
   personalSiteUrl: '',
-  bioSummary:
-    'Single internal operator profile used to rank remote design opportunities and prepare high-quality manual applications.',
-  preferencesNotes:
-    'Internal single-user mode for Ocean / Alvis. Replace these defaults as the real operator profile is filled in.',
+  bioSummary: '',
+  preferencesNotes: '',
+  canonicalProfileReviewedAt: undefined,
 }
 
-const seededResumeMaster: ResumeMasterRecord = {
-  baseTitle: 'Graphic Designer',
+const seededResumeMasterBase: ResumeMasterRecord = {
+  additionalInformation: [],
+  approvalStatus: 'draft',
+  approvedAt: undefined,
+  archivedExperienceEntries: [],
+  baseTitle: '',
   baseCoverLetterText: '',
-  hasSourceMaterial: true,
-  summaryText:
-    'Designer focused on brand systems, presentation design, and campaign work for high-quality remote teams.',
-  experienceEntries: [
-    {
-      companyName: 'Northshore Studio',
-      roleTitle: 'Senior Graphic Designer',
-      locationLabel: 'Toronto, Canada',
-      startDate: '2022-01',
-      endDate: '',
-      summary:
-        'Own brand design systems, launch campaigns, and executive presentation work across marketing and product initiatives.',
-      highlights: [
-        'Built a reusable campaign design system adopted across multiple product launches.',
-        'Led high-visibility deck design for executive and investor presentations.',
-      ],
-    },
-    {
-      companyName: 'Signal Works',
-      roleTitle: 'Visual Designer',
-      locationLabel: 'Remote',
-      startDate: '2019-04',
-      endDate: '2021-12',
-      summary:
-        'Delivered visual identity, landing pages, and growth creative for a distributed SaaS team.',
-      highlights: [
-        'Created campaign assets that improved paid social click-through performance.',
-        'Partnered with product marketing to turn strategy into launch-ready visuals.',
-      ],
-    },
-  ],
-  achievementBank: [
-    {
-      category: 'brand',
-      title: 'Scaled brand systems',
-      detail: 'Created reusable visual systems that improved consistency across campaigns and presentations.',
-    },
-    {
-      category: 'collaboration',
-      title: 'Cross-functional execution',
-      detail: 'Worked closely with marketing, product, and leadership teams to ship polished launch assets.',
-    },
-  ],
-  skillsSection: ['branding', 'campaign design', 'presentation design', 'visual storytelling'],
-  educationEntries: [
-    {
-      schoolName: 'OCAD University',
-      credential: 'Bachelor of Design',
-      fieldOfStudy: 'Graphic Design',
-      startDate: '2014',
-      endDate: '2018',
-      notes: 'Focused on visual communication and brand systems.',
-    },
-  ],
+  contactSnapshot: {
+    email: seededProfile.email,
+    linkedinUrl: '',
+    location: '',
+    name: seededProfile.displayName,
+    phone: '',
+    portfolioUrl: '',
+    websiteUrl: '',
+  },
+  coreExpertise: [],
+  hasSourceMaterial: false,
+  generationIssues: [],
+  languages: [],
+  rawSourceText: '',
+  renderedMarkdown: '',
+  sectionProvenance: {
+    additionalInformation: { confidence: 'high', notes: [], sourceLabels: [] },
+    archivedExperience: { confidence: 'high', notes: [], sourceLabels: [] },
+    certifications: { confidence: 'high', notes: [], sourceLabels: [] },
+    contact: { confidence: 'high', notes: [], sourceLabels: [] },
+    coreExpertise: { confidence: 'high', notes: [], sourceLabels: [] },
+    education: { confidence: 'high', notes: [], sourceLabels: [] },
+    languages: { confidence: 'high', notes: [], sourceLabels: [] },
+    professionalExperience: { confidence: 'high', notes: [], sourceLabels: [] },
+    professionalSummary: { confidence: 'high', notes: [], sourceLabels: [] },
+    selectedImpactHighlights: { confidence: 'high', notes: [], sourceLabels: [] },
+    toolsPlatforms: { confidence: 'high', notes: [], sourceLabels: [] },
+  },
+  selectedImpactHighlights: [],
+  sourceContent: {
+    createdFrom: 'blank-onboarding-fallback',
+  },
+  sourceFormat: 'structured_json',
+  summaryText: '',
+  experienceEntries: [],
+  achievementBank: [],
+  skillsSection: [],
+  educationEntries: [],
   certifications: [],
+  toolsPlatforms: [],
   coverLetterPdfFileName: '',
   portfolioPdfFileName: '',
   resumePdfFileName: '',
 }
 
-const seededPortfolioItems: OperatorPortfolioItemRecord[] = [
-  {
-    id: '44444444-4444-4444-8444-444444444444',
-    title: 'Brand System Refresh',
-    url: 'https://portfolio.example.com/brand-system-refresh',
-    projectType: 'brand design',
-    roleLabel: 'Lead designer',
-    summary: 'Rebuilt the visual system for a growing software brand across web, lifecycle, and sales touchpoints.',
-    skillsTags: ['brand identity', 'visual systems', 'marketing design'],
-    industryTags: ['saas', 'technology'],
-    outcomeMetrics: ['Unified launch visuals across five channels', 'Improved internal design reuse'],
-    visualStrengthRating: '5',
-    isPrimary: true,
-    isActive: true,
+const seededResumeMaster: ResumeMasterRecord = {
+  ...seededResumeMasterBase,
+  renderedMarkdown: '',
+}
+
+const seededCoverLetterMasterBase: CoverLetterMasterRecord = {
+  approvalStatus: 'draft',
+  approvedAt: undefined,
+  capabilities: {
+    disciplines: [],
+    productionTools: [],
   },
-  {
-    id: '55555555-5555-4555-8555-555555555555',
-    title: 'Executive Launch Deck',
-    url: 'https://portfolio.example.com/executive-launch-deck',
-    projectType: 'presentation design',
-    roleLabel: 'Presentation designer',
-    summary: 'Designed a narrative deck for leadership, sales, and investor-facing product launch communication.',
-    skillsTags: ['presentation design', 'storytelling', 'information hierarchy'],
-    industryTags: ['technology', 'b2b'],
-    outcomeMetrics: ['Reduced ad hoc slide redesign work', 'Created reusable story modules for leadership'],
-    visualStrengthRating: '4',
-    isPrimary: false,
-    isActive: true,
+  contactSnapshot: {
+    location: '',
+    name: seededProfile.displayName,
+    roleTargets: [],
   },
-]
+  generationIssues: [],
+  hasSourceMaterial: false,
+  keyDifferentiators: [],
+  outputConstraints: [],
+  positioningPhilosophy: '',
+  proofBank: [],
+  rawSourceText: '',
+  renderedMarkdown: '',
+  sectionProvenance: {
+    capabilities: { confidence: 'high', notes: [], sourceLabels: [] },
+    contact: { confidence: 'high', notes: [], sourceLabels: [] },
+    keyDifferentiators: { confidence: 'high', notes: [], sourceLabels: [] },
+    outputConstraints: { confidence: 'high', notes: [], sourceLabels: [] },
+    positioningPhilosophy: { confidence: 'high', notes: [], sourceLabels: [] },
+    proofBank: { confidence: 'high', notes: [], sourceLabels: [] },
+    selectionRules: { confidence: 'high', notes: [], sourceLabels: [] },
+    toneVoice: { confidence: 'high', notes: [], sourceLabels: [] },
+  },
+  selectionRules: [],
+  sourceContent: {
+    createdFrom: 'blank-onboarding-fallback',
+  },
+  sourceFormat: 'structured_json',
+  toneVoice: [],
+}
+
+const seededCoverLetterMaster: CoverLetterMasterRecord = {
+  ...seededCoverLetterMasterBase,
+  renderedMarkdown: '',
+}
+
+const seededPortfolioItems: OperatorPortfolioItemRecord[] = []
 
 const seededWorkspace: OperatorWorkspaceRecord = {
+  coverLetterMaster: seededCoverLetterMaster,
   portfolioItems: seededPortfolioItems,
   profile: seededProfile,
   resumeMaster: seededResumeMaster,
+  status: deriveProfileWorkspaceStatus({
+    coverLetterMaster: seededCoverLetterMaster,
+    profile: seededProfile,
+    resumeMaster: seededResumeMaster,
+  }),
 }
 
 function asString(value: unknown) {
@@ -203,53 +208,6 @@ function asRecord(value: unknown) {
   return value as Record<string, unknown>
 }
 
-function asObjectArray(value: unknown) {
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  return value
-    .map((item) => asRecord(item))
-    .filter((item): item is Record<string, unknown> => item !== null)
-}
-
-function normalizeExperienceEntry(value: unknown): ResumeExperienceRecord {
-  const record = asRecord(value)
-
-  return {
-    companyName: asString(record?.companyName ?? record?.company_name),
-    roleTitle: asString(record?.roleTitle ?? record?.role_title),
-    locationLabel: asString(record?.locationLabel ?? record?.location_label),
-    startDate: asString(record?.startDate ?? record?.start_date),
-    endDate: asString(record?.endDate ?? record?.end_date),
-    summary: asString(record?.summary),
-    highlights: asStringArray(record?.highlights),
-  }
-}
-
-function normalizeAchievementEntry(value: unknown): ResumeAchievementRecord {
-  const record = asRecord(value)
-
-  return {
-    category: asString(record?.category),
-    title: asString(record?.title),
-    detail: asString(record?.detail),
-  }
-}
-
-function normalizeEducationEntry(value: unknown): ResumeEducationRecord {
-  const record = asRecord(value)
-
-  return {
-    schoolName: asString(record?.schoolName ?? record?.school_name),
-    credential: asString(record?.credential),
-    fieldOfStudy: asString(record?.fieldOfStudy ?? record?.field_of_study),
-    startDate: asString(record?.startDate ?? record?.start_date),
-    endDate: asString(record?.endDate ?? record?.end_date),
-    notes: asString(record?.notes),
-  }
-}
-
 function normalizePortfolioItem(value: unknown): OperatorPortfolioItemRecord {
   const record = asRecord(value)
 
@@ -271,83 +229,11 @@ function normalizePortfolioItem(value: unknown): OperatorPortfolioItemRecord {
   }
 }
 
-function normalizeResumeMaster(value: unknown): ResumeMasterRecord {
-  const record = asRecord(value)
-  const sourceContent = asRecord(record?.source_content ?? record?.sourceContent)
-  const resumeDocumentText = asString(
-    sourceContent?.resumeDocumentText ?? sourceContent?.resume_document_text,
-  )
-  const coverLetterDocumentText = asString(
-    sourceContent?.coverLetterDocumentText ?? sourceContent?.cover_letter_document_text,
-  )
-  const portfolioDocumentText = asString(
-    sourceContent?.portfolioDocumentText ?? sourceContent?.portfolio_document_text,
-  )
-  const baseTitle = asString(record?.base_title ?? record?.baseTitle)
-  const baseCoverLetterText = asString(
-    record?.base_cover_letter_text ??
-      record?.baseCoverLetterText ??
-      sourceContent?.baseCoverLetterText ??
-      sourceContent?.base_cover_letter_text,
-  )
-  const summaryText = asString(record?.summary_text ?? record?.summaryText)
-  const experienceEntries = asObjectArray(record?.experience_entries ?? record?.experienceEntries).map(
-    normalizeExperienceEntry,
-  )
-  const achievementBank = asObjectArray(record?.achievement_bank ?? record?.achievementBank).map(
-    normalizeAchievementEntry,
-  )
-  const skillsSection = asStringArray(record?.skills_section ?? record?.skillsSection)
-  const educationEntries = asObjectArray(record?.education_entries ?? record?.educationEntries).map(
-    normalizeEducationEntry,
-  )
-  const certifications = asStringArray(record?.certifications)
-  const coverLetterPdfFileName = asString(
-    sourceContent?.coverLetterPdfFileName ?? sourceContent?.cover_letter_pdf_file_name,
-  )
-  const portfolioPdfFileName = asString(
-    sourceContent?.portfolioPdfFileName ?? sourceContent?.portfolio_pdf_file_name,
-  )
-  const resumePdfFileName = asString(
-    sourceContent?.resumePdfFileName ?? sourceContent?.resume_pdf_file_name,
-  )
-  const hasSourceMaterial = Boolean(
-    baseCoverLetterText.trim() ||
-      summaryText.trim() ||
-      resumeDocumentText.trim() ||
-      coverLetterDocumentText.trim() ||
-      portfolioDocumentText.trim() ||
-      resumePdfFileName.trim() ||
-      coverLetterPdfFileName.trim() ||
-      portfolioPdfFileName.trim() ||
-      experienceEntries.length > 0 ||
-      achievementBank.length > 0 ||
-      skillsSection.length > 0 ||
-      educationEntries.length > 0 ||
-      certifications.length > 0,
-  )
-
-  return {
-    baseTitle,
-    baseCoverLetterText,
-    hasSourceMaterial,
-    summaryText,
-    experienceEntries,
-    achievementBank,
-    skillsSection,
-    educationEntries,
-    certifications,
-    coverLetterPdfFileName,
-    portfolioPdfFileName,
-    resumePdfFileName,
-  }
-}
-
 export async function getOperatorProfile(): Promise<OperatorProfileResult> {
   if (!hasSupabaseServerEnv()) {
     return {
       issue:
-        'Supabase server environment variables are not configured yet, so this screen is showing the seeded internal fallback workspace.',
+        'Supabase server environment variables are not configured yet, so this screen is showing a blank onboarding fallback workspace.',
       source: 'seed',
       workspace: seededWorkspace,
     }
@@ -365,7 +251,7 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
 
   const supabase = createClient()
 
-  const [profileResult, resumeResult, portfolioResult] = await Promise.all([
+  const [profileResult, resumeResult, coverLetterResult, portfolioResult] = await Promise.all([
     supabase
       .from('user_profiles')
       .select('*')
@@ -373,6 +259,11 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
       .maybeSingle(),
     supabase
       .from('resume_master')
+      .select('*')
+      .eq('operator_id', operatorContext.operator.id)
+      .maybeSingle(),
+    supabase
+      .from('cover_letter_master')
       .select('*')
       .eq('operator_id', operatorContext.operator.id)
       .maybeSingle(),
@@ -395,7 +286,12 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
 
   const profile = profileResult.data
   const issues: string[] = []
-  const secondaryMarkets = asStringArray(profile.secondary_markets)
+  const locationLabel = asString(profile.location_label)
+  const normalizedHiringMarkets = ensureLocationCountryFirst(
+    [asString(profile.primary_market), ...asStringArray(profile.secondary_markets)],
+    locationLabel,
+  )
+  const secondaryMarkets = normalizedHiringMarkets.slice(1)
   const allowedRemoteRegions = asStringArray(profile.allowed_remote_regions)
   const targetSeniorityLevels = getTargetSeniorityLevels(
     asStringArray(profile.target_seniority_levels),
@@ -406,68 +302,85 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
     resumeResult.error || !resumeResult.data
       ? (() => {
           issues.push(
-            'Resume master content is not seeded in Supabase yet, so the page is using the fallback resume workspace.',
+            'Resume master content is not seeded in Supabase yet, so the page is using a blank onboarding fallback workspace.',
           )
           return seededResumeMaster
         })()
-      : normalizeResumeMaster(resumeResult.data)
+      : normalizeResumeMasterRecord(resumeResult.data, seededResumeMaster)
+
+  const coverLetterMaster =
+    coverLetterResult.error || !coverLetterResult.data
+      ? seededCoverLetterMaster
+      : normalizeCoverLetterMasterRecord(coverLetterResult.data, seededCoverLetterMaster)
 
   const portfolioItems =
     portfolioResult.error || !portfolioResult.data
       ? (() => {
           issues.push(
-            'Portfolio items could not be loaded from Supabase, so the page is showing the fallback portfolio library.',
+            'Portfolio items could not be loaded from Supabase, so the page is showing a blank onboarding portfolio state.',
           )
           return seededPortfolioItems
         })()
       : portfolioResult.data.map((item) => normalizePortfolioItem(item))
+
+  const normalizedProfile: OperatorProfileRecord = {
+    userId: operatorContext.userId,
+    profileId: profile.id ?? seededProfile.profileId,
+    updatedAt: asString(profile.updated_at) || undefined,
+    displayName: operatorContext.operator.displayName || seededProfile.displayName,
+    email: operatorContext.operator.email || seededProfile.email,
+    phoneNumber: asString(profile.phone_number),
+    searchBrief: asString(profile.search_brief),
+    headline: asString(profile.headline),
+    locationLabel,
+    timezone: asString(profile.timezone) || 'America/Toronto',
+    remoteRequired:
+      typeof profile.remote_required === 'boolean'
+        ? profile.remote_required
+        : seededProfile.remoteRequired,
+    primaryMarket: normalizedHiringMarkets[0] ?? '',
+    secondaryMarkets,
+    allowedRemoteRegions,
+    timezoneToleranceHours: asNumericString(profile.timezone_tolerance_hours),
+    relocationOpen:
+      typeof profile.relocation_open === 'boolean'
+        ? profile.relocation_open
+        : seededProfile.relocationOpen,
+    salaryFloorCurrency: asString(profile.salary_floor_currency) || 'USD',
+    salaryFloorAmount: asNumericString(profile.salary_floor_amount),
+    salaryTargetMin: asNumericString(profile.salary_target_min),
+    salaryTargetMax: asNumericString(profile.salary_target_max),
+    seniorityLevel: asString(profile.seniority_level),
+    targetSeniorityLevels,
+    targetRoles: asStringArray(profile.target_roles),
+    allowedAdjacentRoles: asStringArray(profile.allowed_adjacent_roles),
+    industriesPreferred: asStringArray(profile.industries_preferred),
+    industriesAvoid: asStringArray(profile.industries_avoid),
+    skills: asStringArray(profile.skills),
+    tools: asStringArray(profile.tools),
+    languages: asStringArray(profile.languages),
+    workAuthorizationNotes: asString(profile.work_authorization_notes),
+    portfolioPrimaryUrl: asString(profile.portfolio_primary_url),
+    linkedinUrl: asString(profile.linkedin_url),
+    personalSiteUrl: asString(profile.personal_site_url),
+    bioSummary: asString(profile.bio_summary),
+    preferencesNotes: asString(profile.preferences_notes),
+    canonicalProfileReviewedAt: asString(profile.canonical_profile_reviewed_at) || undefined,
+  }
 
   return {
     issue: issues.length > 0 ? issues.join(' ') : undefined,
     source: issues.length > 0 ? 'database-fallback' : 'database',
     workspace: {
       portfolioItems,
-      profile: {
-        userId: operatorContext.userId,
-        profileId: profile.id ?? seededProfile.profileId,
-        displayName: operatorContext.operator.displayName || seededProfile.displayName,
-        email: operatorContext.operator.email || seededProfile.email,
-        searchBrief: asString(profile.search_brief),
-        headline: asString(profile.headline),
-        locationLabel: asString(profile.location_label),
-        timezone: asString(profile.timezone) || 'America/Toronto',
-        remoteRequired:
-          typeof profile.remote_required === 'boolean'
-            ? profile.remote_required
-            : seededProfile.remoteRequired,
-        primaryMarket: asString(profile.primary_market),
-        secondaryMarkets,
-        allowedRemoteRegions,
-        timezoneToleranceHours: asNumericString(profile.timezone_tolerance_hours),
-        relocationOpen:
-          typeof profile.relocation_open === 'boolean'
-            ? profile.relocation_open
-            : seededProfile.relocationOpen,
-        salaryFloorCurrency: asString(profile.salary_floor_currency) || 'USD',
-        salaryFloorAmount: asNumericString(profile.salary_floor_amount),
-        salaryTargetMin: asNumericString(profile.salary_target_min),
-        salaryTargetMax: asNumericString(profile.salary_target_max),
-        seniorityLevel: asString(profile.seniority_level),
-        targetSeniorityLevels,
-        targetRoles: asStringArray(profile.target_roles),
-        allowedAdjacentRoles: asStringArray(profile.allowed_adjacent_roles),
-        industriesPreferred: asStringArray(profile.industries_preferred),
-        industriesAvoid: asStringArray(profile.industries_avoid),
-        skills: asStringArray(profile.skills),
-        tools: asStringArray(profile.tools),
-        workAuthorizationNotes: asString(profile.work_authorization_notes),
-        portfolioPrimaryUrl: asString(profile.portfolio_primary_url),
-        linkedinUrl: asString(profile.linkedin_url),
-        personalSiteUrl: asString(profile.personal_site_url),
-        bioSummary: asString(profile.bio_summary),
-        preferencesNotes: asString(profile.preferences_notes),
-      },
+      profile: normalizedProfile,
+      coverLetterMaster,
       resumeMaster,
+      status: deriveProfileWorkspaceStatus({
+        coverLetterMaster,
+        profile: normalizedProfile,
+        resumeMaster,
+      }),
     },
   }
 }

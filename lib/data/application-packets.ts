@@ -123,7 +123,7 @@ function rankExperienceEntry(entry: ResumeExperienceRecord, job: RankedJobRecord
 }
 
 function selectExperienceEntries(workspace: OperatorWorkspaceRecord, job: RankedJobRecord) {
-  return [...workspace.resumeMaster.experienceEntries]
+  return [...workspace.resumeMaster.experienceEntries, ...workspace.resumeMaster.archivedExperienceEntries]
     .sort((left, right) => rankExperienceEntry(right, job) - rankExperienceEntry(left, job))
     .slice(0, 2)
 }
@@ -159,6 +159,8 @@ function selectCaseStudies(workspace: OperatorWorkspaceRecord, job: RankedJobRec
 function selectSkills(workspace: OperatorWorkspaceRecord, job: RankedJobRecord) {
   const preferredSkills = [
     ...workspace.resumeMaster.skillsSection,
+    ...workspace.resumeMaster.coreExpertise,
+    ...workspace.resumeMaster.toolsPlatforms,
     ...workspace.profile.skills,
     ...job.skillsKeywords,
   ]
@@ -210,7 +212,9 @@ function buildProfessionalSummary(
   selectedSkills: string[],
 ) {
   const highlightedSkills =
-    selectedSkills.length > 0 ? selectedSkills.slice(0, 3).join(', ') : 'brand, presentation, and campaign work'
+    selectedSkills.length > 0
+      ? selectedSkills.slice(0, 3).join(', ')
+      : workspace.resumeMaster.coreExpertise.slice(0, 3).join(', ') || 'brand, presentation, and campaign work'
   const fitReason =
     job.fitReasons.length > 0
       ? job.fitReasons.slice(0, 2).join(' and ')
@@ -226,12 +230,19 @@ function buildCoverLetterDraft(
 ) {
   const leadCaseStudy = caseStudies[0]?.title ?? 'my portfolio work'
   const highlightedSkills = describeJobSkillFocus(job)
+  const positioning =
+    cleanLine(workspace.coverLetterMaster.positioningPhilosophy) ||
+    'I design things that move the business forward, not just things that look right.'
+  const proofPoint =
+    workspace.coverLetterMaster.proofBank[0]?.bullets[0] ??
+    workspace.resumeMaster.selectedImpactHighlights[0] ??
+    'led work that translated strategy into polished, market-facing design.'
 
   return `Dear ${job.companyName} team,
 
-I am excited to apply for the ${job.title} role. My background in ${workspace.profile.headline.toLowerCase()} work has consistently focused on thoughtful brand, presentation, and campaign execution for distributed teams, which is why this role stands out immediately.
+I am excited to apply for the ${job.title} role. ${positioning}
 
-Most recently, I have led work that aligns closely with what you are asking for, especially in areas like ${highlightedSkills}. I would lead with ${leadCaseStudy} in this application because it shows the kind of high-clarity, high-craft execution that this role seems to value.
+Most recently, I have led work that aligns closely with what you are asking for, especially in areas like ${highlightedSkills}. One relevant proof point is that I ${proofPoint}. I would lead with ${leadCaseStudy} in this application because it shows the kind of high-clarity, high-craft execution that this role seems to value.
 
 What draws me most is the chance to contribute strong visual thinking without losing strategic context. I would be glad to bring that combination of craft, storytelling, and cross-functional collaboration to ${job.companyName}.
 

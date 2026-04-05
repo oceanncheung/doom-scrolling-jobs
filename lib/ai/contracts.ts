@@ -1,7 +1,10 @@
 import type {
   ApplicationAnswerRecord,
+  CoverLetterMasterRecord,
+  MasterSectionProvenanceRecord,
   OperatorWorkspaceRecord,
   ResumeExperienceRecord,
+  ResumeMasterRecord,
 } from '@/lib/domain/types'
 import type { NormalizedJobRecord, RankedJobRecord } from '@/lib/jobs/contracts'
 
@@ -78,17 +81,57 @@ export interface GeneratedPacketOutput {
 }
 
 export interface ProfileWorkspaceGenerationInput {
-  sourceCoverLetterMarkdown: string
-  sourceResumeMarkdown: string
+  masterCoverLetterMarkdown?: string
+  masterResumeMarkdown: string
 }
 
 export interface ProfileWorkspaceGenerationOutput {
+  allowedAdjacentRoles: string[]
   bioSummary: string
   headline: string
+  locationLabel: string
   searchBrief: string
   skills: string[]
   targetRoles: string[]
   targetSeniorityLevels: string[]
   tools: string[]
-  allowedAdjacentRoles: string[]
+}
+
+export interface GeneratedResumeMasterOutput {
+  additionalInformation: string[]
+  archivedExperienceEntries: ResumeExperienceRecord[]
+  baseTitle: string
+  contactSnapshot: ResumeMasterRecord['contactSnapshot']
+  coreExpertise: string[]
+  educationEntries: ResumeMasterRecord['educationEntries']
+  experienceEntries: ResumeExperienceRecord[]
+  languages: string[]
+  sectionProvenance: Record<string, MasterSectionProvenanceRecord>
+  selectedImpactHighlights: string[]
+  skillsSection: string[]
+  summaryText: string
+  toolsPlatforms: string[]
+}
+
+export interface GeneratedCoverLetterMasterOutput {
+  capabilities: CoverLetterMasterRecord['capabilities']
+  contactSnapshot: CoverLetterMasterRecord['contactSnapshot']
+  keyDifferentiators: string[]
+  outputConstraints: string[]
+  positioningPhilosophy: string
+  proofBank: CoverLetterMasterRecord['proofBank']
+  sectionProvenance: Record<string, MasterSectionProvenanceRecord>
+  selectionRules: string[]
+  toneVoice: string[]
+}
+
+export interface CanonicalSourceGenerationInput {
+  sourceCoverLetterText?: string
+  sourceResumeText: string
+}
+
+export interface CanonicalSourceGenerationOutput {
+  coverLetterMaster: GeneratedCoverLetterMasterOutput
+  profileDraft: ProfileWorkspaceGenerationOutput
+  resumeMaster: GeneratedResumeMasterOutput
 }

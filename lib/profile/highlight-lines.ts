@@ -1,13 +1,9 @@
-/** One highlight per line; leading bullet glyphs (•, hyphen list marker, *) are dropped. */
+import { normalizeListItemText } from '@/lib/profile/master-assets'
+
+/** One highlight per line; leading bullet glyphs and list fragments are normalized away. */
 export function highlightLinesFromMultiline(value: string): string[] {
   return String(value ?? '')
     .split('\n')
-    .map((line) => {
-      const trimmed = line.trim()
-      return trimmed
-        .replace(/^[•·▪◦*]\s*/u, '')
-        .replace(/^-\s+(?!\d)/, '')
-        .trim()
-    })
+    .map((line) => normalizeListItemText(line))
     .filter(Boolean)
 }

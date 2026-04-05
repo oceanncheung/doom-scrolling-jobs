@@ -26,6 +26,14 @@ export async function generateCoverLetter(input: CoverLetterInput): Promise<Cove
     `Resume summary: ${input.resumeVariant.summary}`,
     `Resume change summary: ${input.resumeVariant.changeSummaryForUser}`,
     `Portfolio primary URL: ${input.workspace.profile.portfolioPrimaryUrl}`,
+    `Cover-letter positioning: ${input.workspace.coverLetterMaster.positioningPhilosophy}`,
+    `Cover-letter proof bank: ${JSON.stringify(input.workspace.coverLetterMaster.proofBank)}`,
+    `Cover-letter disciplines: ${input.workspace.coverLetterMaster.capabilities.disciplines.join(' | ')}`,
+    `Cover-letter production tools: ${input.workspace.coverLetterMaster.capabilities.productionTools.join(' | ')}`,
+    `Cover-letter tone: ${input.workspace.coverLetterMaster.toneVoice.join(' | ')}`,
+    `Cover-letter differentiators: ${input.workspace.coverLetterMaster.keyDifferentiators.join(' | ')}`,
+    `Cover-letter selection rules: ${input.workspace.coverLetterMaster.selectionRules.join(' | ')}`,
+    `Cover-letter output constraints: ${input.workspace.coverLetterMaster.outputConstraints.join(' | ')}`,
   ].join('\n')
 
   const response = await generateOpenAIJson<CoverLetterOutput>({

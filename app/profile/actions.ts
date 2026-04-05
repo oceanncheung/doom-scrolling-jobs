@@ -1,13 +1,17 @@
 'use server'
 
 import { extractUploadedDocumentText } from '@/lib/files/extract-uploaded-document-text'
+import { joinHeadlineTags } from '@/lib/profile/headline-tags'
 import { highlightLinesFromMultiline } from '@/lib/profile/highlight-lines'
+import { ensureLocationCountryFirst } from '@/lib/profile/location-market'
 import { normalizeSalaryFloorCurrency } from '@/lib/profile/salary-currency'
 import { refresh, revalidatePath } from 'next/cache'
 
+import { generateCanonicalSources } from '@/lib/ai/tasks/generate-canonical-sources'
 import { generateProfileWorkspace } from '@/lib/ai/tasks/generate-profile-workspace'
 import { getActiveOperatorContext } from '@/lib/data/operators'
 import type {
+  CoverLetterProofBankEntryRecord,
   OperatorPortfolioItemRecord,
   ResumeAchievementRecord,
   ResumeEducationRecord,
@@ -15,6 +19,15 @@ import type {
 } from '@/lib/domain/types'
 import { hasOpenAIEnv, hasSupabaseServerEnv } from '@/lib/env'
 import { ensurePrimaryImportedJobs } from '@/lib/jobs/real-feed'
+import {
+  collectCoverLetterMasterIssues,
+  collectProfileDraftBlockingIssues,
+  collectResumeMasterIssues,
+  normalizeCoverLetterMasterRecord,
+  normalizeResumeMasterRecord,
+  renderMasterCoverLetterMarkdown,
+  renderMasterResumeMarkdown,
+} from '@/lib/profile/master-assets'
 import { createClient } from '@/lib/supabase/server'
 
 export interface ProfileActionState {
@@ -30,10 +43,6 @@ interface ParseResult<T> {
 interface UploadedSourceDocument {
   fileName: string | null
   parsedText: string | null
-}
-
-function isMarkdownSourceFileName(value: string) {
-  return /\.(md|markdown)$/i.test(value.trim())
 }
 
 function asTextValue(value: FormDataEntryValue | null) {
@@ -85,27 +94,18 @@ function asRecord(value: unknown) {
 }
 
 async function resolveUploadedSourceDocument(options: {
-  acceptedKinds?: 'markdown-only' | 'any-supported'
   existingParsedText: string | null
   file: File | null
   fileName: string | null
   label: string
 }): Promise<UploadedSourceDocument> {
-  const { acceptedKinds = 'any-supported', existingParsedText, file, fileName, label } = options
+  const { existingParsedText, file, fileName, label } = options
 
   if (file) {
-    if (acceptedKinds === 'markdown-only' && !isMarkdownSourceFileName(file.name)) {
-      throw new Error(`${label} must be uploaded as a .md file.`)
-    }
-
     const parsedText = await extractUploadedDocumentText(file)
 
     if (!parsedText) {
-      throw new Error(
-        acceptedKinds === 'markdown-only'
-          ? `${label} could not be read. Upload a valid .md file.`
-          : `${label} could not be parsed into readable text. Try another PDF, DOC, or DOCX file.`,
-      )
+      throw new Error(`${label} could not be parsed into readable text. Try another PDF, DOC, or DOCX file.`)
     }
 
     return {
@@ -115,13 +115,6 @@ async function resolveUploadedSourceDocument(options: {
   }
 
   if (!fileName) {
-    return {
-      fileName: null,
-      parsedText: null,
-    }
-  }
-
-  if (acceptedKinds === 'markdown-only' && !isMarkdownSourceFileName(fileName)) {
     return {
       fileName: null,
       parsedText: null,
@@ -184,6 +177,18 @@ function fillBlankText(currentValue: string | null, fallbackValue: string) {
 
 function fillBlankList(currentValues: string[], fallbackValues: string[]) {
   return currentValues.length > 0 ? currentValues : fallbackValues
+}
+
+function dedupeList(values: string[]) {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)))
+}
+
+function buildAchievementBankFromHighlights(highlights: string[]) {
+  return highlights.map((detail, index) => ({
+    category: 'highlight',
+    detail,
+    title: `Impact highlight ${index + 1}`,
+  }))
 }
 
 function toPostgresInList(values: string[]) {
@@ -317,6 +322,39 @@ function parseEducationEntries(formData: FormData): ParseResult<ResumeEducationR
   return { items }
 }
 
+function parseCoverLetterProofBank(formData: FormData): ParseResult<CoverLetterProofBankEntryRecord> {
+  const labels = asFieldArray(formData, 'coverLetterProofLabel')
+  const contexts = asFieldArray(formData, 'coverLetterProofContext')
+  const bullets = asFieldArray(formData, 'coverLetterProofBullets').map((value) =>
+    highlightLinesFromMultiline(value),
+  )
+  const count = Math.max(labels.length, contexts.length, bullets.length)
+  const items: CoverLetterProofBankEntryRecord[] = []
+
+  for (let index = 0; index < count; index += 1) {
+    const item: CoverLetterProofBankEntryRecord = {
+      bullets: bullets[index] ?? [],
+      context: contexts[index] ?? '',
+      label: labels[index] ?? '',
+    }
+
+    if (!hasMeaningfulRow([item.label, item.context, item.bullets])) {
+      continue
+    }
+
+    if (!item.label || item.bullets.length === 0) {
+      return {
+        error: `Proof bank entry ${index + 1} needs both a label and at least one bullet.`,
+        items: [],
+      }
+    }
+
+    items.push(item)
+  }
+
+  return { items }
+}
+
 function parsePortfolioItems(formData: FormData): ParseResult<OperatorPortfolioItemRecord> {
   const ids = asFieldArray(formData, 'portfolioItemId')
   const titles = asFieldArray(formData, 'portfolioTitle')
@@ -418,12 +456,14 @@ export async function saveOperatorProfile(
   const experienceResult = parseExperienceEntries(formData)
   const achievementResult = parseAchievementBank(formData)
   const educationResult = parseEducationEntries(formData)
+  const proofBankResult = parseCoverLetterProofBank(formData)
   const portfolioResult = parsePortfolioItems(formData)
 
   const parseError =
     experienceResult.error ??
     achievementResult.error ??
     educationResult.error ??
+    proofBankResult.error ??
     portfolioResult.error
 
   if (parseError) {
@@ -433,31 +473,41 @@ export async function saveOperatorProfile(
     }
   }
 
-  const experienceEntries = experienceResult.items
-  const achievementBank = achievementResult.items
-  const educationEntries = educationResult.items
+  let experienceEntries = experienceResult.items
+  let achievementBank = achievementResult.items
+  let educationEntries = educationResult.items
+  const proofBankEntries = proofBankResult.items
   const portfolioItems = portfolioResult.items
   let bioSummary = asOptionalText(formData.get('bioSummary')) ?? ''
-  const coverLetterPdfFileName = asOptionalText(formData.get('coverLetterPdfFileName'))
+  const sourceCoverLetterFileName = asOptionalText(formData.get('sourceCoverLetterFileName'))
+  const sourceResumeFileName = asOptionalText(formData.get('sourceResumeFileName'))
   let headline = asTextValue(formData.get('headline'))
+  let locationLabel = asOptionalText(formData.get('locationLabel')) ?? ''
+  const phoneNumber = asOptionalText(formData.get('phoneNumber')) ?? ''
   let searchBrief = asOptionalText(formData.get('searchBrief')) ?? ''
   let targetRoles = asList(formData.get('targetRoles'))
   let allowedAdjacentRoles = asList(formData.get('allowedAdjacentRoles'))
   let targetSeniorityLevels = asList(formData.get('targetSeniorityLevels'))
   let skills = asList(formData.get('skills'))
   let tools = asList(formData.get('tools'))
+  let languages = asList(formData.get('languages'))
   let resumeSkillsSection = asList(formData.get('resumeSkillsSection'))
-  const certifications = asList(formData.get('certifications'))
+  let certifications = asList(formData.get('certifications'))
+  const coverLetterCapabilityDisciplines = asList(formData.get('coverLetterCapabilityDisciplines'))
+  const coverLetterCapabilityTools = asList(formData.get('coverLetterCapabilityTools'))
+  const coverLetterToneVoice = asList(formData.get('coverLetterToneVoice'))
+  const coverLetterKeyDifferentiators = asList(formData.get('coverLetterKeyDifferentiators'))
+  const coverLetterSelectionRules = asList(formData.get('coverLetterSelectionRules'))
+  const coverLetterOutputConstraints = asList(formData.get('coverLetterOutputConstraints'))
+  const coverLetterPositioningPhilosophy =
+    asOptionalText(formData.get('coverLetterPositioningPhilosophy')) ?? ''
   const derivedPortfolioPrimaryUrl =
     asOptionalText(formData.get('portfolioPrimaryUrl')) ??
     portfolioItems.find((item) => item.isPrimary && item.isActive)?.url ??
     portfolioItems.find((item) => item.isActive)?.url ??
     null
   const portfolioPdfFileName = asOptionalText(formData.get('portfolioPdfFileName'))
-  const resumePdfFileName = asOptionalText(formData.get('resumePdfFileName'))
-  const hiringMarkets = asList(formData.get('hiringMarkets'))
-  const primaryMarket = hiringMarkets[0] ?? asOptionalText(formData.get('primaryMarket')) ?? ''
-  const secondaryMarkets = hiringMarkets.slice(1)
+  let hiringMarkets = asList(formData.get('hiringMarkets'))
 
   const supabase = createClient()
   const displayName = asOptionalText(formData.get('displayName'))
@@ -470,43 +520,57 @@ export async function saveOperatorProfile(
     }
   }
 
-  const { data: existingResumeMasterRow, error: existingResumeMasterError } = await supabase
-    .from('resume_master')
-    .select('source_content')
-    .eq('id', operatorContext.resumeMasterId)
-    .maybeSingle()
+  const [{ data: existingResumeMasterRow, error: existingResumeMasterError }, { data: existingCoverLetterMasterRow, error: existingCoverLetterMasterError }] = await Promise.all([
+    supabase.from('resume_master').select('*').eq('id', operatorContext.resumeMasterId).maybeSingle(),
+    operatorContext.coverLetterMasterId
+      ? supabase.from('cover_letter_master').select('*').eq('id', operatorContext.coverLetterMasterId).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ])
 
-  if (existingResumeMasterError) {
+  if (existingResumeMasterError || existingCoverLetterMasterError) {
     return {
-      message: existingResumeMasterError.message,
+      message:
+        existingResumeMasterError?.message ??
+        existingCoverLetterMasterError?.message ??
+        'Profile materials could not be loaded.',
       status: 'error',
     }
   }
 
-  const existingSourceContent = asRecord(existingResumeMasterRow?.source_content)
+  const existingResumeMaster = normalizeResumeMasterRecord(existingResumeMasterRow ?? {})
+  const existingCoverLetterMaster = normalizeCoverLetterMasterRecord(existingCoverLetterMasterRow ?? {})
+  const existingResumeSourceContent = asRecord(existingResumeMaster.sourceContent)
 
-  let parsedResumeDocument: UploadedSourceDocument
-  let parsedCoverLetterDocument: UploadedSourceDocument
+  let parsedRawResumeDocument: UploadedSourceDocument
+  let parsedRawCoverLetterDocument: UploadedSourceDocument
   let parsedPortfolioDocument: UploadedSourceDocument
 
   try {
-    ;[parsedResumeDocument, parsedCoverLetterDocument, parsedPortfolioDocument] = await Promise.all([
+    ;[
+      parsedRawResumeDocument,
+      parsedRawCoverLetterDocument,
+      parsedPortfolioDocument,
+    ] = await Promise.all([
       resolveUploadedSourceDocument({
-        existingParsedText: asOptionalUnknownText(existingSourceContent?.resumeDocumentText),
-        file: asUploadedFile(formData.get('resumePdfUpload')),
-        fileName: resumePdfFileName,
+        existingParsedText:
+          asOptionalUnknownText(existingResumeSourceContent?.resumeSourceText) ??
+          asOptionalUnknownText(existingResumeSourceContent?.resumeDocumentText) ??
+          existingResumeMaster.rawSourceText,
+        file: asUploadedFile(formData.get('resumeSourceUpload')),
+        fileName: sourceResumeFileName ?? existingResumeMaster.resumePdfFileName,
         label: 'Source resume',
-        acceptedKinds: 'markdown-only',
       }),
       resolveUploadedSourceDocument({
-        existingParsedText: asOptionalUnknownText(existingSourceContent?.coverLetterDocumentText),
-        file: asUploadedFile(formData.get('coverLetterPdfUpload')),
-        fileName: coverLetterPdfFileName,
+        existingParsedText:
+          asOptionalUnknownText(existingResumeSourceContent?.coverLetterSourceText) ??
+          asOptionalUnknownText(existingResumeSourceContent?.coverLetterDocumentText) ??
+          existingCoverLetterMaster.rawSourceText,
+        file: asUploadedFile(formData.get('coverLetterSourceUpload')),
+        fileName: sourceCoverLetterFileName ?? existingResumeMaster.coverLetterPdfFileName,
         label: 'Source cover letter',
-        acceptedKinds: 'markdown-only',
       }),
       resolveUploadedSourceDocument({
-        existingParsedText: asOptionalUnknownText(existingSourceContent?.portfolioDocumentText),
+        existingParsedText: asOptionalUnknownText(existingResumeSourceContent?.portfolioDocumentText),
         file: asUploadedFile(formData.get('portfolioPdfUpload')),
         fileName: portfolioPdfFileName,
         label: 'Portfolio file',
@@ -522,45 +586,136 @@ export async function saveOperatorProfile(
     }
   }
 
+  let generatedResumeMaster = existingResumeMaster
+  let generatedCoverLetterMaster = existingCoverLetterMaster
+
   if (isGenerateProfileIntent) {
     if (!hasOpenAIEnv()) {
       return {
-        message: 'Add the OpenAI server environment before generating a profile draft.',
+        message: 'Add the OpenAI server environment before generating canonical profile materials.',
         status: 'error',
       }
     }
 
     try {
-      if (!parsedResumeDocument.parsedText?.trim() || !parsedCoverLetterDocument.parsedText?.trim()) {
+      if (!parsedRawResumeDocument.parsedText?.trim()) {
         return {
-          message: 'Upload both source markdown files before generating a profile.',
+          message: 'Upload a resume before generating a profile draft.',
           status: 'error',
         }
       }
 
-      const generated = await generateProfileWorkspace({
-        sourceCoverLetterMarkdown: parsedCoverLetterDocument.parsedText,
-        sourceResumeMarkdown: parsedResumeDocument.parsedText,
+      if (parsedRawResumeDocument.parsedText?.trim()) {
+        const canonical = await generateCanonicalSources({
+          sourceCoverLetterText: parsedRawCoverLetterDocument.parsedText ?? undefined,
+          sourceResumeText: parsedRawResumeDocument.parsedText,
+        })
+
+        generatedResumeMaster = normalizeResumeMasterRecord({
+          achievement_bank: buildAchievementBankFromHighlights(
+            canonical.resumeMaster.selectedImpactHighlights,
+          ),
+          additional_information: canonical.resumeMaster.additionalInformation,
+          approval_status: 'draft',
+          archived_experience_entries: canonical.resumeMaster.archivedExperienceEntries,
+          base_title: canonical.resumeMaster.baseTitle,
+          contact_snapshot: canonical.resumeMaster.contactSnapshot,
+          core_expertise: canonical.resumeMaster.coreExpertise,
+          education_entries: canonical.resumeMaster.educationEntries,
+          experience_entries: canonical.resumeMaster.experienceEntries,
+          generation_issues: [],
+          languages: canonical.resumeMaster.languages,
+          raw_source_text: parsedRawResumeDocument.parsedText,
+          section_provenance: canonical.resumeMaster.sectionProvenance,
+          selected_impact_highlights: canonical.resumeMaster.selectedImpactHighlights,
+          skills_section: canonical.resumeMaster.skillsSection,
+          source_content: {
+            generatedFrom: 'raw-source-upload',
+          },
+          source_format: 'structured_json',
+          summary_text: canonical.resumeMaster.summaryText,
+          tools_platforms: canonical.resumeMaster.toolsPlatforms,
+        })
+
+        generatedCoverLetterMaster = normalizeCoverLetterMasterRecord({
+          approval_status: 'draft',
+          capabilities: canonical.coverLetterMaster.capabilities,
+          contact_snapshot: canonical.coverLetterMaster.contactSnapshot,
+          generation_issues: [],
+          key_differentiators: canonical.coverLetterMaster.keyDifferentiators,
+          output_constraints: canonical.coverLetterMaster.outputConstraints,
+          positioning_philosophy: canonical.coverLetterMaster.positioningPhilosophy,
+          proof_bank: canonical.coverLetterMaster.proofBank,
+          raw_source_text: parsedRawCoverLetterDocument.parsedText ?? parsedRawResumeDocument.parsedText,
+          section_provenance: canonical.coverLetterMaster.sectionProvenance,
+          selection_rules: canonical.coverLetterMaster.selectionRules,
+          source_content: {
+            generatedFrom: 'raw-source-upload',
+          },
+          source_format: 'structured_json',
+          tone_voice: canonical.coverLetterMaster.toneVoice,
+        })
+      }
+
+      generatedResumeMaster = normalizeResumeMasterRecord({
+        ...generatedResumeMaster,
+        approval_status: 'draft',
+        approved_at: null,
+      })
+      generatedCoverLetterMaster = normalizeCoverLetterMasterRecord({
+        ...generatedCoverLetterMaster,
+        approval_status: 'draft',
+        approved_at: null,
       })
 
-      headline = fillBlankText(headline, generated.headline)
-      bioSummary = fillBlankText(bioSummary, generated.bioSummary)
-      searchBrief = fillBlankText(searchBrief, generated.searchBrief)
-      targetRoles = fillBlankList(targetRoles, generated.targetRoles)
-      allowedAdjacentRoles = fillBlankList(allowedAdjacentRoles, generated.allowedAdjacentRoles)
-      targetSeniorityLevels = fillBlankList(targetSeniorityLevels, generated.targetSeniorityLevels)
-      skills = fillBlankList(skills, generated.skills)
-      tools = fillBlankList(tools, generated.tools)
-      resumeSkillsSection = fillBlankList(resumeSkillsSection, generated.skills)
+      generatedResumeMaster.renderedMarkdown = renderMasterResumeMarkdown(generatedResumeMaster)
+      generatedCoverLetterMaster.renderedMarkdown = generatedCoverLetterMaster.hasSourceMaterial
+        ? renderMasterCoverLetterMarkdown(generatedCoverLetterMaster)
+        : ''
+
+      const generatedProfile = await generateProfileWorkspace({
+        masterCoverLetterMarkdown: generatedCoverLetterMaster.renderedMarkdown || undefined,
+        masterResumeMarkdown: generatedResumeMaster.renderedMarkdown,
+      })
+
+      headline = fillBlankText(headline, generatedProfile.headline)
+      bioSummary = fillBlankText(bioSummary, generatedProfile.bioSummary)
+      locationLabel = fillBlankText(locationLabel, generatedProfile.locationLabel)
+      searchBrief = fillBlankText(searchBrief, generatedProfile.searchBrief)
+      targetRoles = fillBlankList(targetRoles, generatedProfile.targetRoles)
+      allowedAdjacentRoles = fillBlankList(allowedAdjacentRoles, generatedProfile.allowedAdjacentRoles)
+      targetSeniorityLevels = fillBlankList(targetSeniorityLevels, generatedProfile.targetSeniorityLevels)
+      skills = fillBlankList(skills, generatedProfile.skills)
+      tools = fillBlankList(tools, generatedProfile.tools)
+      resumeSkillsSection = fillBlankList(
+        resumeSkillsSection,
+        generatedResumeMaster.skillsSection.length > 0
+          ? generatedResumeMaster.skillsSection
+          : generatedProfile.skills,
+      )
+      experienceEntries = experienceEntries.length > 0 ? experienceEntries : generatedResumeMaster.experienceEntries
+      educationEntries = educationEntries.length > 0 ? educationEntries : generatedResumeMaster.educationEntries
+      achievementBank =
+        achievementBank.length > 0
+          ? achievementBank
+          : generatedResumeMaster.achievementBank.length > 0
+            ? generatedResumeMaster.achievementBank
+            : buildAchievementBankFromHighlights(generatedResumeMaster.selectedImpactHighlights)
+      certifications = certifications.length > 0 ? certifications : generatedResumeMaster.certifications
+      languages = fillBlankList(languages, generatedResumeMaster.languages)
     } catch (error) {
       return {
         message:
           error instanceof Error
             ? error.message
-            : 'Profile generation could not finish from the current source text.',
+            : 'Canonical source generation could not finish from the current materials.',
         status: 'error',
       }
     }
+  }
+
+  if (!headline) {
+    headline = joinHeadlineTags(dedupeList(targetRoles))
   }
 
   if (!headline) {
@@ -570,20 +725,234 @@ export async function saveOperatorProfile(
     }
   }
 
+  hiringMarkets = ensureLocationCountryFirst(
+    hiringMarkets.length > 0
+      ? hiringMarkets
+      : [asOptionalText(formData.get('primaryMarket')) ?? ''].filter(Boolean),
+    locationLabel,
+  )
+
+  const primaryMarket = hiringMarkets[0] ?? ''
+  const secondaryMarkets = hiringMarkets.slice(1)
+
   const primarySeniorityLevel =
     targetSeniorityLevels[0] ?? asOptionalText(formData.get('seniorityLevel')) ?? ''
+  const resolvedDisplayName = displayName ?? operatorContext.operator.displayName
+  const now = new Date().toISOString()
+
+  const baseResumeMaster = normalizeResumeMasterRecord({
+    ...existingResumeMaster,
+    ...generatedResumeMaster,
+    achievement_bank:
+      achievementBank.length > 0
+        ? achievementBank
+        : generatedResumeMaster.achievementBank.length > 0
+          ? generatedResumeMaster.achievementBank
+          : existingResumeMaster.achievementBank,
+    additional_information:
+      generatedResumeMaster.additionalInformation.length > 0
+        ? generatedResumeMaster.additionalInformation
+        : existingResumeMaster.additionalInformation,
+    approval_status: isGenerateProfileIntent
+      ? 'draft'
+      : existingResumeMaster.approvalStatus,
+    approved_at: isGenerateProfileIntent ? null : existingResumeMaster.approvedAt ?? null,
+    base_title: headline || generatedResumeMaster.baseTitle || existingResumeMaster.baseTitle,
+    contact_snapshot: {
+      email: operatorContext.operator.email,
+      linkedinUrl: asOptionalText(formData.get('linkedinUrl')) ?? existingResumeMaster.contactSnapshot.linkedinUrl,
+      location: locationLabel || existingResumeMaster.contactSnapshot.location,
+      name: resolvedDisplayName,
+      phone: phoneNumber || existingResumeMaster.contactSnapshot.phone,
+      portfolioUrl:
+        derivedPortfolioPrimaryUrl ??
+        existingResumeMaster.contactSnapshot.portfolioUrl,
+      websiteUrl:
+        asOptionalText(formData.get('personalSiteUrl')) ??
+        existingResumeMaster.contactSnapshot.websiteUrl,
+    },
+    core_expertise:
+      skills.length > 0 ? dedupeList(skills) : generatedResumeMaster.coreExpertise,
+    certifications:
+      certifications.length > 0
+        ? dedupeList(certifications)
+        : generatedResumeMaster.certifications,
+    cover_letter_pdf_file_name:
+      parsedRawCoverLetterDocument.fileName ?? existingResumeMaster.coverLetterPdfFileName,
+    education_entries:
+      educationEntries.length > 0 ? educationEntries : generatedResumeMaster.educationEntries,
+    experience_entries:
+      experienceEntries.length > 0 ? experienceEntries : generatedResumeMaster.experienceEntries,
+    languages: languages.length > 0 ? dedupeList(languages) : generatedResumeMaster.languages,
+    portfolio_pdf_file_name:
+      parsedPortfolioDocument.fileName ?? existingResumeMaster.portfolioPdfFileName,
+    raw_source_text:
+      generatedResumeMaster.rawSourceText ||
+      parsedRawResumeDocument.parsedText ||
+      existingResumeMaster.rawSourceText,
+    resume_pdf_file_name:
+      parsedRawResumeDocument.fileName ?? existingResumeMaster.resumePdfFileName,
+    section_provenance:
+      generatedResumeMaster.sectionProvenance,
+    selected_impact_highlights:
+      generatedResumeMaster.selectedImpactHighlights.length > 0
+        ? generatedResumeMaster.selectedImpactHighlights
+        : dedupeList(achievementBank.map((item) => item.detail || item.title)),
+    skills_section:
+      resumeSkillsSection.length > 0
+        ? dedupeList(resumeSkillsSection)
+        : generatedResumeMaster.skillsSection,
+    source_content: {
+      ...existingResumeMaster.sourceContent,
+      achievementCount: achievementBank.length,
+      coverLetterSourceFileName: parsedRawCoverLetterDocument.fileName,
+      coverLetterSourceText: parsedRawCoverLetterDocument.parsedText,
+      educationCount: educationEntries.length,
+      experienceCount: experienceEntries.length,
+      portfolioDocumentText:
+        parsedPortfolioDocument.parsedText ??
+        asOptionalUnknownText(existingResumeSourceContent?.portfolioDocumentText) ??
+        null,
+      portfolioFileName:
+        parsedPortfolioDocument.fileName ??
+        asOptionalUnknownText(existingResumeSourceContent?.portfolioFileName) ??
+        null,
+      portfolioItemCount: portfolioItems.length,
+      rawResumeGeneratedAt: isGenerateProfileIntent ? now : existingResumeSourceContent?.rawResumeGeneratedAt,
+      resumeSourceFileName: parsedRawResumeDocument.fileName,
+      resumeSourceText: parsedRawResumeDocument.parsedText,
+      reviewRequired: isGenerateProfileIntent,
+      searchBrief,
+      updatedFrom: 'profile-workspace',
+    },
+    source_format: generatedResumeMaster.sourceFormat || existingResumeMaster.sourceFormat,
+    summary_text:
+      bioSummary || generatedResumeMaster.summaryText || existingResumeMaster.summaryText,
+    tools_platforms:
+      tools.length > 0 ? dedupeList(tools) : generatedResumeMaster.toolsPlatforms,
+  })
+
+  baseResumeMaster.renderedMarkdown = renderMasterResumeMarkdown(baseResumeMaster)
+  const resumeIssues = collectResumeMasterIssues(baseResumeMaster)
+
+  const baseCoverLetterMaster = normalizeCoverLetterMasterRecord({
+    ...existingCoverLetterMaster,
+    ...generatedCoverLetterMaster,
+    approval_status: isGenerateProfileIntent
+      ? 'draft'
+      : existingCoverLetterMaster.approvalStatus,
+    approved_at: isGenerateProfileIntent ? null : existingCoverLetterMaster.approvedAt ?? null,
+    capabilities: {
+      disciplines:
+        coverLetterCapabilityDisciplines.length > 0
+          ? dedupeList(coverLetterCapabilityDisciplines)
+          : generatedCoverLetterMaster.capabilities.disciplines.length > 0
+            ? generatedCoverLetterMaster.capabilities.disciplines
+            : existingCoverLetterMaster.capabilities.disciplines,
+      productionTools:
+        coverLetterCapabilityTools.length > 0
+          ? dedupeList(coverLetterCapabilityTools)
+          : generatedCoverLetterMaster.capabilities.productionTools.length > 0
+            ? generatedCoverLetterMaster.capabilities.productionTools
+            : existingCoverLetterMaster.capabilities.productionTools,
+    },
+    contact_snapshot: {
+      location: locationLabel || existingCoverLetterMaster.contactSnapshot.location,
+      name: resolvedDisplayName,
+      roleTargets:
+        targetRoles.length > 0
+          ? dedupeList(targetRoles)
+          : generatedCoverLetterMaster.contactSnapshot.roleTargets,
+    },
+    key_differentiators:
+      coverLetterKeyDifferentiators.length > 0
+        ? dedupeList(coverLetterKeyDifferentiators)
+        : generatedCoverLetterMaster.keyDifferentiators.length > 0
+          ? generatedCoverLetterMaster.keyDifferentiators
+          : existingCoverLetterMaster.keyDifferentiators,
+    output_constraints:
+      coverLetterOutputConstraints.length > 0
+        ? dedupeList(coverLetterOutputConstraints)
+        : generatedCoverLetterMaster.outputConstraints.length > 0
+          ? generatedCoverLetterMaster.outputConstraints
+          : existingCoverLetterMaster.outputConstraints,
+    positioning_philosophy:
+      coverLetterPositioningPhilosophy ||
+      generatedCoverLetterMaster.positioningPhilosophy ||
+      existingCoverLetterMaster.positioningPhilosophy,
+    proof_bank:
+      proofBankEntries.length > 0
+        ? proofBankEntries
+        : generatedCoverLetterMaster.proofBank.length > 0
+          ? generatedCoverLetterMaster.proofBank
+          : existingCoverLetterMaster.proofBank,
+    raw_source_text:
+      generatedCoverLetterMaster.rawSourceText ||
+      parsedRawCoverLetterDocument.parsedText ||
+      existingCoverLetterMaster.rawSourceText,
+    section_provenance:
+      generatedCoverLetterMaster.sectionProvenance,
+    selection_rules:
+      coverLetterSelectionRules.length > 0
+        ? dedupeList(coverLetterSelectionRules)
+        : generatedCoverLetterMaster.selectionRules.length > 0
+          ? generatedCoverLetterMaster.selectionRules
+          : existingCoverLetterMaster.selectionRules,
+    source_content: {
+      ...existingCoverLetterMaster.sourceContent,
+      coverLetterSourceFileName: parsedRawCoverLetterDocument.fileName,
+      coverLetterSourceText: parsedRawCoverLetterDocument.parsedText,
+      proofBankCount: proofBankEntries.length,
+      updatedFrom: 'profile-workspace',
+    },
+    source_format: generatedCoverLetterMaster.sourceFormat || existingCoverLetterMaster.sourceFormat,
+    tone_voice:
+      coverLetterToneVoice.length > 0
+        ? dedupeList(coverLetterToneVoice)
+        : generatedCoverLetterMaster.toneVoice.length > 0
+          ? generatedCoverLetterMaster.toneVoice
+          : existingCoverLetterMaster.toneVoice,
+  })
+
+  baseCoverLetterMaster.renderedMarkdown = baseCoverLetterMaster.hasSourceMaterial
+    ? renderMasterCoverLetterMarkdown(baseCoverLetterMaster)
+    : ''
+  const coverLetterIssues = collectCoverLetterMasterIssues(baseCoverLetterMaster)
+
+  const draftProfileForValidation = {
+    headline,
+    locationLabel,
+    searchBrief,
+    skills: dedupeList(skills),
+    targetRoles: dedupeList(targetRoles),
+  }
+  const profileBlockingIssues = collectProfileDraftBlockingIssues(draftProfileForValidation)
+  const approvalBlockingIssues = [...resumeIssues, ...profileBlockingIssues]
+  const approvalSucceeded =
+    !isGenerateProfileIntent &&
+    baseResumeMaster.hasSourceMaterial &&
+    approvalBlockingIssues.length === 0
+  const coverLetterApprovalSucceeded =
+    !isGenerateProfileIntent &&
+    baseCoverLetterMaster.hasSourceMaterial &&
+    coverLetterIssues.length === 0
+  const canonicalReviewedAt = isGenerateProfileIntent
+    ? null
+    : approvalSucceeded
+      ? now
+      : null
 
   const userPayload = {
     account_status: 'active',
     auth_provider: 'internal',
-    display_name: displayName,
+    display_name: resolvedDisplayName,
     email: operatorContext.operator.email,
     id: operatorContext.userId,
     is_internal: true,
   }
 
   const operatorPayload = {
-    display_name: displayName ?? operatorContext.operator.displayName,
+    display_name: resolvedDisplayName,
     email: operatorContext.operator.email,
     id: operatorContext.operator.id,
     slug: operatorContext.operator.slug,
@@ -593,9 +962,10 @@ export async function saveOperatorProfile(
     id: operatorContext.profileId,
     operator_id: operatorContext.operator.id,
     user_id: operatorContext.userId,
+    canonical_profile_reviewed_at: canonicalReviewedAt,
     search_brief: searchBrief,
     headline,
-    location_label: asOptionalText(formData.get('locationLabel')) ?? '',
+    location_label: locationLabel,
     timezone: asOptionalText(formData.get('timezone')) ?? 'America/Toronto',
     remote_required: formData.get('remoteRequired') === 'on',
     primary_market: primaryMarket,
@@ -608,20 +978,22 @@ export async function saveOperatorProfile(
     salary_target_min: asOptionalInteger(formData.get('salaryTargetMin')),
     salary_target_max: asOptionalInteger(formData.get('salaryTargetMax')),
     seniority_level: primarySeniorityLevel,
-    target_seniority_levels: targetSeniorityLevels,
-    target_roles: targetRoles,
-    allowed_adjacent_roles: allowedAdjacentRoles,
+    target_seniority_levels: dedupeList(targetSeniorityLevels),
+    target_roles: dedupeList(targetRoles),
+    allowed_adjacent_roles: dedupeList(allowedAdjacentRoles),
     industries_preferred: asList(formData.get('industriesPreferred')),
     industries_avoid: [],
-    skills,
-    tools,
+    skills: dedupeList(skills),
+    tools: dedupeList(tools),
+    languages: dedupeList(languages),
     work_authorization_notes: '',
     portfolio_primary_url: derivedPortfolioPrimaryUrl,
     linkedin_url: asOptionalText(formData.get('linkedinUrl')),
+    phone_number: phoneNumber,
     personal_site_url: asOptionalText(formData.get('personalSiteUrl')),
     bio_summary: bioSummary || null,
-    experience_summary: experienceEntries,
-    education_summary: educationEntries,
+    experience_summary: baseResumeMaster.experienceEntries,
+    education_summary: baseResumeMaster.educationEntries,
     preferences_notes: '',
   }
 
@@ -629,56 +1001,78 @@ export async function saveOperatorProfile(
     id: operatorContext.resumeMasterId,
     operator_id: operatorContext.operator.id,
     user_id: operatorContext.userId,
-    base_title: headline,
-    base_cover_letter_text: parsedCoverLetterDocument.parsedText || null,
-    summary_text: parsedResumeDocument.parsedText || null,
-    experience_entries: experienceEntries,
-    achievement_bank: achievementBank,
-    skills_section: resumeSkillsSection,
-    education_entries: educationEntries,
-    certifications,
+    additional_information: baseResumeMaster.additionalInformation,
+    approval_status: approvalSucceeded ? 'approved' : 'draft',
+    approved_at: approvalSucceeded ? now : null,
+    archived_experience_entries: baseResumeMaster.archivedExperienceEntries,
+    base_title: baseResumeMaster.baseTitle,
+    base_cover_letter_text: baseResumeMaster.baseCoverLetterText || null,
+    contact_snapshot: baseResumeMaster.contactSnapshot,
+    core_expertise: baseResumeMaster.coreExpertise,
+    summary_text: baseResumeMaster.summaryText || null,
+    experience_entries: baseResumeMaster.experienceEntries,
+    achievement_bank: baseResumeMaster.achievementBank,
+    skills_section: baseResumeMaster.skillsSection,
+    education_entries: baseResumeMaster.educationEntries,
+    certifications: baseResumeMaster.certifications,
+    languages: baseResumeMaster.languages,
     links: {
       linkedin: asOptionalText(formData.get('linkedinUrl')),
       portfolio: derivedPortfolioPrimaryUrl,
       website: asOptionalText(formData.get('personalSiteUrl')),
     },
-    source_format: 'structured_json',
-    source_content: {
-      achievementCount: achievementBank.length,
-      coverLetterDocumentText: parsedCoverLetterDocument.parsedText,
-      coverLetterPdfFileName: parsedCoverLetterDocument.fileName,
-      educationCount: educationEntries.length,
-      experienceCount: experienceEntries.length,
-      portfolioItemCount: portfolioItems.length,
-      portfolioDocumentText:
-        parsedPortfolioDocument.parsedText ??
-        asOptionalUnknownText(existingSourceContent?.portfolioDocumentText) ??
-        null,
-      portfolioPdfFileName:
-        parsedPortfolioDocument.fileName ??
-        asOptionalUnknownText(existingSourceContent?.portfolioPdfFileName) ??
-        null,
-      resumeDocumentText: parsedResumeDocument.parsedText,
-      resumePdfFileName: parsedResumeDocument.fileName,
-      searchBrief,
-      updatedFrom: 'profile-workspace',
-    },
+    raw_source_text: baseResumeMaster.rawSourceText || null,
+    rendered_markdown: baseResumeMaster.renderedMarkdown || null,
+    section_provenance: baseResumeMaster.sectionProvenance,
+    generation_issues: resumeIssues,
+    selected_impact_highlights: baseResumeMaster.selectedImpactHighlights,
+    source_format: baseResumeMaster.sourceFormat,
+    source_content: baseResumeMaster.sourceContent,
+    tools_platforms: baseResumeMaster.toolsPlatforms,
   }
 
-  const [userResult, operatorResult, profileResult, resumeResult] = await Promise.all([
+  const coverLetterPayload = {
+    approval_status: coverLetterApprovalSucceeded ? 'approved' : 'draft',
+    approved_at:
+      coverLetterApprovalSucceeded
+        ? now
+        : null,
+    capability_disciplines: baseCoverLetterMaster.capabilities.disciplines,
+    capability_tools: baseCoverLetterMaster.capabilities.productionTools,
+    contact_snapshot: baseCoverLetterMaster.contactSnapshot,
+    generation_issues: coverLetterIssues,
+    id: operatorContext.coverLetterMasterId || crypto.randomUUID(),
+    key_differentiators: baseCoverLetterMaster.keyDifferentiators,
+    operator_id: operatorContext.operator.id,
+    output_constraints: baseCoverLetterMaster.outputConstraints,
+    positioning_philosophy: baseCoverLetterMaster.positioningPhilosophy || null,
+    proof_bank: baseCoverLetterMaster.proofBank,
+    raw_source_text: baseCoverLetterMaster.rawSourceText || null,
+    rendered_markdown: baseCoverLetterMaster.renderedMarkdown || null,
+    section_provenance: baseCoverLetterMaster.sectionProvenance,
+    selection_rules: baseCoverLetterMaster.selectionRules,
+    source_content: baseCoverLetterMaster.sourceContent,
+    source_format: baseCoverLetterMaster.sourceFormat,
+    tone_voice: baseCoverLetterMaster.toneVoice,
+    user_id: operatorContext.userId,
+  }
+
+  const [userResult, operatorResult, profileResult, resumeResult, coverLetterResult] = await Promise.all([
     supabase.from('users').upsert(userPayload, { onConflict: 'id' }),
     supabase.from('operators').upsert(operatorPayload, { onConflict: 'id' }),
     supabase.from('user_profiles').upsert(profilePayload, { onConflict: 'id' }),
     supabase.from('resume_master').upsert(resumePayload, { onConflict: 'id' }),
+    supabase.from('cover_letter_master').upsert(coverLetterPayload, { onConflict: 'id' }),
   ])
 
-  if (userResult.error || operatorResult.error || profileResult.error || resumeResult.error) {
+  if (userResult.error || operatorResult.error || profileResult.error || resumeResult.error || coverLetterResult.error) {
     return {
       message:
         userResult.error?.message ??
         operatorResult.error?.message ??
         profileResult.error?.message ??
         resumeResult.error?.message ??
+        coverLetterResult.error?.message ??
         'Supabase rejected the profile update.',
       status: 'error',
     }
@@ -762,10 +1156,21 @@ export async function saveOperatorProfile(
     refresh()
   }
 
+  const unresolvedDraftNote =
+    approvalBlockingIssues.length > 0
+      ? ' Finish any sections marked with a red dot, then save again to unlock ranking.'
+      : ''
+  const approvalNote =
+    approvalSucceeded ? ' Profile is now approved for ranking.' : ''
+  const coverLetterDraftNote =
+    !coverLetterApprovalSucceeded && baseCoverLetterMaster.hasSourceMaterial && coverLetterIssues.length > 0
+      ? ' Cover-letter strategy was saved as a draft so you can refine it later.'
+      : ''
+
   return {
     message: isGenerateProfileIntent
-      ? `${operatorPayload.display_name} workspace draft filled from the current source markdown files. Review the generated blanks and save again if you want to adjust anything.${rankingRefreshNote}`
-      : `${operatorPayload.display_name} workspace saved with ${experienceEntries.length} experience entries and ${portfolioItems.length} portfolio items.${rankingRefreshNote}`,
+      ? `${operatorPayload.display_name} profile draft refreshed from the uploaded documents. Review the editable sections, then save settings when ready.${unresolvedDraftNote}${rankingRefreshNote}`
+      : `${operatorPayload.display_name} workspace saved with ${experienceEntries.length} experience entries and ${portfolioItems.length} portfolio items.${approvalNote}${unresolvedDraftNote}${coverLetterDraftNote}${rankingRefreshNote}`,
     status: 'success',
   }
 }
@@ -881,7 +1286,7 @@ export async function resetProfileWorkspaceForTesting(
     }
   }
 
-  const [resetWorkflowResult, resetProfileResult, resetResumeMasterResult, deletePortfolioResult] =
+  const [resetWorkflowResult, resetProfileResult, resetResumeMasterResult, resetCoverLetterMasterResult, deletePortfolioResult] =
     await Promise.all([
       supabase
         .from('job_scores')
@@ -894,14 +1299,17 @@ export async function resetProfileWorkspaceForTesting(
         allowed_adjacent_roles: [],
         allowed_remote_regions: [],
         bio_summary: null,
+        canonical_profile_reviewed_at: null,
         education_summary: [],
         experience_summary: [],
         headline: '',
         industries_avoid: [],
         industries_preferred: [],
+        languages: [],
         linkedin_url: null,
         location_label: '',
         personal_site_url: null,
+        phone_number: '',
         portfolio_primary_url: null,
         preferences_notes: null,
         primary_market: '',
@@ -923,19 +1331,54 @@ export async function resetProfileWorkspaceForTesting(
         work_authorization_notes: '',
       }).eq('id', operatorContext.profileId),
       supabase.from('resume_master').update({
+        additional_information: [],
         achievement_bank: [],
+        approval_status: 'draft',
+        approved_at: null,
+        archived_experience_entries: [],
         base_cover_letter_text: null,
         base_title: '',
         certifications: [],
+        contact_snapshot: {},
+        core_expertise: [],
         education_entries: [],
         experience_entries: [],
+        generation_issues: [],
+        languages: [],
         links: {},
+        raw_source_text: null,
+        rendered_markdown: null,
+        section_provenance: {},
+        selected_impact_highlights: [],
         skills_section: [],
+        source_format: 'structured_json',
         source_content: {
           updatedFrom: 'profile-testing-reset',
         },
         summary_text: null,
+        tools_platforms: [],
       }).eq('id', operatorContext.resumeMasterId),
+      supabase.from('cover_letter_master').update({
+        approval_status: 'draft',
+        approved_at: null,
+        capability_disciplines: [],
+        capability_tools: [],
+        contact_snapshot: {},
+        generation_issues: [],
+        key_differentiators: [],
+        output_constraints: [],
+        positioning_philosophy: null,
+        proof_bank: [],
+        raw_source_text: null,
+        rendered_markdown: null,
+        section_provenance: {},
+        selection_rules: [],
+        source_content: {
+          updatedFrom: 'profile-testing-reset',
+        },
+        source_format: 'structured_json',
+        tone_voice: [],
+      }).eq('operator_id', operatorContext.operator.id),
       supabase.from('portfolio_items').delete().eq('operator_id', operatorContext.operator.id),
     ])
 
@@ -943,6 +1386,7 @@ export async function resetProfileWorkspaceForTesting(
     resetWorkflowResult.error ??
     resetProfileResult.error ??
     resetResumeMasterResult.error ??
+    resetCoverLetterMasterResult.error ??
     deletePortfolioResult.error
 
   if (failure) {

@@ -19,12 +19,13 @@ export const generateResumeVariantPrompt = {
   ]
 }`,
   system: `You tailor resumes for ATS-safe designer job applications.
-Use only the source profile, source resume, and source job facts provided.
+Use only the source profile, source resume, source impact highlights, source expertise, and source job facts provided.
 Do not invent employers, titles, dates, tools, achievements, numbers, or responsibilities.
 Preserve truthfulness and readability.
 Keep the output structurally consistent and optimized for ATS screening:
 - concise headline
 - concise summary
+- highlighted impact focus grounded in the source material
 - selected relevant experience only
 - bullet highlights that remain factual
 - compact skills list

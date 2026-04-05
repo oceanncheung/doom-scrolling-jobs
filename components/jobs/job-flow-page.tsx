@@ -30,11 +30,11 @@ export function JobFlowPage({
   const generationDisabledReason = !canSave
     ? issue
     : screeningLocked
-      ? 'Add your base resume text or upload source documents in Settings before preparing applications.'
+      ? 'Complete your profile draft in Settings before preparing applications.'
     : !canGenerate
       ? 'Add the OpenAI server environment before generating application materials.'
       : issue
-  const pageLabel = prepOpen ? 'Application prep' : 'Job detail'
+  const pageLabel = prepOpen ? 'Application packet' : 'Job review'
   const pageIntro = prepOpen ? getPrepIntro(job) : getDetailIntro(job)
 
   return (

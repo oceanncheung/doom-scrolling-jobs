@@ -4,27 +4,32 @@ import { ProfileSettingsRail } from '@/components/profile/profile-settings-rail'
 import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
 import { requireActiveOperatorSelection } from '@/lib/data/operators'
 import { getOperatorProfile } from '@/lib/data/operator-profile'
+import { parseHeadlineTags } from '@/lib/profile/headline-tags'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ProfilePage() {
   await requireActiveOperatorSelection()
   const { workspace } = await getOperatorProfile()
+  const initialApplicationTitleTags =
+    workspace.profile.targetRoles.length > 0
+      ? workspace.profile.targetRoles
+      : parseHeadlineTags(workspace.profile.headline)
 
   return (
     <main className="page-stack workspace-surface settings-page">
-      <ProfileSaveMessageRootProvider>
+      <ProfileSaveMessageRootProvider initialApplicationTitleTags={initialApplicationTitleTags}>
         <WorkspaceSurface
           rail={<ProfileSettingsRail formId="profile-workspace-form" workspace={workspace} />}
         >
             <div className="queue-meta settings-page-header">
               <div className="queue-meta-heading">
                 <div>
-                  <p className="panel-label">Workspace settings</p>
+                  <p className="panel-label">Profile</p>
                   <h1>Profile</h1>
                 </div>
               </div>
-              <p>Manage the materials and preferences this workspace uses.</p>
+              <p>Manage the source documents, profile facts, and matching preferences used across the site.</p>
             </div>
 
             <ProfileForm workspace={workspace} />

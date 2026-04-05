@@ -61,29 +61,23 @@ export function FileUploadSlot({
     return (
       <div className="upload-slot upload-slot--chip">
         {fileName ? (
-          <div className="upload-slot-chip-filled">
-            <button
-              className="upload-slot-chip-main"
-              onClick={() => inputRef.current?.click()}
-              title={fileName}
-              type="button"
-            >
-              <span className="upload-slot-chip-filename">{compactFileName}</span>
-            </button>
-            <button
-              aria-label={`Remove ${label}`}
-              className="upload-slot-chip-icon-btn"
-              onClick={() => {
-                if (inputRef.current) {
-                  inputRef.current.value = ''
-                }
-                onRemove()
-              }}
-              type="button"
-            >
+          <button
+            aria-label={`Remove ${label}`}
+            className="upload-slot-chip-btn upload-slot-chip-btn--filled"
+            onClick={() => {
+              if (inputRef.current) {
+                inputRef.current.value = ''
+              }
+              onRemove()
+            }}
+            title={fileName}
+            type="button"
+          >
+            <span className="upload-slot-chip-filename">{compactFileName}</span>
+            <span className="upload-slot-chip-trailing-icon">
               <TrashGlyph />
-            </button>
-          </div>
+            </span>
+          </button>
         ) : (
           <button className="upload-slot-chip-btn" onClick={() => inputRef.current?.click()} type="button">
             {showUploadIcon ? (

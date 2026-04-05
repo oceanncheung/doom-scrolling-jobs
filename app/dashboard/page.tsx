@@ -64,7 +64,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           />
         ))
       ) : (
-        <StageEmpty message="Skipped and archived jobs will show up here." title="Archive" />
+        <StageEmpty message="Skipped and archived jobs will show up here." title="Archived" />
       ),
     potential:
       potentialJobs.length > 0 ? (
@@ -80,7 +80,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <StageEmpty
           message={
             screeningLocked
-              ? 'Add your base resume text or upload source documents in Settings to unlock Potential.'
+              ? 'Complete your profile draft in Settings to unlock Potential.'
               : 'No active screening jobs are available right now.'
           }
           title="Potential"
@@ -98,7 +98,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           />
         ))
       ) : (
-        <StageEmpty message="Move a packet to ready to apply and it will show up here." title="Prepared" />
+        <StageEmpty message="Mark a packet ready and it will show up here." title="Ready" />
       ),
     saved:
       savedJobs.length > 0 ? (

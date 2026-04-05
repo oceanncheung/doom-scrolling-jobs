@@ -27,7 +27,9 @@
   .settings-job-targets-row,
   .settings-advanced-tags-row,
   .strengths-experience-grid,
-  .field-grid-2 {
+  .field-grid-2,
+  .repeat-card-proof-grid,
+  .repeat-card-achievement-grid {
     grid-template-columns: 1fr;
   }
 
@@ -136,7 +138,13 @@
 
   .settings-source-uploads-materials-files--dual {
     grid-template-columns: 1fr;
+    gap: 0;
     width: 100%;
+  }
+
+  .settings-main .settings-source-uploads-materials-files--dual > .upload-slot + .upload-slot {
+    margin-left: 0;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
   }
 
   .settings-main .settings-source-uploads-row--materials .upload-slot {
@@ -228,6 +236,12 @@
     gap: 0;
   }
 
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot + .screening-action-slot,
+  .job-overview-actions .screening-action-slot + .screening-action-slot {
+    margin-left: 0;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+  }
+
   main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child,
   main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child {
     grid-column: auto;
@@ -264,6 +278,11 @@
     width: 100%;
   }
 
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-action-slot {
+    margin-left: 0;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+  }
+
   main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote:has(+ .stage-action-slot--salary),
   main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit),
   main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--fit:has(+ .stage-action-slot--status) {
@@ -272,6 +291,12 @@
 
   .stage-actions-bar .stage-actions {
     grid-template-columns: 1fr;
+  }
+
+  .packet-page-actions > * + *,
+  .job-flow-actions > * + * {
+    margin-left: 0;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
   }
 }
 

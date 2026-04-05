@@ -20,6 +20,7 @@ export interface OperatorSessionState {
 }
 
 export interface ActiveOperatorContext {
+  coverLetterMasterId: string
   operator: OperatorRecord
   profileId: string
   resumeMasterId: string
@@ -181,6 +182,7 @@ export async function getActiveOperatorContext(): Promise<ActiveOperatorContext 
 
   if (!hasSupabaseServerEnv()) {
     return {
+      coverLetterMasterId: '',
       operator: session.activeOperator,
       profileId: defaultOperator.profileId,
       resumeMasterId: defaultOperator.resumeMasterId,
@@ -189,7 +191,7 @@ export async function getActiveOperatorContext(): Promise<ActiveOperatorContext 
   }
 
   const supabase = createClient()
-  const [profileResult, resumeResult] = await Promise.all([
+  const [profileResult, resumeResult, coverLetterResult] = await Promise.all([
     supabase
       .from('user_profiles')
       .select('id')
@@ -200,9 +202,15 @@ export async function getActiveOperatorContext(): Promise<ActiveOperatorContext 
       .select('id')
       .eq('operator_id', session.activeOperator.id)
       .maybeSingle(),
+    supabase
+      .from('cover_letter_master')
+      .select('id')
+      .eq('operator_id', session.activeOperator.id)
+      .maybeSingle(),
   ])
 
   return {
+    coverLetterMasterId: asString(coverLetterResult.data?.id),
     operator: session.activeOperator,
     profileId: asString(profileResult.data?.id),
     resumeMasterId: asString(resumeResult.data?.id),

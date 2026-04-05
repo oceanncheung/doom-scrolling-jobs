@@ -1,15 +1,74 @@
 import { clearActiveOperatorSelection } from '@/app/operators/actions'
 import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
-import { ProfileSaveMessageSlot } from '@/components/profile/profile-save-message-root'
+import { ProfileHeadlineTagField } from '@/components/profile/profile-headline-tag-field'
+import { ProfileSaveButton } from '@/components/profile/profile-save-button'
+import { ReviewStateIndicator } from '@/components/profile/review-state-indicator'
+import { OverlayOptionField } from '@/components/ui/overlay-option-field'
 import type { OperatorWorkspaceRecord } from '@/lib/domain/types'
 import { LOCATION_SUGGESTIONS } from '@/lib/profile/autocomplete-options'
+import { getReviewStateFromText } from '@/lib/profile/master-assets'
 
 interface ProfileSettingsRailProps {
   formId: string
   workspace: OperatorWorkspaceRecord
 }
 
+function formatRailUpdatedAt(value: string | undefined, timeZone: string) {
+  if (!value) {
+    return null
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  const formatParts = (resolvedTimeZone?: string) => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', {
+        day: '2-digit',
+        hour: '2-digit',
+        hour12: false,
+        minute: '2-digit',
+        month: 'short',
+        timeZone: resolvedTimeZone,
+        year: 'numeric',
+      }).formatToParts(date)
+    } catch {
+      return null
+    }
+  }
+
+  const parts = formatParts(timeZone) ?? formatParts('America/Toronto') ?? formatParts(undefined)
+
+  if (!parts) {
+    return null
+  }
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? ''
+
+  const year = get('year')
+  const month = get('month')
+  const day = get('day')
+  const hour = get('hour')
+  const minute = get('minute')
+
+  if (!year || !month || !day || !hour || !minute) {
+    return null
+  }
+
+  return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
 export function ProfileSettingsRail({ formId, workspace }: ProfileSettingsRailProps) {
+  const locationReviewState = getReviewStateFromText(workspace.profile.locationLabel)
+  const updatedAtLabel = formatRailUpdatedAt(
+    workspace.profile.updatedAt,
+    workspace.profile.timezone || 'America/Toronto',
+  )
+
   return (
     <WorkspaceRailShell
       ariaLabel="Profile setup"
@@ -22,13 +81,16 @@ export function ProfileSettingsRail({ formId, workspace }: ProfileSettingsRailPr
                 <p className="panel-label">Actions</p>
                 <h2>Account</h2>
               </div>
-              <ProfileSaveMessageSlot />
+              {updatedAtLabel ? (
+                <p className="settings-rail-updated-at">
+                  <span className="settings-rail-updated-at-label">Last updated</span>
+                  <span className="settings-rail-updated-at-value">{updatedAtLabel}</span>
+                </p>
+              ) : null}
             </div>
 
             <div className="settings-rail-actions">
-              <button className="button button-primary" form={formId} type="submit">
-                Save settings
-              </button>
+              <ProfileSaveButton formId={formId} />
 
               <form action={clearActiveOperatorSelection}>
                 <button className="button button-secondary" type="submit">
@@ -68,32 +130,35 @@ export function ProfileSettingsRail({ formId, workspace }: ProfileSettingsRailPr
               <input defaultValue={workspace.profile.email} disabled readOnly type="email" />
             </label>
             <label className="field">
-              <span>Current location</span>
+              <span>Phone number</span>
               <input
+                defaultValue={workspace.profile.phoneNumber}
+                form={formId}
+                name="phoneNumber"
+                placeholder="(647) 807-4263"
+                type="tel"
+              />
+            </label>
+            <label className={`field field--${locationReviewState}`}>
+              <span className="field-label-row">
+                <span>Current location</span>
+                <ReviewStateIndicator state={locationReviewState} />
+              </span>
+              <OverlayOptionField
+                ariaLabel="Current location"
                 defaultValue={workspace.profile.locationLabel}
                 form={formId}
-                list="profile-location-suggestions"
                 name="locationLabel"
-                placeholder="Toronto, Canada"
-                type="text"
-              />
-              <datalist id="profile-location-suggestions">
-                {LOCATION_SUGGESTIONS.map((suggestion) => (
-                  <option key={suggestion} value={suggestion} />
-                ))}
-              </datalist>
-            </label>
-            <label className="field">
-              <span>Title used on applications</span>
-              <input
-                defaultValue={workspace.profile.headline}
-                form={formId}
-                name="headline"
-                placeholder="Senior Graphic Designer"
-                required
-                type="text"
+                openBehavior="type"
+                options={LOCATION_SUGGESTIONS.map((suggestion) => ({
+                  label: suggestion,
+                  value: suggestion,
+                }))}
+                placeholder="Start typing a city or country"
+                triggerVariant="underline-search"
               />
             </label>
+            <ProfileHeadlineTagField formId={formId} />
           </div>
         </section>
 

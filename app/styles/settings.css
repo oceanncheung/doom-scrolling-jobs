@@ -39,8 +39,38 @@
 
 .settings-rail-heading-with-status {
   display: grid;
-  gap: 8px;
+  /* Match `.settings-profile-rail .today-block` gap (heading → first row below, e.g. Public links → MAIN PORTFOLIO LINK). */
+  gap: 24px;
   min-width: 0;
+}
+
+.settings-rail-updated-at {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  min-width: 0;
+}
+
+.settings-rail-updated-at-label {
+  flex: 1 1 auto;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.settings-rail-updated-at-value {
+  flex: 0 0 auto;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .settings-profile-rail-footer {
@@ -78,6 +108,11 @@
   opacity: 1;
 }
 
+.settings-profile-rail-footer .today-block .button.settings-save-button.is-attention-flash-a,
+.settings-profile-rail-footer .today-block .button.settings-save-button.is-attention-flash-b {
+  animation: settings-save-button-flash 2.2s ease-in-out 1;
+}
+
 /* Log out: same muted hover as Skip in Apply next */
 .settings-profile-rail-footer .today-block .button.button-secondary:hover:not(:disabled),
 .settings-profile-rail-footer .today-block .button.button-secondary:focus-visible {
@@ -85,27 +120,6 @@
   color: var(--bg);
   border-color: var(--muted);
   opacity: 1;
-}
-
-.profile-rail-message-host {
-  min-width: 0;
-}
-
-.profile-rail-message-host .form-message,
-.profile-rail-save-message .form-message {
-  flex: none;
-  width: 100%;
-  box-sizing: border-box;
-  max-width: none;
-  min-height: 0;
-  padding-top: 0;
-  border: none;
-}
-
-.profile-rail-message-host .form-message:not(.form-message-success):not(.form-message-error) {
-  font-size: 0.875rem;
-  letter-spacing: 0.16px;
-  line-height: 1.5;
 }
 
 .profile-card {
@@ -116,6 +130,25 @@
 .profile-fields {
   display: grid;
   gap: 16px;
+}
+
+.settings-profile-rail .profile-fields .field > input:not([type='checkbox']):not([type='radio']),
+.settings-profile-rail .profile-fields .field .list-input-shell input[list] {
+  line-height: 1.5;
+}
+
+/* One rail grid row: TagInput + hidden field for form association */
+.profile-fields-headline-tags {
+  min-width: 0;
+}
+
+/* Same rail field placeholder as profile workspace (phone, etc.) */
+.settings-profile-rail .profile-fields .field input::placeholder,
+.settings-profile-rail .profile-fields .field textarea::placeholder,
+.operator-create-rail-block .profile-fields .field input::placeholder,
+.operator-create-rail-block .profile-fields .field textarea::placeholder {
+  color: var(--line-soft);
+  opacity: 1;
 }
 
 .profile-note {
@@ -130,6 +163,8 @@
   --settings-section-pad-right: var(--queue-column-pad);
   /* One rhythm: helper/small → next control row (uploads, Additional filters, tab bar) */
   --settings-stack-gap: 24px;
+  /* Disclosure h2 → tab toolbar: wider than a single stack gap (reads narrow at 24px next to Job targets) */
+  --settings-disclosure-heading-to-toolbar-gap: calc(var(--settings-stack-gap) * 2);
   display: grid;
   gap: 0;
   align-content: start;
@@ -208,7 +243,10 @@
   padding-bottom: 48px;
 }
 
-/* Experience: same vertical rhythm as .settings-section (e.g. Job targets): stack-gap between blocks, header like settings-section-header */
+/*
+ * Cover letter: larger gap from disclosure heading → tab toolbar (no body in between).
+ * Experience: match Job targets — section header h2 → first field label uses one stack gap (24px).
+ */
 .settings-main > section.panel.disclosure.disclosure-experience {
   display: flex;
   flex-direction: column;
@@ -216,7 +254,15 @@
   padding-bottom: 0;
 }
 
-.settings-main > section.panel.disclosure.disclosure-experience > .disclosure-summary {
+.settings-main > section.panel.disclosure.disclosure-cover-letter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--settings-disclosure-heading-to-toolbar-gap);
+  padding-bottom: 0;
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience > .disclosure-summary,
+.settings-main > section.panel.disclosure.disclosure-cover-letter > .disclosure-summary {
   flex-shrink: 0;
   display: grid;
   grid-template-columns: 1fr;
@@ -226,19 +272,31 @@
 }
 
 /* unwrapBody: summary + strengths grid + tab shell are direct children of section */
-.settings-main > section.panel.disclosure.disclosure-experience > .strengths-experience-grid {
+.settings-main > section.panel.disclosure.disclosure-experience > .settings-section-state-shell,
+.settings-main > section.panel.disclosure.disclosure-cover-letter > .settings-section-state-shell {
   flex-shrink: 0;
   gap: var(--settings-stack-gap);
 }
 
 /* Same horizontal bleed as Job targets `.settings-action-disclosure` so chips align with Additional filters */
-.settings-main > section.panel.disclosure.disclosure-experience > .settings-tab-shell {
+.settings-main > section.panel.disclosure.disclosure-experience > .settings-section-state-shell > .settings-section-state-content > .settings-tab-shell,
+.settings-main > section.panel.disclosure.disclosure-cover-letter > .settings-section-state-shell > .settings-section-state-content > .settings-tab-shell {
   flex-shrink: 0;
   margin-left: calc(-1 * var(--queue-column-pad));
   margin-right: calc(-1 * var(--settings-section-pad-right));
   width: calc(100% + var(--queue-column-pad) + var(--settings-section-pad-right));
   max-width: none;
   box-sizing: border-box;
+}
+
+/*
+ * Same vertical rhythm as Cover letter h2 → tab toolbar (48px, --settings-disclosure-heading-to-toolbar-gap):
+ * — Experience: professional summary block → background tab toolbar
+ * — Job targets: “Good roles…” → Additional filters summary
+ */
+.settings-main > section.panel.disclosure.disclosure-experience .settings-section-state-content,
+.settings-main > section.panel.settings-section:has(.settings-search-brief) .settings-section-state-content {
+  gap: var(--settings-disclosure-heading-to-toolbar-gap);
 }
 
 /* Profile queue column: form fills space below header so experience section can grow and pin tab toolbar */
@@ -269,8 +327,29 @@
   border-top: 0;
 }
 
+/* profile-note → upload row: match 48px (section gap 24px + extra 24px) */
+.settings-main > section.panel.settings-section#source-files .settings-source-uploads-row.settings-source-uploads-row--materials {
+  margin-top: var(--settings-stack-gap);
+}
+
 .settings-main > section.panel.settings-section#source-files::before {
   display: none;
+}
+
+.settings-main > section.panel.settings-section#source-files.is-standalone {
+  padding-bottom: 0;
+}
+
+.settings-main > section.panel.settings-section#source-files.is-standalone::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: calc(-1 * var(--queue-column-pad));
+  width: calc(100% + var(--queue-column-pad));
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 2;
 }
 
 .settings-section {
@@ -412,6 +491,23 @@
   position: relative;
   z-index: 1;
   transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.settings-action-toggle::-moz-focus-inner,
+.settings-tab-button::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+/* Avoid native :active inset / padding shift (1px text “wiggle”) on press */
+.settings-action-toggle:active,
+.settings-tab-button:active {
+  transform: none;
+  padding: 10px 18px;
 }
 
 /* Tab chip: never a black bottom edge (open or closed); line comes from content top + white band to the right */
@@ -431,45 +527,8 @@
   border-color: var(--text);
 }
 
-.settings-tab-button-label,
-.settings-tab-button-count {
+.settings-tab-button-label {
   white-space: nowrap;
-}
-
-.settings-tab-button-count {
-  margin-left: 0.35em;
-  transition: color 200ms ease, opacity 200ms ease;
-}
-
-.settings-tab-button:hover .settings-tab-button-count {
-  color: inherit;
-  opacity: 0.7;
-}
-
-.settings-tab-shell.has-selection .settings-tab-button:not(.is-active) .settings-tab-button-count {
-  opacity: 0.85;
-}
-
-.settings-tab-shell.has-selection .settings-tab-button:not(.is-active):hover .settings-tab-button-count {
-  opacity: 0.7;
-}
-
-.settings-main
-  > section.panel.disclosure.disclosure-experience
-  .settings-tab-shell.has-selection
-  .settings-tab-button:not(.is-active)
-  .settings-tab-button-count {
-  color: var(--muted);
-  opacity: 1;
-}
-
-.settings-main
-  > section.panel.disclosure.disclosure-experience
-  .settings-tab-shell.has-selection
-  .settings-tab-button:not(.is-active):hover
-  .settings-tab-button-count {
-  color: inherit;
-  opacity: 0.7;
 }
 
 .settings-action-toggle-icon,
@@ -596,7 +655,8 @@
  * Experience background tabs: mirror Job targets `.settings-action-summary` + `.settings-action-toggle`
  * (those rules are scoped to `section.panel.settings-section`, so disclosure experience needs its own copy).
  */
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-toolbar {
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-toolbar,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-toolbar {
   background-color: var(--bg);
   padding-left: var(--queue-column-pad);
   padding-right: var(--settings-section-pad-right);
@@ -608,11 +668,13 @@
  * `section.panel.disclosure::before` (e.g. Advanced filters) and reads as a 2px stripe.
  * The following section’s top hairline is the single separator under the chip row.
  */
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell:not(.has-selection) .settings-tab-toolbar {
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell:not(.has-selection) .settings-tab-toolbar,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell:not(.has-selection) .settings-tab-toolbar {
   border-bottom: none;
 }
 
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-toolbar .settings-tab-button:not(.is-active) {
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-toolbar .settings-tab-button:not(.is-active),
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-toolbar .settings-tab-button:not(.is-active) {
   margin-bottom: 0;
   z-index: 1;
 }
@@ -630,12 +692,14 @@
   opacity: 1;
 }
 
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:not(.is-active) {
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:not(.is-active),
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button:not(.is-active) {
   color: var(--text);
   border-color: var(--line);
 }
 
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:not(.is-active):hover {
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:not(.is-active):hover,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button:not(.is-active):hover {
   background: var(--text);
   color: var(--bg);
   border-color: var(--text);
@@ -658,7 +722,8 @@
 }
 
 /* Open disclosure chip: grey L/T/R, no bottom; overlaps `.settings-tab-panel` border-top like `.settings-action-body` */
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active {
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active {
   background: var(--surface-soft);
   border-top: 1px solid var(--line);
   border-left: 1px solid var(--line);
@@ -671,7 +736,8 @@
  * Inactive chips keep a right border; the active chip restores border-left (beats `+ .settings-tab-button { border-left: 0 }`).
  * That stacks two 1px edges — drop the previous sibling’s right edge only at the seam.
  */
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:has(+ .settings-tab-button.is-active) {
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:has(+ .settings-tab-button.is-active),
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button:has(+ .settings-tab-button.is-active) {
   border-right: none;
 }
 
@@ -686,7 +752,8 @@
   opacity: 1;
 }
 
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active:hover {
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active:hover,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active:hover {
   background: var(--text);
   color: var(--bg);
   border-color: var(--text);
@@ -699,6 +766,10 @@
   transform: rotate(180deg);
   color: currentColor;
   opacity: 1;
+}
+
+.settings-tab-button-state {
+  margin-left: 8px;
 }
 
 /* Match Roles tab row: hover anywhere on the summary row rotates the chevron */
@@ -736,14 +807,6 @@
   margin: 0;
 }
 
-.settings-tab-meta {
-  color: var(--muted);
-  font-family: var(--font-mono), monospace;
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
 /* One black rule under the chips (like Additional filters body); active tab overlaps via margin-bottom */
 .settings-tab-shell.has-selection .settings-tab-panel {
   color-scheme: light;
@@ -760,7 +823,8 @@
 }
 
 .settings-tab-shell.has-selection .settings-tab-panel .repeat-card {
-  border-top-color: var(--line-faint);
+  /* No hairline between cards — separation comes from padding (see .repeat-card). */
+  border-top: 0;
 }
 
 .settings-section-header {
@@ -797,6 +861,55 @@
   font-size: 0.875rem;
   letter-spacing: 0.16px;
   line-height: 1.5;
+}
+
+@keyframes settings-save-button-flash {
+  0%,
+  100% {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  15%,
+  35%,
+  55% {
+    background: var(--accent);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  25%,
+  45%,
+  65% {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+}
+
+.settings-section-state-shell {
+  display: grid;
+  gap: var(--settings-stack-gap);
+}
+
+.settings-section-state-content {
+  display: grid;
+  gap: var(--settings-stack-gap);
+}
+
+.settings-section-state-shell.is-locked .settings-section-state-content {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.settings-section-lock-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  letter-spacing: 0.16px;
+  line-height: 1.5;
+  max-width: 34rem;
 }
 
 .settings-section .button,

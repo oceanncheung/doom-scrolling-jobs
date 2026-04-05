@@ -55,7 +55,7 @@ export function JobWorkflowControls({
           type="submit"
           value="shortlist"
         >
-          {isPending ? 'Saving...' : 'Shortlist'}
+          {isPending ? 'Saving...' : 'Save'}
         </button>
         <button
           className="button button-ghost button-small"

@@ -85,6 +85,26 @@
   gap: 16px;
 }
 
+/* Inputs use shared `.field` rules from forms.css + placeholder in settings.css (with `.profile-fields`). */
+.operator-create-rail-block .operator-setup-form--rail .button.button-primary {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  opacity: 1;
+}
+
+.operator-create-rail-block .operator-setup-form--rail .button.button-primary:hover:not(:disabled),
+.operator-create-rail-block .operator-setup-form--rail .button.button-primary:focus-visible {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  opacity: 0.92;
+}
+
+.operator-create-rail-block .operator-setup-form--rail .button.button-primary:disabled {
+  opacity: 0.35;
+}
+
 .detail-group {
   display: grid;
   gap: 8px;

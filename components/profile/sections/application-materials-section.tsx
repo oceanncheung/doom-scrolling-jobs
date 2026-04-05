@@ -3,91 +3,76 @@
 import { FileUploadSlot } from '@/components/settings/file-upload-slot'
 
 interface ApplicationMaterialsSectionProps {
-  coverLetterFileName: string | null
-  resumeFileName: string | null
-  setCoverLetterFileName: (value: string | null) => void
-  setResumeFileName: (value: string | null) => void
+  standalone: boolean
+  setSourceCoverLetterFileName: (value: string | null) => void
+  setSourceResumeFileName: (value: string | null) => void
+  sourceCoverLetterFileName: string | null
+  sourceResumeFileName: string | null
 }
 
 export function ApplicationMaterialsSection({
-  coverLetterFileName,
-  resumeFileName,
-  setCoverLetterFileName,
-  setResumeFileName,
+  standalone,
+  setSourceCoverLetterFileName,
+  setSourceResumeFileName,
+  sourceCoverLetterFileName,
+  sourceResumeFileName,
 }: ApplicationMaterialsSectionProps) {
-  const sourceDocumentGptUrl = process.env.NEXT_PUBLIC_SOURCE_DOCUMENT_GPT_URL?.trim() ?? ''
-  const canGenerateProfile = Boolean(resumeFileName && coverLetterFileName)
+  const hasResumeInput = Boolean(sourceResumeFileName)
 
   return (
-    <section className="panel settings-section" id="source-files">
+    <section
+      className={`panel settings-section${standalone ? ' is-standalone' : ''}`}
+      id="source-files"
+    >
       <div className="settings-section-header">
         <div className="settings-section-title-stack">
           <p className="panel-label">Source documents</p>
-          <h2>Generate the master source for your resume and cover letter first.</h2>
+          <h2>Generate your profile from your resume.</h2>
         </div>
       </div>
 
       <div className="settings-section-subcopy">
         <p className="profile-note">
-          Use the Custom GPT below to turn your current resume and cover letter into two simple
-          source files for this workspace.
+          Upload the resume we should pull from. Add a cover letter now or later if you want
+          stronger tailored letters.
         </p>
-        <p className="profile-note">Upload the markdown files it gives you here, then generate your profile.</p>
-        <p className="panel-label">Use .md files only.</p>
-      </div>
-
-      <div className="settings-source-gpt-row inline-link-row">
-        {sourceDocumentGptUrl ? (
-          <a
-            className="settings-source-gpt-link"
-            href={sourceDocumentGptUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Open Custom GPT
-          </a>
-        ) : (
-          <span className="settings-source-gpt-link settings-source-gpt-link--disabled">
-            Open Custom GPT
-          </span>
-        )}
       </div>
 
       <div className="settings-source-uploads-row settings-source-uploads-row--materials">
-        <div className="settings-source-uploads-materials-files settings-source-uploads-materials-files--dual">
+        <div className="settings-source-uploads-materials-files--dual">
           <FileUploadSlot
-            accept=".md,.markdown,text/markdown"
-            compactMaxLength={40}
-            fileName={resumeFileName}
-            inputName="resumePdfUpload"
-            label="Source Resume (.md)"
-            onRemove={() => setResumeFileName(null)}
-            onUpload={(file) => setResumeFileName(file.name)}
+            accept=".pdf,.doc,.docx,.md,.markdown,.txt,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            compactMaxLength={28}
+            fileName={sourceResumeFileName}
+            inputName="resumeSourceUpload"
+            label="Resume"
+            onRemove={() => setSourceResumeFileName(null)}
+            onUpload={(file) => setSourceResumeFileName(file.name)}
             presentation="chip"
             showUploadIcon
           />
           <FileUploadSlot
-            accept=".md,.markdown,text/markdown"
-            compactMaxLength={40}
-            fileName={coverLetterFileName}
-            inputName="coverLetterPdfUpload"
-            label="Source Cover Letter (.md)"
-            onRemove={() => setCoverLetterFileName(null)}
-            onUpload={(file) => setCoverLetterFileName(file.name)}
+            accept=".pdf,.doc,.docx,.md,.markdown,.txt,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            compactMaxLength={28}
+            fileName={sourceCoverLetterFileName}
+            inputName="coverLetterSourceUpload"
+            label="Cover letter (optional)"
+            onRemove={() => setSourceCoverLetterFileName(null)}
+            onUpload={(file) => setSourceCoverLetterFileName(file.name)}
             presentation="chip"
             showUploadIcon
           />
         </div>
         <button
           className="upload-slot-chip-btn upload-slot-chip-btn--action settings-source-generate-button"
-          disabled={!canGenerateProfile}
+          disabled={!hasResumeInput}
           formNoValidate
           name="intent"
-          title={!canGenerateProfile ? 'Upload both source markdown files first.' : undefined}
+          title={!hasResumeInput ? 'Upload your resume first.' : undefined}
           type="submit"
           value="generate-profile"
         >
-          <span>Generate Profile</span>
+          <span>Generate profile</span>
         </button>
       </div>
     </section>

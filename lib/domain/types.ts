@@ -43,6 +43,22 @@ export const resumeExportStatuses = ['draft', 'ready', 'exported'] as const
 
 export type ResumeExportStatus = (typeof resumeExportStatuses)[number]
 
+export const canonicalApprovalStatuses = ['draft', 'approved'] as const
+
+export type CanonicalApprovalStatus = (typeof canonicalApprovalStatuses)[number]
+
+export const profileSourceStates = ['blank', 'sources_uploaded', 'draft_generated'] as const
+
+export type ProfileSourceState = (typeof profileSourceStates)[number]
+
+export const profileReadinessStates = ['needs_review', 'approved'] as const
+
+export type ProfileReadinessState = (typeof profileReadinessStates)[number]
+
+export const rankingEligibilityStates = ['locked', 'ready'] as const
+
+export type RankingEligibilityState = (typeof rankingEligibilityStates)[number]
+
 export const recommendationLevels = [
   'strong_apply',
   'apply_if_interested',
@@ -53,6 +69,8 @@ export const recommendationLevels = [
 export type RecommendationLevel = (typeof recommendationLevels)[number]
 
 export type RemoteType = 'remote' | 'hybrid' | 'onsite' | 'unknown'
+
+export type CanonicalConfidence = 'high' | 'medium' | 'low'
 
 export interface OperatorRecord {
   createdAt?: string
@@ -206,8 +224,10 @@ export interface ApplicationPacketRecord {
 export interface OperatorProfileRecord {
   userId: string
   profileId: string
+  updatedAt?: string
   displayName: string
   email: string
+  phoneNumber: string
   searchBrief: string
   headline: string
   locationLabel: string
@@ -230,12 +250,14 @@ export interface OperatorProfileRecord {
   industriesAvoid: string[]
   skills: string[]
   tools: string[]
+  languages: string[]
   workAuthorizationNotes: string
   portfolioPrimaryUrl: string
   linkedinUrl: string
   personalSiteUrl: string
   bioSummary: string
   preferencesNotes: string
+  canonicalProfileReviewedAt?: string
 }
 
 export interface ResumeExperienceRecord {
@@ -263,19 +285,85 @@ export interface ResumeEducationRecord {
   notes: string
 }
 
+export interface MasterSectionProvenanceRecord {
+  confidence: CanonicalConfidence
+  notes: string[]
+  sourceLabels: string[]
+}
+
+export interface ResumeContactSnapshotRecord {
+  email: string
+  linkedinUrl: string
+  location: string
+  name: string
+  phone: string
+  portfolioUrl: string
+  websiteUrl: string
+}
+
 export interface ResumeMasterRecord {
+  additionalInformation: string[]
+  approvalStatus: CanonicalApprovalStatus
+  approvedAt?: string
+  archivedExperienceEntries: ResumeExperienceRecord[]
   baseTitle: string
   baseCoverLetterText: string
+  contactSnapshot: ResumeContactSnapshotRecord
+  coreExpertise: string[]
   hasSourceMaterial: boolean
+  generationIssues: string[]
+  languages: string[]
+  rawSourceText: string
+  renderedMarkdown: string
+  sectionProvenance: Record<string, MasterSectionProvenanceRecord>
+  selectedImpactHighlights: string[]
+  sourceContent: Record<string, unknown>
+  sourceFormat: string
   summaryText: string
   experienceEntries: ResumeExperienceRecord[]
   achievementBank: ResumeAchievementRecord[]
   skillsSection: string[]
   educationEntries: ResumeEducationRecord[]
   certifications: string[]
+  toolsPlatforms: string[]
   resumePdfFileName: string
   coverLetterPdfFileName: string
   portfolioPdfFileName: string
+}
+
+export interface CoverLetterContactSnapshotRecord {
+  location: string
+  name: string
+  roleTargets: string[]
+}
+
+export interface CoverLetterProofBankEntryRecord {
+  bullets: string[]
+  context: string
+  label: string
+}
+
+export interface CoverLetterMasterRecord {
+  approvalStatus: CanonicalApprovalStatus
+  approvedAt?: string
+  capabilities: {
+    disciplines: string[]
+    productionTools: string[]
+  }
+  contactSnapshot: CoverLetterContactSnapshotRecord
+  generationIssues: string[]
+  hasSourceMaterial: boolean
+  keyDifferentiators: string[]
+  outputConstraints: string[]
+  positioningPhilosophy: string
+  proofBank: CoverLetterProofBankEntryRecord[]
+  rawSourceText: string
+  renderedMarkdown: string
+  sectionProvenance: Record<string, MasterSectionProvenanceRecord>
+  selectionRules: string[]
+  sourceContent: Record<string, unknown>
+  sourceFormat: string
+  toneVoice: string[]
 }
 
 export interface OperatorPortfolioItemRecord {
@@ -293,8 +381,20 @@ export interface OperatorPortfolioItemRecord {
   isActive: boolean
 }
 
+export interface ProfileWorkspaceStatusRecord {
+  blockingIssues: string[]
+  coverLetterIssues: string[]
+  profileIssues: string[]
+  rankingEligibilityState: RankingEligibilityState
+  readinessState: ProfileReadinessState
+  resumeIssues: string[]
+  sourceState: ProfileSourceState
+}
+
 export interface OperatorWorkspaceRecord {
+  coverLetterMaster: CoverLetterMasterRecord
   portfolioItems: OperatorPortfolioItemRecord[]
   profile: OperatorProfileRecord
   resumeMaster: ResumeMasterRecord
+  status: ProfileWorkspaceStatusRecord
 }
