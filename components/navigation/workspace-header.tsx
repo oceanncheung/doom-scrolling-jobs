@@ -10,14 +10,7 @@ import {
   queueViews,
   type QueueView,
 } from '@/lib/jobs/dashboard-queue'
-
-const labels: Record<QueueView, string> = {
-  applied: 'Applied',
-  archive: 'Archived',
-  potential: 'Potential',
-  prepared: 'Ready',
-  saved: 'Saved',
-}
+import { getQueueViewLabel } from '@/lib/jobs/workflow-state'
 
 export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView, number>> }) {
   const pathname = usePathname()
@@ -52,7 +45,7 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
             href={getQueueViewHref(view)}
             key={view}
           >
-            <span>{labels[view]}</span>
+            <span>{getQueueViewLabel(view)}</span>
             {typeof counts?.[view] === 'number' ? (
               <span className="site-workflow-count">{counts[view]}</span>
             ) : null}

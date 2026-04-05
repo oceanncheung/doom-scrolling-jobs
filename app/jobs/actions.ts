@@ -13,6 +13,13 @@ import {
 import { hasSupabaseServerEnv } from '@/lib/env'
 import { generateAndPersistApplicationPacket } from '@/lib/jobs/application-packet-generation'
 import { persistPreferenceSignal } from '@/lib/jobs/learning'
+import {
+  isAppliedWorkflowStatus,
+  isArchivedWorkflowStatus,
+  isReadyWorkflowStatus,
+  shouldBeginPacketPrep,
+  shouldEnsurePacketWorkspace,
+} from '@/lib/jobs/workflow-state'
 import { createClient } from '@/lib/supabase/server'
 
 export interface JobWorkflowActionState {
@@ -338,7 +345,7 @@ export async function updateJobWorkflow(
     userId: operatorContext.userId,
   })
 
-  if (targetStatus === 'shortlisted' || targetStatus === 'preparing') {
+  if (shouldEnsurePacketWorkspace(targetStatus)) {
     await getApplicationPacketReview(jobId, {
       ensurePacket: true,
       syncQuestionSnapshot: true,
@@ -593,10 +600,7 @@ export async function saveApplicationPacket(
   const currentWorkflowStatus = asWorkflowStatus(asTextValue(jobScore?.workflow_status))
   const shouldMarkReady = submitIntent === 'mark-ready'
   const shouldMarkPreparing =
-    !shouldMarkReady &&
-    (currentWorkflowStatus === 'new' ||
-      currentWorkflowStatus === 'ranked' ||
-      currentWorkflowStatus === 'shortlisted')
+    !shouldMarkReady && currentWorkflowStatus ? shouldBeginPacketPrep(currentWorkflowStatus) : false
 
   if (shouldMarkReady) {
     await supabase
@@ -650,9 +654,10 @@ export async function saveApplicationPacket(
   const signalStatus =
     shouldMarkReady
       ? 'ready_to_apply'
-      : currentWorkflowStatus === 'ready_to_apply' || currentWorkflowStatus === 'applied'
+      : currentWorkflowStatus &&
+          (isReadyWorkflowStatus(currentWorkflowStatus) || isAppliedWorkflowStatus(currentWorkflowStatus))
         ? currentWorkflowStatus
-      : currentWorkflowStatus === 'archived' || currentWorkflowStatus === 'rejected'
+      : currentWorkflowStatus && isArchivedWorkflowStatus(currentWorkflowStatus)
         ? null
         : 'preparing'
 

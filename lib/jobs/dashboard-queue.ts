@@ -1,4 +1,12 @@
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
+import {
+  getQueueView,
+  getQueueViewHref,
+  isScreeningWorkflowStatus,
+  matchesQueueView,
+  queueViews,
+  type QueueView,
+} from '@/lib/jobs/workflow-state'
 
 const screeningBatchSize = 8
 const minimumStrictScreeningBatch = 5
@@ -25,10 +33,6 @@ const genericRoleTokens = new Set([
   'graphic',
 ])
 
-export const queueViews = ['potential', 'saved', 'prepared', 'applied', 'archive'] as const
-
-export type QueueView = (typeof queueViews)[number]
-
 export interface DashboardQueues {
   appliedJobs: QualifiedJobRecord[]
   archivedJobs: QualifiedJobRecord[]
@@ -39,21 +43,8 @@ export interface DashboardQueues {
   screeningPool: QualifiedJobRecord[]
 }
 
-export function getQueueView(value: string | string[] | undefined): QueueView {
-  const selected = Array.isArray(value) ? value[0] : value
-  if (selected === 'ready') {
-    return 'prepared'
-  }
-  return queueViews.find((view) => view === selected) ?? 'potential'
-}
-
-export function getQueueViewHref(view: QueueView) {
-  if (view === 'potential') {
-    return '/dashboard'
-  }
-
-  return `/dashboard?view=${view === 'prepared' ? 'ready' : view}`
-}
+export { getQueueView, getQueueViewHref, queueViews }
+export type { QueueView }
 
 function isGenericMatchReason(reason: string) {
   const normalized = reason.toLowerCase()
@@ -97,7 +88,7 @@ function sortStageJobs(jobs: QualifiedJobRecord[]) {
 
 function isActiveScreeningJob(job: QualifiedJobRecord) {
   return (
-    (job.workflowStatus === 'new' || job.workflowStatus === 'ranked') &&
+    isScreeningWorkflowStatus(job.workflowStatus) &&
     job.queueSegment !== 'hidden' &&
     !job.stale &&
     job.listingStatus !== 'stale'
@@ -215,21 +206,10 @@ function buildPotentialQueue(jobs: QualifiedJobRecord[]) {
 export function getDashboardQueues(jobs: QualifiedJobRecord[]): DashboardQueues {
   const screeningPool = buildScreeningPool(jobs)
   const potentialJobs = buildPotentialQueue(screeningPool)
-  const savedJobs = sortStageJobs(
-    jobs.filter((job) => job.workflowStatus === 'shortlisted' || job.workflowStatus === 'preparing'),
-  )
-  const preparedJobs = sortStageJobs(jobs.filter((job) => job.workflowStatus === 'ready_to_apply'))
-  const appliedJobs = sortStageJobs(
-    jobs.filter(
-      (job) =>
-        job.workflowStatus === 'applied' ||
-        job.workflowStatus === 'follow_up_due' ||
-        job.workflowStatus === 'interview',
-    ),
-  )
-  const archivedJobs = sortStageJobs(
-    jobs.filter((job) => job.workflowStatus === 'archived' || job.workflowStatus === 'rejected'),
-  )
+  const savedJobs = sortStageJobs(jobs.filter((job) => matchesQueueView(job.workflowStatus, 'saved')))
+  const preparedJobs = sortStageJobs(jobs.filter((job) => matchesQueueView(job.workflowStatus, 'prepared')))
+  const appliedJobs = sortStageJobs(jobs.filter((job) => matchesQueueView(job.workflowStatus, 'applied')))
+  const archivedJobs = sortStageJobs(jobs.filter((job) => matchesQueueView(job.workflowStatus, 'archive')))
 
   return {
     appliedJobs,
@@ -246,4 +226,8 @@ export function getDashboardQueues(jobs: QualifiedJobRecord[]): DashboardQueues 
     savedJobs,
     screeningPool,
   }
+}
+
+export function getApplyNextJob(queues: Pick<DashboardQueues, 'preparedJobs' | 'savedJobs'>) {
+  return queues.preparedJobs[0] ?? queues.savedJobs[0] ?? null
 }

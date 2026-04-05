@@ -4,20 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { hasSupabaseServerEnv } from '@/lib/env'
+import { getQueueView, getQueueViewHref } from '@/lib/jobs/dashboard-queue'
 import { ensurePrimaryImportedJobs } from '@/lib/jobs/real-feed'
 
 function normalizeView(value: FormDataEntryValue | null) {
-  const text = String(value ?? '').trim().toLowerCase()
-
-  if (text === 'ready' || text === 'prepared') {
-    return 'ready'
-  }
-
-  if (text === 'saved' || text === 'applied' || text === 'archive') {
-    return text
-  }
-
-  return 'potential'
+  return getQueueView(String(value ?? '').trim().toLowerCase())
 }
 
 export async function refreshDashboardQueue(formData: FormData) {
@@ -33,5 +24,5 @@ export async function refreshDashboardQueue(formData: FormData) {
   revalidatePath('/dashboard')
   revalidatePath('/jobs/[jobId]', 'page')
 
-  redirect(`/dashboard?view=${view}`)
+  redirect(getQueueViewHref(view))
 }

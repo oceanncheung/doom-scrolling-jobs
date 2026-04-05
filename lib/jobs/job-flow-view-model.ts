@@ -6,6 +6,7 @@ import { hasOpenAIEnv } from '@/lib/env'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
 import { getLocationDisplay, getSalaryDisplay } from '@/lib/jobs/display'
 import { formatDateLabel, formatWorkflowLabel } from '@/lib/jobs/presentation'
+import { isReadyWorkflowStatus } from '@/lib/jobs/workflow-state'
 
 export interface JobFlowHeaderSnapshotItem {
   label: string
@@ -30,7 +31,7 @@ export interface JobFlowPageViewModel {
 }
 
 function getDetailIntro(job: QualifiedJobRecord) {
-  if (job.workflowStatus === 'ready_to_apply') {
+  if (isReadyWorkflowStatus(job.workflowStatus)) {
     return 'Everything is lined up. Review the role, then apply when you want to move.'
   }
 
@@ -42,7 +43,7 @@ function getDetailIntro(job: QualifiedJobRecord) {
 }
 
 function getPrepIntro(job: QualifiedJobRecord) {
-  if (job.workflowStatus === 'ready_to_apply') {
+  if (isReadyWorkflowStatus(job.workflowStatus)) {
     return 'Your packet is ready. Review the materials, then apply when you want to submit.'
   }
 

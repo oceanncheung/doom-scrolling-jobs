@@ -13,6 +13,7 @@ import { applyQualificationEngine } from '@/lib/jobs/qualification'
 import { ensurePrimaryImportedJobs } from '@/lib/jobs/real-feed'
 import { buildRemoteSourceJobUrl } from '@/lib/jobs/remote-source'
 import { normalizeStoredSalaryPeriod } from '@/lib/jobs/source-parsing'
+import { isScreeningWorkflowStatus } from '@/lib/jobs/workflow-state'
 import {
   isImportedSourceName,
   saveSourceQueueCoverage,
@@ -46,7 +47,7 @@ function applyScreeningLock(
   }
 
   return {
-    jobs: jobs.filter((job) => job.workflowStatus !== 'new' && job.workflowStatus !== 'ranked'),
+    jobs: jobs.filter((job) => !isScreeningWorkflowStatus(job.workflowStatus)),
     screeningLocked: true,
   }
 }

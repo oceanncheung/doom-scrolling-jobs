@@ -1,5 +1,9 @@
-import type { ApplicationPacketRecord, WorkflowStatus } from '@/lib/domain/types'
+import type { ApplicationPacketRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
+import {
+  isReadyWorkflowStatus,
+  isScreeningWorkflowStatus,
+} from '@/lib/jobs/workflow-state'
 
 export type JobOverviewActionModel =
   | {
@@ -21,10 +25,6 @@ export type JobOverviewActionModel =
       layoutClass: 'job-overview-actions--pair-right'
     }
 
-function isScreeningWorkflowStatus(workflowStatus: WorkflowStatus) {
-  return workflowStatus === 'new' || workflowStatus === 'ranked'
-}
-
 export function getJobOverviewActionModel({
   job,
   packet,
@@ -41,7 +41,7 @@ export function getJobOverviewActionModel({
   }
 
   if (prepOpen) {
-    if (job.workflowStatus === 'ready_to_apply') {
+    if (isReadyWorkflowStatus(job.workflowStatus)) {
       return {
         kind: 'ready-to-apply',
         layoutClass: 'job-overview-actions--pair-right',

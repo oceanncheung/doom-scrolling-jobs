@@ -7,6 +7,7 @@ import { type WorkflowStatus } from '@/lib/domain/types'
 import { getOpenAIEnv, hasOpenAIEnv, hasSupabaseServerEnv } from '@/lib/env'
 import { getPacketGenerationUserMessage } from '@/lib/jobs/packet-generation-copy'
 import { persistPreferenceSignal } from '@/lib/jobs/learning'
+import { shouldBeginPacketPrep } from '@/lib/jobs/workflow-state'
 import { createClient } from '@/lib/supabase/server'
 
 function asTextValue(value: unknown) {
@@ -268,11 +269,7 @@ export async function generateAndPersistApplicationPacket(
 
     let workflowStatus: WorkflowStatus = review.job.workflowStatus
 
-    if (
-      review.job.workflowStatus === 'new' ||
-      review.job.workflowStatus === 'ranked' ||
-      review.job.workflowStatus === 'shortlisted'
-    ) {
+    if (shouldBeginPacketPrep(review.job.workflowStatus)) {
       workflowStatus = 'preparing'
 
       await supabase

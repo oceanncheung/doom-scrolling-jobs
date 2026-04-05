@@ -9,7 +9,8 @@ import { WorkspaceHeader } from '@/components/navigation/workspace-header'
 import { site } from '@/lib/config/site'
 import { getRankedJobs } from '@/lib/data/jobs'
 import { getOperatorSessionState } from '@/lib/data/operators'
-import { getDashboardQueues, type QueueView } from '@/lib/jobs/dashboard-queue'
+import { getDashboardQueues, getQueueViewHref, queueViews, type QueueView } from '@/lib/jobs/dashboard-queue'
+import { getQueueViewLabel } from '@/lib/jobs/workflow-state'
 
 import './globals.css'
 
@@ -36,36 +37,14 @@ function HeaderFallback({ counts }: { counts?: Partial<Record<QueueView, number>
       </div>
 
       <nav className="site-workflow-nav" aria-label="Queue views">
-        <Link className="site-workflow-link" href="/dashboard">
-          <span>Potential</span>
-          {typeof counts?.potential === 'number' ? (
-            <span className="site-workflow-count">{counts.potential}</span>
-          ) : null}
-        </Link>
-        <Link className="site-workflow-link" href="/dashboard?view=saved">
-          <span>Saved</span>
-          {typeof counts?.saved === 'number' ? (
-            <span className="site-workflow-count">{counts.saved}</span>
-          ) : null}
-        </Link>
-        <Link className="site-workflow-link" href="/dashboard?view=ready">
-          <span>Ready</span>
-          {typeof counts?.prepared === 'number' ? (
-            <span className="site-workflow-count">{counts.prepared}</span>
-          ) : null}
-        </Link>
-        <Link className="site-workflow-link" href="/dashboard?view=applied">
-          <span>Applied</span>
-          {typeof counts?.applied === 'number' ? (
-            <span className="site-workflow-count">{counts.applied}</span>
-          ) : null}
-        </Link>
-        <Link className="site-workflow-link" href="/dashboard?view=archive">
-          <span>Archived</span>
-          {typeof counts?.archive === 'number' ? (
-            <span className="site-workflow-count">{counts.archive}</span>
-          ) : null}
-        </Link>
+        {queueViews.map((view) => (
+          <Link className="site-workflow-link" href={getQueueViewHref(view)} key={view}>
+            <span>{getQueueViewLabel(view)}</span>
+            {typeof counts?.[view] === 'number' ? (
+              <span className="site-workflow-count">{counts[view]}</span>
+            ) : null}
+          </Link>
+        ))}
       </nav>
     </header>
   )

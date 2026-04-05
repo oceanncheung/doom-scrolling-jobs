@@ -6,6 +6,11 @@ import type {
   RankedJobRecord,
 } from '@/lib/jobs/contracts'
 import { getEffectiveSalaryBounds } from '@/lib/jobs/salary-estimation'
+import {
+  isArchivedWorkflowStatus,
+  isReadyWorkflowStatus,
+  isSavedWorkflowStatus,
+} from '@/lib/jobs/workflow-state'
 
 interface MarketDefinition {
   key: string
@@ -346,7 +351,7 @@ function buildOperatorScope(profile: OperatorProfileRecord): OperatorScope {
 }
 
 function assessEligibility(job: RankedJobRecord) {
-  if (job.workflowStatus === 'archived' || job.workflowStatus === 'rejected') {
+  if (isArchivedWorkflowStatus(job.workflowStatus)) {
     return createDimension('blocked', -18, 'Already hidden by your workflow status.')
   }
 
@@ -633,10 +638,10 @@ function assessApplicationFriction(job: RankedJobRecord, scope: OperatorScope) {
     score -= Math.min(3, redFlagCount)
   }
 
-  if (job.workflowStatus === 'ready_to_apply') {
+  if (isReadyWorkflowStatus(job.workflowStatus)) {
     score += 2
     label = 'Workflow already shows this role as close to application-ready.'
-  } else if (job.workflowStatus === 'preparing' || job.workflowStatus === 'shortlisted') {
+  } else if (isSavedWorkflowStatus(job.workflowStatus)) {
     score += 1
   }
 
@@ -668,7 +673,7 @@ function buildQueueSegment(
   },
   stale: boolean,
 ): QueueSegment {
-  if (job.workflowStatus === 'archived' || job.workflowStatus === 'rejected') {
+  if (isArchivedWorkflowStatus(job.workflowStatus)) {
     return 'hidden'
   }
 

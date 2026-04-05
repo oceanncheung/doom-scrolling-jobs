@@ -4,17 +4,13 @@ import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
 import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
 import { TodayBlockHeading } from '@/components/ui/today-block-heading'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
-import { getDashboardQueues, getMatchReason } from '@/lib/jobs/dashboard-queue'
+import { getApplyNextJob, getDashboardQueues, getMatchReason } from '@/lib/jobs/dashboard-queue'
 import { getApplyNextAction, getJobReviewHref } from '@/lib/jobs/review-navigation'
 
 interface WorkspaceTodayRailProps {
   actionsEnabled: boolean
   jobs: QualifiedJobRecord[]
   screeningLocked?: boolean
-}
-
-function getApplyNextJob(savedJobs: QualifiedJobRecord[], preparedJobs: QualifiedJobRecord[]) {
-  return preparedJobs[0] ?? savedJobs[0] ?? null
 }
 
 function getNewTodayCount(jobs: QualifiedJobRecord[]) {
@@ -27,7 +23,7 @@ export function WorkspaceTodayRail({
   screeningLocked = false,
 }: WorkspaceTodayRailProps) {
   const { preparedJobs, savedJobs } = getDashboardQueues(jobs)
-  const applyNextJob = getApplyNextJob(savedJobs, preparedJobs)
+  const applyNextJob = getApplyNextJob({ preparedJobs, savedJobs })
   const applyNextAction = applyNextJob ? getApplyNextAction(applyNextJob) : null
   const newTodayCount = getNewTodayCount(jobs)
 

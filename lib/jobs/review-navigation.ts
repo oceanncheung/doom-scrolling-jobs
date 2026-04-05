@@ -1,30 +1,29 @@
 import type { WorkflowStatus } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
-
-const prepOpenWorkflowStatuses = new Set<WorkflowStatus>([
-  'shortlisted',
-  'preparing',
-  'ready_to_apply',
-])
+import {
+  getWorkflowQueueView,
+  isPrepOpenWorkflowStatus,
+  isReadyWorkflowStatus,
+} from '@/lib/jobs/workflow-state'
 
 export function getJobReviewHref(jobId: string) {
   return `/jobs/${jobId}`
 }
 
 export function isJobPrepOpen(workflowStatus: WorkflowStatus) {
-  return prepOpenWorkflowStatuses.has(workflowStatus)
+  return isPrepOpenWorkflowStatus(workflowStatus)
 }
 
 export function getInternalJobReviewLabel(workflowStatus: WorkflowStatus) {
-  switch (workflowStatus) {
-    case 'shortlisted':
+  switch (getWorkflowQueueView(workflowStatus)) {
+    case 'saved':
+      if (workflowStatus === 'preparing') {
+        return 'Continue prep'
+      }
+
       return 'Prepare'
-    case 'preparing':
-      return 'Continue prep'
-    case 'ready_to_apply':
+    case 'prepared':
     case 'applied':
-    case 'follow_up_due':
-    case 'interview':
       return 'Review'
     default:
       return 'Review'
@@ -32,7 +31,7 @@ export function getInternalJobReviewLabel(workflowStatus: WorkflowStatus) {
 }
 
 export function getApplyNextAction(job: Pick<QualifiedJobRecord, 'applicationUrl' | 'id' | 'sourceUrl' | 'workflowStatus'>) {
-  if (job.workflowStatus === 'ready_to_apply') {
+  if (isReadyWorkflowStatus(job.workflowStatus)) {
     return {
       external: true as const,
       href: job.applicationUrl ?? job.sourceUrl,

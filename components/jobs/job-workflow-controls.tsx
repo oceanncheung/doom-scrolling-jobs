@@ -5,6 +5,10 @@ import { useActionState } from 'react'
 import { updateJobWorkflow, type JobWorkflowActionState } from '@/app/jobs/actions'
 import { workflowStatuses, type WorkflowStatus } from '@/lib/domain/types'
 import { formatWorkflowLabel } from '@/lib/jobs/presentation'
+import {
+  isArchivedWorkflowStatus,
+  isSavedWorkflowStatus,
+} from '@/lib/jobs/workflow-state'
 
 const initialState: JobWorkflowActionState = {
   message: '',
@@ -50,7 +54,7 @@ export function JobWorkflowControls({
       <div className="workflow-quick-actions">
         <button
           className="button button-secondary button-small"
-          disabled={!canEdit || isPending || currentStatus === 'shortlisted'}
+          disabled={!canEdit || isPending || isSavedWorkflowStatus(currentStatus)}
           name="intent"
           type="submit"
           value="shortlist"
@@ -59,7 +63,7 @@ export function JobWorkflowControls({
         </button>
         <button
           className="button button-ghost button-small"
-          disabled={!canEdit || isPending || currentStatus === 'archived'}
+          disabled={!canEdit || isPending || isArchivedWorkflowStatus(currentStatus)}
           name="intent"
           type="submit"
           value="dismiss"
