@@ -448,6 +448,10 @@
     padding-bottom: 0;
   }
 
+  .settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action {
+    margin-top: 8px;
+  }
+
   .settings-profile-rail-footer {
     margin-top: 0;
     padding-bottom: 24px;
@@ -562,6 +566,18 @@
 
   .site-mobile-menu-link[aria-current='page'] {
     background: var(--accent);
+  }
+
+  .settings-tab-toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .settings-tab-toolbar::-webkit-scrollbar {
+    display: none;
   }
 
   .screening-summary-grid,
