@@ -1,3 +1,9 @@
+/* Hidden by default; mobile-only header controls are enabled at <=900px. */
+.site-mobile-menu-toggle,
+.site-mobile-menu {
+  display: none;
+}
+
 @media (max-width: 1440px) {
   :root {
     --dashboard-rail-min: 17rem;
@@ -111,6 +117,12 @@
   .stage-row,
   .stage-column-actions {
     justify-items: start;
+  }
+
+  /* Stacked summary: each row is full width; inset from queue right (queue-column has padding-right: 0). */
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell {
+    padding-right: 10px;
+    box-sizing: border-box;
   }
 
   .screening-row,
@@ -287,6 +299,11 @@
     margin-top: calc(-1 * var(--adjacent-control-overlap));
   }
 
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-action-slot .button {
+    border-left-width: 1px;
+    border-top-width: 0;
+  }
+
   main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote:has(+ .stage-action-slot--salary),
   main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit),
   main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--fit:has(+ .stage-action-slot--status) {
@@ -306,11 +323,7 @@
 
 @media (max-width: 900px) {
   :root {
-    --site-header-height: calc(
-      var(--site-header-row-height) +
-      var(--site-header-nav-row-height) +
-      2px
-    );
+    --site-header-height: calc(var(--site-header-row-height) + 1px);
   }
 
   .dashboard-workspace {
@@ -410,18 +423,81 @@
   }
 
   .site-workflow-nav {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    display: none;
   }
 
   .site-brand {
     border-right: 0;
-    border-bottom: 1px solid var(--line-soft);
     padding-left: var(--site-gutter);
+    padding-right: 0;
   }
 
   .site-brand::after {
     display: none;
+  }
+
+  .site-profile-avatar-link {
+    display: none;
+  }
+
+  .site-mobile-menu-toggle {
+    display: inline-flex;
+    flex: 0 0 var(--site-header-row-height);
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    gap: 4px;
+    min-height: var(--site-header-row-height);
+    padding: 0 24px;
+    border: 0;
+    border-left: 1px solid var(--line-soft);
+    background: var(--bg);
+    color: inherit;
+    cursor: pointer;
+    flex-direction: column;
+  }
+
+  .site-mobile-menu-toggle-line {
+    display: block;
+    width: 18px;
+    height: 1px;
+    background: currentColor;
+  }
+
+  .site-mobile-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .site-mobile-menu.is-open {
+    display: grid;
+  }
+
+  .site-mobile-menu-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 56px;
+    padding: 0 24px;
+    font-family: var(--font-body), sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .site-mobile-menu-link + .site-mobile-menu-link {
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .site-mobile-menu-link[aria-current='page'] {
+    background: var(--accent);
   }
 
   .flow-header,
@@ -445,15 +521,6 @@
 }
 
 @media (max-width: 640px) {
-  :root {
-    --site-header-nav-row-height: 64px;
-    --site-header-height: calc(
-      var(--site-header-row-height) +
-      var(--site-header-nav-row-height) +
-      2px
-    );
-  }
-
   .workspace-main > main:not(.jobs-index):not(.workspace-surface) {
     padding: 16px;
   }
@@ -487,15 +554,6 @@
 
   .page-heading h1 {
     font-size: 2.1rem;
-  }
-
-  .site-workflow-nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .site-workflow-link {
-    min-height: 64px;
-    padding: 0 16px;
   }
 
   .settings-page-toolbar {
@@ -549,17 +607,6 @@
   .site-brand {
     min-height: 64px;
     padding-left: 12px;
-  }
-
-  .site-profile-avatar-link {
-    flex: 0 0 64px;
-    min-height: 64px;
-  }
-
-  .site-workflow-link {
-    min-height: 56px;
-    padding: 0 12px;
-    font-size: 0.6875rem;
   }
 
   .dashboard-workspace .today-rail {

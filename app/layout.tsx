@@ -29,6 +29,17 @@ function HeaderFallback({ counts }: { counts?: Partial<Record<QueueView, number>
         <Link href="/dashboard">
           <strong>Doom Scrolling Jobs</strong>
         </Link>
+        <button
+          aria-controls="site-mobile-menu-fallback"
+          aria-expanded="false"
+          aria-label="Open navigation menu"
+          className="site-mobile-menu-toggle"
+          type="button"
+        >
+          <span className="site-mobile-menu-toggle-line" />
+          <span className="site-mobile-menu-toggle-line" />
+          <span className="site-mobile-menu-toggle-line" />
+        </button>
         <Link aria-label="Profile settings" className="site-profile-avatar-link" href="/profile">
           <span className="site-profile-mark">
             <ProfileSettingsIcon className="site-profile-icon" />
@@ -46,6 +57,24 @@ function HeaderFallback({ counts }: { counts?: Partial<Record<QueueView, number>
           </Link>
         ))}
       </nav>
+
+      <div
+        aria-label="Mobile queue views"
+        className="site-mobile-menu"
+        id="site-mobile-menu-fallback"
+      >
+        {queueViews.map((view) => (
+          <Link className="site-mobile-menu-link" href={getQueueViewHref(view)} key={view}>
+            <span>{getQueueViewLabel(view)}</span>
+            {typeof counts?.[view] === 'number' ? (
+              <span className="site-workflow-count">{counts[view]}</span>
+            ) : null}
+          </Link>
+        ))}
+        <Link className="site-mobile-menu-link" href="/profile">
+          <span>Profile Settings</span>
+        </Link>
+      </div>
     </header>
   )
 }
