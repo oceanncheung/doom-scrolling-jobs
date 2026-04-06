@@ -14,7 +14,7 @@
 
 .settings-profile-rail {
   --today-rail-pad-left: 24px;
-  --today-rail-pad-right: 24px;
+  --today-rail-pad-right: var(--today-rail-pad-left);
   align-self: stretch;
   align-content: stretch;
   display: flex;

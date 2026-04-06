@@ -1,7 +1,7 @@
 'use client'
 
 import type { KeyboardEvent } from 'react'
-import { useId, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { FieldLabelRow } from '@/components/ui/field-label-row'
 import { ChevronDownIcon } from '@/components/ui/icons/chevron-down-icon'
@@ -18,22 +18,17 @@ interface TagInputProps {
   reviewState?: ReviewState
   suggestions?: string[]
   tags: string[]
-  /** `square`: 30×30 cells (+ becomes caret-ready input; new cell after each Enter). `field`: full-width underline input. */
-  variant?: 'field' | 'square'
 }
 
 export function TagInput({
   helper,
   label,
   onChange,
-  placeholder,
   preserveCase = false,
   reviewState,
   suggestions,
   tags,
-  variant = 'field',
 }: TagInputProps) {
-  const isSquare = variant === 'square'
   const [input, setInput] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [showAllSquareSuggestions, setShowAllSquareSuggestions] = useState(false)
@@ -42,7 +37,6 @@ export function TagInput({
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
-  const suggestionsId = useId()
   const availableSuggestions =
     suggestions?.filter(
       (suggestion, index, values) =>
@@ -120,11 +114,10 @@ export function TagInput({
     })
   }
 
-  const needsInput = tags.length === 0
   /** Idle trailing slot: + control; click → type → Enter → back to + for the next item */
   const showAddButton = !isEditing && !input.trim()
   const hasDatalist = availableSuggestions.length > 0
-  const showSquareSuggestionField = isSquare && hasDatalist && !showAddButton
+  const showSquareSuggestionField = hasDatalist && !showAddButton
   const filteredSquareSuggestions = showSquareSuggestionField
     ? input.trim()
       ? availableSuggestions.filter((suggestion) =>
@@ -165,8 +158,7 @@ export function TagInput({
       aria-label={
         tags.length > 0 ? `Add another ${label.toLowerCase()}` : `Add ${label.toLowerCase()}`
       }
-      className={isSquare ? 'tag-input tag-input-square' : 'tag-input'}
-      list={hasDatalist && !isSquare ? suggestionsId : undefined}
+      className="tag-input tag-input-square"
       onBlur={() => {
         requestAnimationFrame(() => {
           if (containerRef.current?.contains(document.activeElement)) {
@@ -206,29 +198,18 @@ export function TagInput({
         }
       }}
       onKeyDown={handleKeyDown}
-      placeholder={
-        isSquare
-          ? ''
-          : tags.length > 0
-            ? 'Add another…'
-            : (placeholder ?? 'Type and press Enter')
-      }
+      placeholder=""
       ref={inputRef}
-      size={isSquare ? Math.max(1, Math.min(80, input.length + 1)) : undefined}
+      size={Math.max(1, Math.min(80, input.length + 1))}
       type="text"
       value={input}
     />
   )
 
   return (
-    <div
-      className={`field tag-input-field${needsInput ? ' field--needs-input' : ''}${reviewState ? ` field--${reviewState}` : ''}`}
-    >
+    <div className={`field tag-input-field${reviewState ? ` field--${reviewState}` : ''}`}>
       <FieldLabelRow reviewState={reviewState}>{label}</FieldLabelRow>
-      <div
-        className={`tag-input-container${isSquare ? ' tag-input-container--square' : ''}`}
-        ref={containerRef}
-      >
+      <div className="tag-input-container tag-input-container--square" ref={containerRef}>
         <div className="tag-list">
           {tags.map((tag, i) => (
             <button
@@ -274,13 +255,6 @@ export function TagInput({
                 </span>
               </button>
             </span>
-          ) : hasDatalist && !isSquare ? (
-            <span className="list-input-shell tag-input-datalist-wrap tag-input-datalist-wrap--field">
-              {tagInputEl}
-              <span aria-hidden className="list-input-shell__chevron">
-                <ChevronDownIcon />
-              </span>
-            </span>
           ) : (
             tagInputEl
           )}
@@ -308,13 +282,6 @@ export function TagInput({
           </div>
         ) : null}
       </div>
-      {hasDatalist ? (
-        <datalist id={suggestionsId}>
-          {availableSuggestions.map((suggestion) => (
-            <option key={suggestion} value={suggestion} />
-          ))}
-        </datalist>
-      ) : null}
       {helper ? <small>{helper}</small> : null}
     </div>
   )

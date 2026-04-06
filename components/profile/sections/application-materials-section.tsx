@@ -38,30 +38,26 @@ export function ApplicationMaterialsSection({
       </div>
 
       <div className="settings-source-uploads-row settings-source-uploads-row--materials">
-        <div className="settings-source-uploads-materials-files--dual">
-          <FileUploadSlot
-            accept=".pdf,.doc,.docx,.md,.markdown,.txt,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            compactMaxLength={28}
-            fileName={sourceResumeFileName}
-            inputName="resumeSourceUpload"
-            label="Resume"
-            onRemove={() => setSourceResumeFileName(null)}
-            onUpload={(file) => setSourceResumeFileName(file.name)}
-            presentation="chip"
-            showUploadIcon
-          />
-          <FileUploadSlot
-            accept=".pdf,.doc,.docx,.md,.markdown,.txt,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            compactMaxLength={28}
-            fileName={sourceCoverLetterFileName}
-            inputName="coverLetterSourceUpload"
-            label="Cover letter (optional)"
-            onRemove={() => setSourceCoverLetterFileName(null)}
-            onUpload={(file) => setSourceCoverLetterFileName(file.name)}
-            presentation="chip"
-            showUploadIcon
-          />
-        </div>
+        <FileUploadSlot
+          accept=".pdf,.doc,.docx,.md,.markdown,.txt,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          compactMaxLength={28}
+          fileName={sourceResumeFileName}
+          inputName="resumeSourceUpload"
+          label="Resume"
+          onRemove={() => setSourceResumeFileName(null)}
+          onUpload={(file) => setSourceResumeFileName(file.name)}
+          showUploadIcon
+        />
+        <FileUploadSlot
+          accept=".pdf,.doc,.docx,.md,.markdown,.txt,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          compactMaxLength={28}
+          fileName={sourceCoverLetterFileName}
+          inputName="coverLetterSourceUpload"
+          label="Cover letter (optional)"
+          onRemove={() => setSourceCoverLetterFileName(null)}
+          onUpload={(file) => setSourceCoverLetterFileName(file.name)}
+          showUploadIcon
+        />
         <button
           className="upload-slot-chip-btn upload-slot-chip-btn--action settings-source-generate-button"
           disabled={!hasResumeInput}

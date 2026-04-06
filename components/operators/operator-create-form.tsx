@@ -16,7 +16,7 @@ export function OperatorCreateForm({ hasOperators }: { hasOperators: boolean }) 
   return (
     <section className="today-block operator-create-rail-block">
       <TodayBlockHeading
-        label={hasOperators ? 'Create account' : 'First account'}
+        label={hasOperators ? 'First time using DSJ?' : 'First account'}
         title={hasOperators ? 'Create account' : 'Create the first account'}
       />
 

@@ -40,7 +40,6 @@ export function AdvancedFiltersSection({
             preserveCase
             suggestions={TIMEZONE_SUGGESTIONS}
             tags={timezoneTags}
-            variant="square"
           />
           <TagInput
             label="Allowed remote regions"
@@ -49,7 +48,6 @@ export function AdvancedFiltersSection({
             preserveCase
             suggestions={REGION_SUGGESTIONS}
             tags={allowedRemoteRegionTags}
-            variant="square"
           />
           <TagInput
             label="Preferred industries"
@@ -58,7 +56,6 @@ export function AdvancedFiltersSection({
             preserveCase
             suggestions={INDUSTRY_SUGGESTIONS}
             tags={industriesPreferredTags}
-            variant="square"
           />
         </div>
       </SectionLockFrame>

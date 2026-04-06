@@ -10,7 +10,7 @@ It does three things:
 
 1. identifies the current responsive drift in the repo
 2. maps the pressure points by route
-3. sequences the four-breakpoint implementation work
+3. sequences the five-breakpoint implementation work
 
 ## Locked Decisions
 
@@ -20,7 +20,8 @@ It does three things:
   - `1180px`
   - `900px`
   - `640px`
-- Additional widths are for audit coverage only, not new breakpoint rules
+  - `390px`
+- Additional audit widths beyond those breakpoint widths are for coverage only
 - Visual language must remain unchanged:
   - 1px rules
   - monochrome surfaces
@@ -28,20 +29,32 @@ It does three things:
   - hard-edged geometry
   - existing type hierarchy
 
+## Protected UI Contracts During Responsive Work
+
+These controls are already approved and should be preserved while breakpoint work continues:
+
+- the profile source upload row
+- the active disclosure chip behavior
+- the active experience / cover-letter tab behavior
+
+Responsive implementation may only touch these patterns when a breakpoint-specific layout rule explicitly requires it, and every change must pass geometry, screenshot, and interaction verification before it is accepted.
+
 ## Current Responsive Drift
 
-### 1. Breakpoint drift in the codebase
+### 1. Breakpoint contract is now centralized, but still needs hardening
 
 Current evidence:
 - [responsive.css](/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom%20Scrolling%20Jobs/app/styles/responsive.css) uses:
+  - `1440px`
   - `1180px`
   - `900px`
-  - `720px`
-- [dashboard/job-flow.css](/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom%20Scrolling%20Jobs/app/styles/dashboard/job-flow.css) still contains route-local responsive behavior around `1200px`
+  - `640px`
+  - `390px`
+- [dashboard/job-flow.css](/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom%20Scrolling%20Jobs/app/styles/dashboard/job-flow.css) no longer owns its own route-local breakpoint override
 
 Finding:
-- The system currently collapses too much at `1180px`, then introduces more ad hoc changes again at `900px` and `720px`
-- This does not match the agreed five layout zones
+- The breakpoint contract now matches the agreed six layout zones
+- The remaining work is pass-by-pass hardening, not inventing new breakpoint rules
 
 ### 2. Rail width and header width are too tightly coupled
 
@@ -55,15 +68,15 @@ Finding:
 - the header tab math, profile source row widths, and some settings field widths inherit desktop assumptions from the rail width
 - this works at large desktop sizes, but it becomes brittle as the viewport narrows
 
-### 3. Narrow desktop is currently treated like tablet
+### 3. Narrow desktop now exists, but still needs route sweeps
 
 Current evidence:
-- at `1180px`, [responsive.css](/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom%20Scrolling%20Jobs/app/styles/responsive.css) collapses many route internals to `grid-template-columns: 1fr`
-- the rail also stops behaving like the desktop fixed rail at that same breakpoint
+- at `1180px`, [responsive.css](/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom%20Scrolling%20Jobs/app/styles/responsive.css) keeps the desktop rail/content shell and collapses inner grids and action groups instead
+- the rail does not switch to stacked flow until `900px`
 
 Finding:
-- the current system skips a true narrow-desktop zone
-- it goes straight from roomy desktop to a much more stacked composition
+- the missing narrow-desktop zone is now in place structurally
+- the remaining work is to sweep each route for collisions, clipping, and density regressions within that zone
 
 ## Route Audit
 
@@ -83,6 +96,7 @@ Implementation target:
 - `1180px`: keep rail + queue as two regions, but reduce rail claim and collapse inner row grids
 - `900px`: convert the rail to a top band and stack queue content below
 - `640px`: keep the queue readable with one-column row summaries and vertically stacked action groups
+- `390px`: tighten safe padding, shorter action rows, and compact summary wrapping without changing the visual language
 
 ### `/profile`
 
@@ -100,6 +114,7 @@ Implementation target:
 - `1180px`: keep rail + main split, but collapse selected inner grids earlier than today
 - `900px`: move the rail to a full-width top band and keep the form below as ruled sections
 - `640px`: convert all paired rows, upload/action rows, and repeat-card internals to single-column without horizontal overflow
+- `390px`: tighten padding, chip wrapping, and overlay placement constraints for compact mobile
 
 ### `/jobs/[jobId]`
 
@@ -117,6 +132,7 @@ Implementation target:
 - `1180px`: collapse dense snapshot/action internals without fully stacking the page
 - `900px`: shift to stacked editorial bands with no squeezed side region
 - `640px`: stack action groups cleanly and keep section rules aligned
+- `390px`: shorten action and summary rows further while keeping rule alignment intact
 
 ### `/operators`
 
@@ -132,6 +148,7 @@ Implementation target:
 - keep current composition until `900px`
 - at `900px`, stack the rail band above the main operator content
 - at `640px`, reduce internal padding but preserve the same rule rhythm
+- at `390px`, apply compact-mobile padding and field spacing without changing the block language
 
 ## Breakpoint Implementation Order
 
@@ -175,6 +192,16 @@ Scope:
 - move the current `720px` mobile logic down to `640px`
 - collapse chips, button clusters, tab rows, and repeat-card internals into compact single-column systems
 
+### Pass 5: `390px` compact mobile
+
+Goal:
+- make compact mobile intentional instead of a squeezed version of `640px`
+
+Scope:
+- tighten safe padding and action-row assumptions
+- increase chip wrapping tolerance and summary stacking
+- ensure overlays and list panels stay fully usable within the viewport
+
 ## Concrete CSS Refactor Targets
 
 ### Shared shell and tokens
@@ -187,6 +214,7 @@ Needed:
 - decouple rail width assumptions from header tab width assumptions
 - make `responsive.css` the single owner of breakpoint overrides
 - fold the current `720px` behavior into the new `640px` mobile breakpoint
+- add an explicit `390px` compact-mobile pass instead of treating it as audit-only
 
 ### Route families
 
@@ -214,7 +242,7 @@ Review at:
 - `640`
 - `390`
 
-These widths are still required for audit coverage even though only four of them become implementation breakpoints.
+These widths are still required for audit coverage even though only five of them become implementation breakpoints.
 
 ## Implementation Rule
 
@@ -235,9 +263,9 @@ Use this sequence every time:
 
 ## Immediate Next Step
 
-Start the actual responsive implementation at `1440px` first, not at tablet or mobile.
+Finish and harden the `1440px` pass before moving to `1180px`.
 
 Reason:
 - it is the safest pass
-- it reduces desktop coupling before the more structural `1180px` and `900px` changes
-- it gives the later breakpoint work cleaner shared contracts to build on
+- it lets the route families shake out compressed-desktop collisions before the bigger shell changes
+- it gives the later `1180px`, `900px`, `640px`, and `390px` work cleaner shared contracts to build on

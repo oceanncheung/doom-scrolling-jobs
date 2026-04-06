@@ -126,7 +126,6 @@ export function CoverLetterStrategySection({
                   preserveCase
                   reviewState={positioningReviewState}
                   tags={capabilityDisciplineTags}
-                  variant="square"
                 />
                 <TagInput
                   label="Production / tools / execution strengths"
@@ -135,7 +134,6 @@ export function CoverLetterStrategySection({
                   preserveCase
                   reviewState={positioningReviewState}
                   tags={capabilityToolsTags}
-                  variant="square"
                 />
               </div>
             </SettingsTabPanel>
@@ -250,7 +248,6 @@ export function CoverLetterStrategySection({
                   preserveCase
                   reviewState={voiceReviewState}
                   tags={toneVoiceTags}
-                  variant="square"
                 />
                 <TagInput
                   label="Key differentiators"
@@ -259,7 +256,6 @@ export function CoverLetterStrategySection({
                   preserveCase
                   reviewState={voiceReviewState}
                   tags={keyDifferentiatorTags}
-                  variant="square"
                 />
               </div>
             </SettingsTabPanel>

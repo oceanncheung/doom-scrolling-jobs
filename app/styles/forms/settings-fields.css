@@ -40,20 +40,18 @@
 }
 
 .settings-source-uploads-row--materials {
-  display: grid;
-  grid-template-columns:
-    calc(var(--site-workflow-tab-width) * 2)
-    minmax(0, 1fr)
-    var(--site-workflow-tab-width);
-  gap: 16px;
+  display: flex;
+  flex-wrap: nowrap;
   align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
   box-sizing: border-box;
 }
 
 /* Bleed past section padding so the source-doc row can sit flush with the queue column edge. */
 .settings-main .settings-source-uploads-row--materials {
-  width: calc(100% + var(--settings-section-pad-right));
-  margin-right: calc(-1 * var(--settings-section-pad-right));
+  width: calc(100% + var(--settings-section-pad-right) + var(--adjacent-control-overlap));
+  margin-right: calc(-1 * (var(--settings-section-pad-right) + var(--adjacent-control-overlap)));
   max-width: none;
 }
 
@@ -74,22 +72,26 @@
   border-bottom-color: var(--line);
 }
 
-.settings-source-uploads-row--materials .upload-slot {
-  width: 100%;
+.settings-main .settings-source-uploads-row--materials > .upload-slot {
+  flex: 0 0 var(--source-materials-chip-width);
+  width: var(--source-materials-chip-width);
+  max-width: var(--source-materials-chip-width);
   min-width: 0;
-  max-width: none;
 }
 
 .settings-source-uploads-row--materials .upload-slot-chip-btn--filled,
-.settings-source-uploads-row--materials .upload-slot-chip-btn:not(.upload-slot-chip-btn--action) {
+.settings-source-uploads-row--materials .upload-slot-chip-btn:not(.upload-slot-chip-btn--action),
+.settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action {
   min-height: 44px;
 }
 
 .settings-main .settings-source-uploads-row--materials .upload-slot-chip-btn:not(.upload-slot-chip-btn--action) {
+  --source-upload-chip-border-color: var(--line);
+  position: relative;
   width: 100%;
   max-width: none;
   padding: 12px 20px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--source-upload-chip-border-color);
   border-bottom: none;
   border-radius: 0;
   font-family: var(--font-body), sans-serif;
@@ -118,9 +120,10 @@
 }
 
 .settings-main .settings-source-uploads-row--materials .upload-slot-chip-btn:not(.upload-slot-chip-btn--action):not(.upload-slot-chip-btn--filled):hover {
+  --source-upload-chip-border-color: var(--text);
   background: var(--text);
   color: var(--bg);
-  border-color: var(--text);
+  border-color: var(--source-upload-chip-border-color);
   border-bottom: none;
 }
 
@@ -130,9 +133,10 @@
 }
 
 .settings-main .settings-source-uploads-row--materials .upload-slot-chip-btn.upload-slot-chip-btn--filled:hover {
+  --source-upload-chip-border-color: var(--text);
   background: var(--status-attention);
   color: var(--bg);
-  border-color: var(--status-attention);
+  border-color: var(--text);
   border-bottom: none;
 }
 
@@ -140,26 +144,20 @@
   min-width: 0;
 }
 
-.settings-source-uploads-materials-files--dual {
-  display: grid;
-  grid-template-columns: repeat(2, var(--site-workflow-tab-width));
-  gap: 0;
-  width: calc(var(--site-workflow-tab-width) * 2);
-  max-width: none;
-}
-
-.settings-main .settings-source-uploads-materials-files--dual > .upload-slot + .upload-slot {
+.settings-main .settings-source-uploads-row--materials > .upload-slot + .upload-slot {
   margin-left: calc(-1 * var(--adjacent-control-overlap));
 }
 
-.settings-main .settings-source-uploads-row--materials .upload-slot-chip-btn--action {
+.settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action {
+  flex: 0 0 var(--source-materials-chip-width);
+  width: var(--source-materials-chip-width);
+  max-width: var(--source-materials-chip-width);
   position: relative;
   z-index: 0;
   justify-content: center;
   align-self: stretch;
   box-sizing: border-box;
-  width: 100%;
-  max-width: var(--site-workflow-tab-width);
+  margin-left: auto;
   margin-right: 0;
   padding: 12px 20px;
   min-width: 0;
@@ -169,12 +167,9 @@
   border-bottom: none;
 }
 
-.settings-main .settings-source-generate-button {
-  grid-column: 3 / 4;
-}
-
 .settings-main .settings-source-uploads-row--materials .upload-slot-chip-btn--action:hover:not(:disabled) {
   opacity: 0.92;
+  z-index: 1;
 }
 
 .settings-main .settings-source-uploads-row--materials .upload-slot-chip-btn--action:disabled {
@@ -208,12 +203,6 @@
   align-content: start;
   box-sizing: border-box;
   padding-bottom: 48px;
-}
-
-.upload-slot-empty,
-.upload-slot-file {
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .settings-core-grid {
@@ -303,13 +292,6 @@
 .settings-tag-row .tag-list,
 .settings-job-targets-col-left .tag-list {
   gap: 8px;
-}
-
-.strengths-tag-stack .tag-input:not(.tag-input-square),
-.settings-tag-row .tag-input:not(.tag-input-square),
-.settings-job-targets-col-left .tag-input:not(.tag-input-square) {
-  min-width: 12rem;
-  padding: 0;
 }
 
 .strengths-tag-stack .field small,
@@ -464,7 +446,7 @@
 .field--needs-input input,
 .field--needs-input textarea,
 .field--needs-input select,
-.field--needs-input .tag-input-container:not(.tag-input-container--square) {
+.field--needs-input .tag-input-container {
   background: transparent;
   border-bottom-width: 1px;
 }
@@ -839,4 +821,3 @@
 .form-message-error {
   color: var(--text);
 }
-

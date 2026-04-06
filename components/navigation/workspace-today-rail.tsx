@@ -32,7 +32,30 @@ export function WorkspaceTodayRail({
   const newTodayCount = getNewTodayCount(jobs)
 
   return (
-    <WorkspaceRailShell ariaLabel="Today">
+    <WorkspaceRailShell
+      ariaLabel="Today"
+      footer={
+        <div className="today-rail-footer">
+          <section className="today-block">
+            <TodayBlockHeading label="" title="Snapshot" className="today-block-heading--title-only" />
+            <dl className="today-stats">
+              <div>
+                <dt>New today</dt>
+                <dd>{screeningLocked ? 0 : newTodayCount}</dd>
+              </div>
+              <div>
+                <dt>Ready</dt>
+                <dd>{preparedJobs.length}</dd>
+              </div>
+              <div>
+                <dt>Saved</dt>
+                <dd>{savedJobs.length}</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      }
+    >
       <section className="today-block">
         <TodayBlockHeading label="Apply next" title="" className="today-block-heading--label-only" />
 
@@ -86,24 +109,6 @@ export function WorkspaceTodayRail({
             <p>Save something from Potential and it will move into the next-action rail.</p>
           </div>
         )}
-      </section>
-
-      <section className="today-block">
-        <TodayBlockHeading label="" title="Snapshot" className="today-block-heading--title-only" />
-        <dl className="today-stats">
-          <div>
-            <dt>New today</dt>
-            <dd>{screeningLocked ? 0 : newTodayCount}</dd>
-          </div>
-          <div>
-            <dt>Ready</dt>
-            <dd>{preparedJobs.length}</dd>
-          </div>
-          <div>
-            <dt>Saved</dt>
-            <dd>{savedJobs.length}</dd>
-          </div>
-        </dl>
       </section>
     </WorkspaceRailShell>
   )

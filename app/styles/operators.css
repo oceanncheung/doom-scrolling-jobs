@@ -13,8 +13,8 @@
 
 .operator-list {
   display: grid;
-  margin-right: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + var(--queue-column-pad));
+  width: 100%;
+  min-width: 0;
 }
 
 .operator-row {

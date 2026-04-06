@@ -132,17 +132,6 @@
   min-width: 0;
 }
 
-@media (max-width: 900px) {
-  .job-flow-snapshot.detail-page-snapshot {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-page-header-stack .job-flow-heading,
-  .job-flow-header-stack .job-flow-heading {
-    grid-column: 1 / -1;
-  }
-}
-
 .packet-page-actions,
 .job-flow-actions {
   display: grid;
@@ -361,8 +350,9 @@
 }
 
 .job-overview-actions--pair-right .screening-actions-cluster {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, var(--workflow-action-control-width)));
   align-items: end;
+  justify-content: end;
 }
 
 .job-overview-actions--triple-right .screening-actions-cluster {

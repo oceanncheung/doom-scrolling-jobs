@@ -14,6 +14,21 @@ function splitExtension(fileName: string) {
   }
 }
 
+export function formatCompactMiddleText(value: string, maxLength = 30) {
+  const trimmed = value.trim()
+
+  if (!trimmed || trimmed.length <= maxLength) {
+    return trimmed
+  }
+
+  const ellipsis = '...'
+  const availableLength = Math.max(6, maxLength - ellipsis.length)
+  const startLength = Math.max(4, Math.ceil(availableLength * 0.55))
+  const endLength = Math.max(3, availableLength - startLength)
+
+  return `${trimmed.slice(0, startLength)}${ellipsis}${trimmed.slice(-endLength)}`
+}
+
 export function formatCompactFileName(fileName: string, maxLength = 30) {
   const trimmed = fileName.trim()
 

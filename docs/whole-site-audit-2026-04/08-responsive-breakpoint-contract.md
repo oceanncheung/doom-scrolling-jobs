@@ -10,14 +10,15 @@ Date: April 5, 2026
 
 ## Breakpoint System
 
-Use only four actual breakpoints:
+Use only five actual breakpoints:
 
 - `1440px`
 - `1180px`
 - `900px`
 - `640px`
+- `390px`
 
-This creates five layout zones:
+This creates six layout zones:
 
 | Zone | Width | Purpose |
 | --- | --- | --- |
@@ -25,7 +26,8 @@ This creates five layout zones:
 | Compressed desktop | `1181px – 1440px` | Same architecture, tighter measures |
 | Narrow desktop | `901px – 1180px` | Preserve two-part structure while collapsing inner grids |
 | Tablet | `641px – 900px` | Rail becomes a top band, main content stacks below |
-| Mobile | `<= 640px` | Single-column vertical composition |
+| Mobile | `391px – 640px` | Single-column vertical composition |
+| Compact mobile | `<= 390px` | Single-column composition with tighter safe padding and denser control stacking |
 
 ## Non-Negotiable Rules
 
@@ -46,27 +48,34 @@ This creates five layout zones:
 - `>= 1441px`: current rail + queue composition
 - `1181px – 1440px`: same composition, tighter row internals and action clusters
 - `901px – 1180px`: keep rail and queue distinct, but relax fixed widths and collapse dense row tracks
-- `<= 900px`: rail becomes a top band above queue content; stage rows stack detail pairs vertically
+- `641px – 900px`: rail becomes a top band above queue content; stage rows stack detail pairs vertically
+- `391px – 640px`: queue becomes a clean single-column reading flow with vertically stacked action groups
+- `<= 390px`: compact mobile pass tightens safe padding and shortens control rows without changing the visual language
 
 ### `/profile`
 
 - `>= 1441px`: current rail + settings main
 - `1181px – 1440px`: same structure, tighter field grids
 - `901px – 1180px`: preserve left rail, but collapse inner two-column settings grids as needed
-- `<= 900px`: left rail becomes a top block; disclosures and tabs remain ruled sections, not “cards”
-- `<= 640px`: one-column stack; upload/action clusters and chip rows must avoid horizontal overflow
+- `641px – 900px`: left rail becomes a top block; disclosures and tabs remain ruled sections, not “cards”
+- `391px – 640px`: one-column stack; upload/action clusters and chip rows must avoid horizontal overflow
+- `<= 390px`: compact mobile pass keeps the same ruled hierarchy while tightening padding and chip wrapping
 
 ### `/operators`
 
 - `>= 901px`: keep the current editorial composition
-- `<= 900px`: stack operator/account blocks vertically while preserving rule rhythm
+- `641px – 900px`: stack operator/account blocks vertically while preserving rule rhythm
+- `391px – 640px`: reduce internal padding and convert dense control groupings to one-column stacks
+- `<= 390px`: reduce padding and control width assumptions, but keep the same block and rule grammar
 
 ### `/jobs/[jobId]`
 
 - `>= 1441px`: current job-review shell
 - `1181px – 1440px`: same layout, tighter summary/action internals
 - `901px – 1180px`: header snapshot and action bars collapse more aggressively
-- `<= 900px`: route behaves like stacked editorial bands; no squeezed sidebar pattern
+- `641px – 900px`: route behaves like stacked editorial bands; no squeezed sidebar pattern
+- `391px – 640px`: stack action groups cleanly and preserve section rules with no horizontal overflow
+- `<= 390px`: compact mobile pass tightens padding and chip/action wrapping while preserving editorial rhythm
 
 ## Audit Widths
 
@@ -98,6 +107,7 @@ Every responsive issue should be tagged as one of:
 ## Implementation Guidance
 
 - Keep breakpoint overrides in `app/styles/responsive.css`
+- Treat `390px` as a deliberate implementation breakpoint, not a QA afterthought
 - Shared contract ownership remains:
   - `forms.css` for shared field / overlay / tag behavior
   - `settings.css` for profile/settings layout behavior

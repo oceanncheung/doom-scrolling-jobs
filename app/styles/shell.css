@@ -86,11 +86,12 @@
 
 .dashboard-workspace {
   display: grid;
-  grid-template-columns: var(--dashboard-rail) minmax(0, 1fr);
+  grid-template-columns: var(--dashboard-rail-width) minmax(0, 1fr);
   column-gap: 0;
   row-gap: 0;
   align-items: stretch;
-  min-height: calc(100vh - 73px);
+  min-height: calc(100vh - var(--site-header-height));
+  overflow-x: clip;
 }
 
 .today-rail,
@@ -125,7 +126,7 @@
 
 .dashboard-workspace .today-rail {
   --today-rail-pad-left: var(--site-gutter);
-  --today-rail-pad-right: 24px;
+  --today-rail-pad-right: var(--today-rail-pad-left);
   padding-top: 24px;
   padding-left: var(--today-rail-pad-left);
   padding-right: var(--today-rail-pad-right);
@@ -139,12 +140,12 @@
   flex-direction: column;
   gap: 0;
   position: fixed;
-  top: 73px;
+  top: var(--site-header-height);
   left: 0;
   z-index: 4;
-  width: max(18rem, 28%);
-  height: calc(100dvh - 73px);
-  max-height: calc(100dvh - 73px);
+  width: var(--dashboard-rail-width);
+  height: calc(100dvh - var(--site-header-height));
+  max-height: calc(100dvh - var(--site-header-height));
   min-height: 0;
   overflow: visible;
   background: var(--bg);
@@ -160,6 +161,8 @@
   gap: 24px;
   align-content: start;
   justify-items: stretch;
+  padding-bottom: 24px;
+  box-sizing: border-box;
 }
 
 /* Profile rail: viewport-tall column; scroll middle; actions pinned to viewport bottom (not in scroll) */
@@ -168,19 +171,20 @@
   flex-direction: column;
   gap: 0;
   position: fixed;
-  top: 73px;
+  top: var(--site-header-height);
   left: 0;
   z-index: 4;
-  width: max(18rem, 28%);
+  width: var(--dashboard-rail-width);
   align-content: stretch;
   justify-items: unset;
   align-items: stretch;
   align-self: start;
-  height: calc(100dvh - 73px);
-  max-height: calc(100dvh - 73px);
-  min-height: calc(100dvh - 73px);
+  height: calc(100dvh - var(--site-header-height));
+  max-height: calc(100dvh - var(--site-header-height));
+  min-height: calc(100dvh - var(--site-header-height));
   overflow: hidden;
   background: var(--bg);
+  padding-top: 0;
 }
 
 .dashboard-workspace .today-rail.settings-profile-rail > .settings-profile-rail-scroll {
@@ -192,6 +196,9 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding-top: 0;
+  padding-bottom: 24px;
+  box-sizing: border-box;
 }
 
 .settings-profile-rail-heading-stack {
@@ -200,23 +207,39 @@
   min-width: 0;
 }
 
-/* Single rule between Apply next and Snapshot: drop paired bottom+top borders */
-.dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block:first-child {
+/* Apply next + Snapshot footer: footer supplies the black rule; avoid double line above it */
+.dashboard-workspace
+  .today-rail:not(.settings-profile-rail):has(> .today-rail-footer)
+  > .today-rail-scroll
+  > .today-block:first-child {
   border-bottom: none;
   padding-bottom: 0;
 }
 
-.dashboard-workspace
-  .today-rail:not(.settings-profile-rail)
-  > .today-rail-scroll
-  > .today-block:first-child
-  + .today-block {
-  border-top: none;
-  padding-top: 0;
+.dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-footer {
+  flex-shrink: 0;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-left: calc(-1 * var(--today-rail-pad-left));
+  padding-left: var(--today-rail-pad-left);
+  padding-right: var(--today-rail-pad-right);
+  width: calc(100% + var(--today-rail-pad-left) + var(--today-rail-pad-right));
+  box-sizing: border-box;
+  padding-top: 24px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid var(--line);
+  border-bottom: none;
+}
+
+.dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-footer > .today-block:first-child {
+  border-bottom: none;
 }
 
 .dashboard-workspace .today-rail.settings-profile-rail > .settings-profile-rail-scroll > .today-block:first-child {
   border-bottom: none;
+  padding-top: 24px;
   padding-bottom: 0;
 }
 
@@ -227,6 +250,7 @@
 
 .dashboard-workspace .queue-column {
   --queue-column-pad: 32px;
+  --workflow-action-control-width: calc((100vw - var(--dashboard-rail-width) - var(--queue-column-pad)) / 3);
   align-content: start;
   align-items: start;
   padding-top: 24px;
@@ -234,6 +258,7 @@
   padding-left: var(--queue-column-pad);
   padding-right: 0;
   min-width: 0;
+  overflow-x: clip;
 }
 
 .today-block {

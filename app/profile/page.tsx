@@ -25,7 +25,7 @@ export default async function ProfilePage() {
         >
             <PageIntroHeader
               className="settings-page-header"
-              label="Profile"
+              label="Settings"
               note="Manage the source documents, profile facts, and matching preferences used across the site."
               title="Profile"
             />

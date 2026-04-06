@@ -246,19 +246,6 @@
   pointer-events: none;
 }
 
-.tag-input-datalist-wrap--field {
-  flex: 1 1 8rem;
-  min-width: 8rem;
-  width: 100%;
-}
-
-.list-input-shell .tag-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-}
-
 .list-input-shell__chevron {
   position: absolute;
   right: 0;
@@ -579,4 +566,3 @@
   letter-spacing: 0.16px;
   margin: 0;
 }
-

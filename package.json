@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run build",
+    "test:ui-contracts": "playwright test tests/ui-contracts.spec.ts --project=chromium",
     "smoke:packet": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/smoke-test-packet.mts",
     "smoke:routes": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/smoke-routes.mts",
     "backfill:job-review-copy": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/backfill-job-review-copy.mts",
@@ -25,6 +26,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

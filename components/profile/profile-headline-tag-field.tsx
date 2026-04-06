@@ -23,7 +23,6 @@ export function ProfileHeadlineTagField({ formId }: ProfileHeadlineTagFieldProps
         preserveCase
         reviewState={reviewState}
         tags={applicationTitleTags}
-        variant="square"
       />
       <input form={formId} name="headline" onChange={() => {}} required type="hidden" value={joined} />
     </div>

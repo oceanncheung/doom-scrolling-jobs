@@ -129,6 +129,32 @@ Contract:
 - Chip upload state and idle upload state stay on one shared component.
 - Upload, remove, and filename compaction behavior should not be reimplemented locally.
 
+## Protected Contracts
+
+These patterns are visually settled and should not be reinterpreted during cleanup or responsive work unless a scoped bug explicitly targets them.
+
+### Source upload row
+
+Owned by:
+- `components/profile/sections/application-materials-section.tsx`
+- `app/styles/forms/settings-fields.css`
+
+Contract:
+- `Resume` and `Cover letter` remain joined with a single seam.
+- `Generate profile` remains flush to the right edge of the source row.
+- The row keeps its approved alignment with the section content.
+- Breakpoint work may only stack or reflow this row when a breakpoint-specific layout rule explicitly requires it.
+
+### Active disclosure and tab chips
+
+Owned by:
+- `app/styles/settings/elevated-controls.css`
+
+Contract:
+- Opening a chip must not move the label vertically.
+- Active chips must not reveal a bottom-rule leak during open or close.
+- Interaction polish belongs in the shared elevated-controls contract, not route-specific selector patches.
+
 ## Shared Icon Rule
 
 Owned by:
@@ -148,6 +174,11 @@ Contract:
 - New shared primitives or behavior refinements should be exercised in the internal inventory route before spreading across product routes.
 - The inventory route is internal and unlinked from the main product IA.
 - Inventory-specific layout styles must stay isolated from live-route selectors.
+
+## Verification Workflow
+
+- Before closing any UI bug fix, run one live geometry check, one screenshot check, and one interaction check on the affected route.
+- For protected contracts, regressions must be fixed at the owning shared contract, not at the consuming route.
 
 ## CSS Ownership Rule
 

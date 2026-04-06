@@ -3,6 +3,7 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   type ComponentPropsWithoutRef,
@@ -45,6 +46,18 @@ export const AutoSizeTextarea = forwardRef<HTMLTextAreaElement, AutoSizeTextarea
     useLayoutEffect(() => {
       syncHeight()
     }, [value, syncHeight])
+
+    useEffect(() => {
+      const handleResize = () => {
+        syncHeight()
+      }
+
+      window.addEventListener('resize', handleResize)
+
+      return () => {
+        window.removeEventListener('resize', handleResize)
+      }
+    }, [syncHeight])
 
     return (
       <textarea

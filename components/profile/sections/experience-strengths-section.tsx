@@ -430,7 +430,6 @@ export function ExperienceStrengthsSection({
                 preserveCase
                 reviewState={skillsToolsReviewState}
                 tags={skillsTags}
-                variant="square"
               />
               <TagInput
                 label="Tools I use"
@@ -439,7 +438,6 @@ export function ExperienceStrengthsSection({
                 preserveCase
                 reviewState={skillsToolsReviewState}
                 tags={toolsTags}
-                variant="square"
               />
               <TagInput
                 label="Languages"
@@ -448,7 +446,6 @@ export function ExperienceStrengthsSection({
                 preserveCase
                 reviewState={skillsToolsReviewState}
                 tags={languageTags}
-                variant="square"
               />
             </div>
             </SettingsTabPanel>
@@ -464,7 +461,6 @@ export function ExperienceStrengthsSection({
                 preserveCase
                 reviewState={certificationsReviewState}
                 tags={certificationTags}
-                variant="square"
               />
             </div>
             </SettingsTabPanel>

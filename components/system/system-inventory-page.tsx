@@ -53,7 +53,9 @@ export function SystemInventoryPage() {
         </div>
         <p className="system-inventory-note">
           This page is internal only. It exercises the live shared primitives so we can tighten the
-          UI system without changing the visual output on product routes.
+          UI system without changing the visual output on product routes. The source upload row and
+          active disclosure/tab chips are protected contracts and should be validated here before
+          they are touched elsewhere.
         </p>
       </section>
 
@@ -122,7 +124,6 @@ export function SystemInventoryPage() {
                     preserveCase
                     reviewState="ready"
                     tags={roleTags}
-                    variant="square"
                   />
                   <TagInput
                     label="Hiring markets"
@@ -131,7 +132,6 @@ export function SystemInventoryPage() {
                     preserveCase
                     suggestions={REGION_SUGGESTIONS}
                     tags={marketTags}
-                    variant="square"
                   />
                   <TagToggleGroup
                     label="Target seniority"
@@ -150,7 +150,6 @@ export function SystemInventoryPage() {
                     reviewState="review"
                     suggestions={INDUSTRY_SUGGESTIONS}
                     tags={industryTags}
-                    variant="square"
                   />
                   <TagInput
                     label="Timezone"
@@ -159,7 +158,6 @@ export function SystemInventoryPage() {
                     preserveCase
                     suggestions={TIMEZONE_SUGGESTIONS}
                     tags={timezoneTags}
-                    variant="square"
                   />
                   <TagInput
                     label="Tools and platforms"
@@ -167,7 +165,6 @@ export function SystemInventoryPage() {
                     placeholder="Type and press Enter"
                     reviewState="ready"
                     tags={toolTags}
-                    variant="field"
                   />
                 </div>
               </div>
@@ -185,7 +182,6 @@ export function SystemInventoryPage() {
                         label="Resume"
                         onRemove={() => setResumeFileName(null)}
                         onUpload={(file) => setResumeFileName(file.name)}
-                        presentation="chip"
                         showUploadIcon
                       />
                       <FileUploadSlot
@@ -194,7 +190,6 @@ export function SystemInventoryPage() {
                         label="Cover letter (optional)"
                         onRemove={() => setCoverLetterFileName(null)}
                         onUpload={(file) => setCoverLetterFileName(file.name)}
-                        presentation="chip"
                         showUploadIcon
                       />
                     </div>

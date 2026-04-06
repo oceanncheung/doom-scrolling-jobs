@@ -101,7 +101,6 @@ export function JobTargetsSection({
                     preserveCase
                     suggestions={REGION_SUGGESTIONS}
                     tags={hiringMarketTags}
-                    variant="square"
                   />
                   <TagToggleGroup
                     label="Target seniority (Multi-select)"
@@ -116,7 +115,6 @@ export function JobTargetsSection({
                     placeholder="e.g. Brand designer"
                     reviewState={targetRolesReviewState}
                     tags={targetRoleTags}
-                    variant="square"
                   />
                   <TagInput
                     label="Also consider"
@@ -124,7 +122,6 @@ export function JobTargetsSection({
                     placeholder="e.g. Art director"
                     reviewState={adjacentRolesReviewState}
                     tags={adjacentRoleTags}
-                    variant="square"
                   />
                 </div>
                 <div className="settings-job-targets-col-right">

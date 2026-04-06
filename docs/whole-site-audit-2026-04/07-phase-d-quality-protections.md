@@ -35,12 +35,15 @@ Contract:
 
 Owned by:
 - [09 Screenshot Baseline Manifest](./09-screenshot-baseline-manifest.md)
+- `tests/ui-contracts.spec.ts`
 
 Contract:
 - use `1920×1200` as the canonical desktop baseline
 - keep screenshot coverage lightweight and route-focused
 - do not introduce a full browser automation platform yet
 - capture the five primary product surfaces first, then expand only if regressions justify it
+- after the responsive sweep, also keep breakpoint spot-check captures at `1440×1200`, `1180×1100`, `900×1000`, `640×900`, and `390×844`
+- protect settled UI contracts with targeted Playwright checks before they are touched during later breakpoint work
 
 ### 3. Keyboard and focus regression checklist
 
@@ -81,6 +84,7 @@ Before merge to `main`, the minimum Phase D gate is:
 4. `npm run smoke:routes`
 5. visual spot-check against the screenshot baseline manifest
 6. keyboard/focus pass on the affected route family
+7. targeted UI-contract Playwright pass for any frozen control that was touched
 
 ## Notes
 

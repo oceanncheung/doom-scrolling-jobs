@@ -12,7 +12,7 @@ export default async function OperatorsPage() {
   const hasOperators = session.operators.length > 0
 
   return (
-    <main className="page-stack">
+    <main className="page-stack workspace-surface">
       <WorkspaceSurface
         rail={
           <WorkspaceRailShell className="today-rail">
