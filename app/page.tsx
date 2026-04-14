@@ -1,16 +1,7 @@
-import { redirect } from 'next/navigation'
+import { OperatorEntryScreen } from '@/components/operators/operator-entry-screen'
 
-import { getOperatorSessionState } from '@/lib/data/operators'
-import { hasSupabaseServerEnv } from '@/lib/env'
+export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  if (hasSupabaseServerEnv()) {
-    const session = await getOperatorSessionState()
-
-    if (session.needsSetup || session.needsSelection) {
-      redirect('/operators')
-    }
-  }
-
-  redirect('/dashboard')
+  return <OperatorEntryScreen />
 }

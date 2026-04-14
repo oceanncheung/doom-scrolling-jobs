@@ -64,7 +64,7 @@ export async function selectOperator(formData: FormData) {
   }
 
   if (!operatorId) {
-    redirect('/operators')
+    redirect('/')
   }
 
   const supabase = createClient()
@@ -75,7 +75,7 @@ export async function selectOperator(formData: FormData) {
     .maybeSingle()
 
   if (!operator?.id) {
-    redirect('/operators')
+    redirect('/')
   }
 
   const cookieStore = await cookies()
@@ -102,7 +102,7 @@ export async function clearActiveOperatorSelection() {
 
   revalidatePath('/')
   revalidatePath('/operators')
-  redirect('/operators')
+  redirect('/')
 }
 
 export async function createOperator(

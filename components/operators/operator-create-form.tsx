@@ -16,12 +16,12 @@ export function OperatorCreateForm({ hasOperators }: { hasOperators: boolean }) 
   return (
     <section className="today-block operator-create-rail-block">
       <TodayBlockHeading
-        label={hasOperators ? 'First time using DSJ?' : 'First account'}
-        title={hasOperators ? 'Create account' : 'Create the first account'}
+        label={hasOperators ? 'Need an account?' : 'First account'}
+        title={hasOperators ? 'Create account' : 'Create your first account'}
       />
 
       <p className="profile-note">
-        Add another internal workspace profile for this browser session.
+        Create a workspace account for this app.
       </p>
 
       <form action={formAction} className="operator-setup-form operator-setup-form--rail">
@@ -38,7 +38,7 @@ export function OperatorCreateForm({ hasOperators }: { hasOperators: boolean }) 
         </div>
 
         <button className="button button-primary" disabled={isPending} type="submit">
-          {isPending ? 'Saving...' : 'Create Account'}
+          {isPending ? 'Saving...' : 'Create account'}
         </button>
 
         {state.message ? (

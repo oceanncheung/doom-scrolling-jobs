@@ -3,7 +3,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Suspense } from 'react'
 
-import { ProfileTestingResetButton } from '@/components/profile/profile-testing-reset-button'
+import { WorkspaceChrome } from '@/components/navigation/workspace-chrome'
 import { ProfileSettingsIcon } from '@/components/navigation/profile-settings-icon'
 import { WorkspaceHeader } from '@/components/navigation/workspace-header'
 import { site } from '@/lib/config/site'
@@ -84,21 +84,24 @@ function HeaderFallback({ counts }: { counts?: Partial<Record<QueueView, number>
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const session = await getOperatorSessionState()
-  const counts = session.activeOperator
+  const showWhenAuthenticated = Boolean(session.activeOperator)
+  const counts = showWhenAuthenticated
     ? getDashboardQueues((await getRankedJobs()).jobs).counts
     : undefined
 
   return (
     <html lang="en">
       <body>
-        <div className="workspace-shell">
-          <Suspense fallback={<HeaderFallback counts={counts} />}>
-            <WorkspaceHeader counts={counts} />
-          </Suspense>
-
-          <div className="workspace-main">{children}</div>
-          <ProfileTestingResetButton />
-        </div>
+        <WorkspaceChrome
+          header={
+            <Suspense fallback={<HeaderFallback counts={counts} />}>
+              <WorkspaceHeader counts={counts} />
+            </Suspense>
+          }
+          showWhenAuthenticated={showWhenAuthenticated}
+        >
+          {children}
+        </WorkspaceChrome>
       </body>
     </html>
   )

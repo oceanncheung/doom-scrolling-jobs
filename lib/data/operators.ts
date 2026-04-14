@@ -145,16 +145,6 @@ export async function getOperatorSessionState(): Promise<OperatorSessionState> {
     }
   }
 
-  if (operators.length === 1) {
-    return {
-      activeOperator: operators[0],
-      needsSelection: false,
-      needsSetup: false,
-      operators,
-      source: 'database',
-    }
-  }
-
   return {
     needsSelection: true,
     needsSetup: false,
@@ -167,7 +157,7 @@ export async function requireActiveOperatorSelection() {
   const session = await getOperatorSessionState()
 
   if (!session.activeOperator) {
-    redirect('/operators')
+    redirect('/')
   }
 
   return session.activeOperator

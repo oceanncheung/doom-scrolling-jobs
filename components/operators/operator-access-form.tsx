@@ -27,7 +27,7 @@ export function OperatorAccessForm({
                     <strong>{operator.displayName}</strong>
                     <span>{operator.email}</span>
                   </span>
-                  <span className="operator-row-meta">{isActive ? 'Current' : 'Use this profile'}</span>
+                  <span className="operator-row-meta">{isActive ? 'Signed in' : 'Sign in'}</span>
                 </button>
               </form>
             )
@@ -36,7 +36,7 @@ export function OperatorAccessForm({
       ) : (
         <section className="empty-state operator-empty-state">
           <p className="panel-label">Accounts</p>
-          <p>No internal accounts are saved on this browser yet.</p>
+          <p>No accounts are available yet. Create one to start using the app.</p>
         </section>
       )}
     </div>
