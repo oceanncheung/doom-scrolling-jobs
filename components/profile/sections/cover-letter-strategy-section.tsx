@@ -196,7 +196,7 @@ export function CoverLetterStrategySection({
                           />
                         </label>
                         <label
-                          className={`field settings-field-autosize field--${proofBankReviewState}`}
+                          className={`field settings-field-autosize repeat-card-proof-context field--${proofBankReviewState}`}
                         >
                           <span>Context</span>
                           <AutoSizeTextarea

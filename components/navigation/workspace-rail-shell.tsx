@@ -1,7 +1,9 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+const RAIL_CLOSE_MS = 320
 
 interface WorkspaceRailShellProps {
   ariaLabel?: string
@@ -26,7 +28,42 @@ export function WorkspaceRailShell({
 }: WorkspaceRailShellProps) {
   const hasRailCollapse = Boolean(collapsedLabel)
   const [isRailCollapsed, setIsRailCollapsed] = useState(hasRailCollapse)
-  const toggleRailCollapsed = () => setIsRailCollapsed((collapsed) => !collapsed)
+  const [isRailClosing, setIsRailClosing] = useState(false)
+  const railCloseTimerRef = useRef<number | null>(null)
+
+  const clearRailCloseTimer = () => {
+    if (railCloseTimerRef.current !== null) {
+      window.clearTimeout(railCloseTimerRef.current)
+      railCloseTimerRef.current = null
+    }
+  }
+
+  const toggleRailCollapsed = () => {
+    clearRailCloseTimer()
+
+    if (isRailCollapsed) {
+      setIsRailClosing(false)
+      setIsRailCollapsed(false)
+      return
+    }
+
+    setIsRailClosing(true)
+    railCloseTimerRef.current = window.setTimeout(() => {
+      setIsRailCollapsed(true)
+      setIsRailClosing(false)
+      railCloseTimerRef.current = null
+    }, RAIL_CLOSE_MS)
+  }
+
+  useEffect(
+    () => () => {
+      if (railCloseTimerRef.current !== null) {
+        window.clearTimeout(railCloseTimerRef.current)
+        railCloseTimerRef.current = null
+      }
+    },
+    [],
+  )
 
   useEffect(() => {
     if (!hasRailCollapse || isRailCollapsed || typeof window === 'undefined') {
@@ -60,6 +97,7 @@ export function WorkspaceRailShell({
           className,
           hasRailCollapse ? 'has-rail-collapse' : null,
           hasRailCollapse && isRailCollapsed ? 'is-rail-collapsed' : null,
+          hasRailCollapse && isRailClosing ? 'is-rail-closing' : null,
         ]
           .filter(Boolean)
           .join(' ')}
@@ -83,12 +121,13 @@ export function WorkspaceRailShell({
             <button
               aria-expanded={!isRailCollapsed}
               aria-label={`${isRailCollapsed ? 'Expand' : 'Collapse'} ${collapsedLabel}`}
-              className="rail-collapse-icon-toggle"
+              className={`rail-collapse-icon-toggle${isRailCollapsed ? ' is-collapsed' : ''}`}
               onClick={toggleRailCollapsed}
               type="button"
             >
               <span aria-hidden="true" className="rail-collapse-indicator">
-                {isRailCollapsed ? '+' : '−'}
+                <span className="rail-collapse-indicator__arm" />
+                <span className="rail-collapse-indicator__arm rail-collapse-indicator__arm--v" />
               </span>
             </button>
           </div>

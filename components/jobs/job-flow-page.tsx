@@ -64,8 +64,8 @@ export function JobFlowPage({
             readinessPresentation={readinessPresentation}
             screeningLocked={screeningLocked}
           />
-        </div>
-      ) : null}
+            </div>
+          ) : null}
     </>
   )
 }

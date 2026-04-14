@@ -1,6 +1,31 @@
 import type { OperatorProfileRecord } from '@/lib/domain/types'
 import type { CompensationPeriod, NormalizedJobRecord, RankedJobRecord } from '@/lib/jobs/contracts'
 
+/** Annual/unknown amounts above 10k use compact “$80K” style; other periods stay full currency. */
+export function formatSalaryAmountForUi(
+  amount: number,
+  currency: string,
+  period: CompensationPeriod,
+): string {
+  const formatter = new Intl.NumberFormat('en-US', {
+    currency,
+    maximumFractionDigits: 0,
+    style: 'currency',
+  })
+
+  if (period !== 'annual' && period !== 'unknown') {
+    return formatter.format(amount)
+  }
+
+  if (amount <= 10_000) {
+    return formatter.format(amount)
+  }
+
+  const thousands = Math.round(amount / 1000)
+  const currencySymbol = formatter.formatToParts(amount).find((p) => p.type === 'currency')?.value ?? ''
+  return `${currencySymbol}${thousands}K`
+}
+
 type SalaryEstimateJob = Pick<
   NormalizedJobRecord,
   | 'department'
@@ -134,11 +159,6 @@ function formatRangeValue(
   currency: string,
   period: CompensationPeriod,
 ) {
-  const formatter = new Intl.NumberFormat('en-US', {
-    currency,
-    maximumFractionDigits: 0,
-    style: 'currency',
-  })
   const suffix =
     period === 'hourly'
       ? ' / hr'
@@ -151,10 +171,10 @@ function formatRangeValue(
             : ''
 
   if (Math.abs(max - min) < 1000) {
-    return `${formatter.format(min)}${suffix}`
+    return `${formatSalaryAmountForUi(min, currency, period)}${suffix}`
   }
 
-  return `${formatter.format(min)} - ${formatter.format(max)}${suffix}`
+  return `${formatSalaryAmountForUi(min, currency, period)} - ${formatSalaryAmountForUi(max, currency, period)}${suffix}`
 }
 
 function getCompensationLabel(period: CompensationPeriod, estimated: boolean) {

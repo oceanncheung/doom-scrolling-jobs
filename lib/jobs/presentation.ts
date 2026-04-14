@@ -1,4 +1,5 @@
 import type { QualifiedJobRecord, RankedJobRecord } from '@/lib/jobs/contracts'
+import { formatSalaryAmountForUi } from '@/lib/jobs/salary-estimation'
 
 const compactRegionMap: Array<[RegExp, string]> = [
   [/\bUnited States\b/gi, 'US'],
@@ -100,11 +101,6 @@ export function formatSalaryRange(
     return 'Salary not listed'
   }
 
-  const formatter = new Intl.NumberFormat('en-US', {
-    currency: job.salaryCurrency,
-    maximumFractionDigits: 0,
-    style: 'currency',
-  })
   const period = options?.period ?? job.salaryPeriod
   const suffix =
     period === 'hourly'
@@ -118,14 +114,14 @@ export function formatSalaryRange(
             : ''
 
   if (job.salaryMin && job.salaryMax) {
-    return `${formatter.format(job.salaryMin)} - ${formatter.format(job.salaryMax)}${suffix}`
+    return `${formatSalaryAmountForUi(job.salaryMin, job.salaryCurrency, period)} - ${formatSalaryAmountForUi(job.salaryMax, job.salaryCurrency, period)}${suffix}`
   }
 
   if (job.salaryMin) {
-    return `${formatter.format(job.salaryMin)}+${suffix}`
+    return `${formatSalaryAmountForUi(job.salaryMin, job.salaryCurrency, period)}+${suffix}`
   }
 
-  return `Up to ${formatter.format(job.salaryMax ?? 0)}${suffix}`
+  return `Up to ${formatSalaryAmountForUi(job.salaryMax ?? 0, job.salaryCurrency, period)}${suffix}`
 }
 
 export function formatDateLabel(value?: string) {

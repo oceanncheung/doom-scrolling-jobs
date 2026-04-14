@@ -61,25 +61,29 @@ export function SystemInventoryPage() {
 
       <section className="panel system-inventory-panel">
         <div className="settings-tab-shell has-selection">
-          <div aria-label="Inventory views" className="settings-tab-toolbar" role="tablist">
-            <SettingsTabButton
-              active={activeTab === 'fields'}
-              label="Underline fields"
-              onClick={() => setActiveTab('fields')}
-              reviewState="ready"
-            />
-            <SettingsTabButton
-              active={activeTab === 'inputs'}
-              label="Tag inputs"
-              onClick={() => setActiveTab('inputs')}
-              reviewState="review"
-            />
-            <SettingsTabButton
-              active={activeTab === 'supporting'}
-              label="Uploads and bullets"
-              onClick={() => setActiveTab('supporting')}
-              reviewState="ready"
-            />
+          <div className="settings-tab-toolbar-shell">
+            <div className="settings-tab-toolbar-track">
+              <div aria-label="Inventory views" className="settings-tab-toolbar" role="tablist">
+                <SettingsTabButton
+                  active={activeTab === 'fields'}
+                  label="Underline fields"
+                  onClick={() => setActiveTab('fields')}
+                  reviewState="ready"
+                />
+                <SettingsTabButton
+                  active={activeTab === 'inputs'}
+                  label="Tag inputs"
+                  onClick={() => setActiveTab('inputs')}
+                  reviewState="review"
+                />
+                <SettingsTabButton
+                  active={activeTab === 'supporting'}
+                  label="Uploads and bullets"
+                  onClick={() => setActiveTab('supporting')}
+                  reviewState="ready"
+                />
+              </div>
+            </div>
           </div>
 
           <section className="settings-tab-panel system-inventory-tab-panel">

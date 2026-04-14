@@ -1,7 +1,7 @@
 'use client'
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 
 import { ProfileSettingsIcon } from '@/components/navigation/profile-settings-icon'
@@ -13,20 +13,140 @@ import {
 } from '@/lib/jobs/dashboard-queue'
 import { getQueueViewLabel } from '@/lib/jobs/workflow-state'
 
+const MENU_CLOSE_MS = 280
+const MENU_BACKDROP_FADE_MS = 280
+
 export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView, number>> }) {
   const pathname = usePathname()
-  const router = useRouter()
   const searchParams = useSearchParams()
   const currentRouteKey = `${pathname}?${searchParams.toString()}`
   const [mobileMenuState, setMobileMenuState] = useState({
     open: false,
     routeKey: currentRouteKey,
   })
+  const [isMenuClosing, setIsMenuClosing] = useState(false)
+  const [backdropLit, setBackdropLit] = useState(false)
+  const [backdropMounted, setBackdropMounted] = useState(false)
+  const menuCloseTimerRef = useRef<number | null>(null)
+  const backdropUnmountTimerRef = useRef<number | null>(null)
+  const backdropOpenRafRef = useRef<number | null>(null)
+
   const activeView =
     pathname === '/dashboard' ? getQueueView(searchParams.get('view') ?? undefined) : null
   const profileActive = pathname === '/profile'
-  const mobileMenuOpen =
-    mobileMenuState.open && mobileMenuState.routeKey === currentRouteKey
+
+  const routeMatches = mobileMenuState.routeKey === currentRouteKey
+  const menuExpanded = (mobileMenuState.open && routeMatches) || isMenuClosing
+  const mobileMenuOpen = mobileMenuState.open && routeMatches && !isMenuClosing
+  const menuToggleShowsCross =
+    Boolean(mobileMenuState.open && routeMatches) && !isMenuClosing
+
+  const clearMenuCloseTimer = () => {
+    if (menuCloseTimerRef.current !== null) {
+      window.clearTimeout(menuCloseTimerRef.current)
+      menuCloseTimerRef.current = null
+    }
+  }
+
+  const clearBackdropUnmountTimer = () => {
+    if (backdropUnmountTimerRef.current !== null) {
+      window.clearTimeout(backdropUnmountTimerRef.current)
+      backdropUnmountTimerRef.current = null
+    }
+  }
+
+  const clearBackdropOpenRaf = () => {
+    if (backdropOpenRafRef.current !== null) {
+      window.cancelAnimationFrame(backdropOpenRafRef.current)
+      backdropOpenRafRef.current = null
+    }
+  }
+
+  const beginCloseMenu = () => {
+    if (!mobileMenuState.open || !routeMatches || isMenuClosing) {
+      return
+    }
+
+    clearMenuCloseTimer()
+    setIsMenuClosing(true)
+    menuCloseTimerRef.current = window.setTimeout(() => {
+      setMobileMenuState({ open: false, routeKey: currentRouteKey })
+      setIsMenuClosing(false)
+      menuCloseTimerRef.current = null
+    }, MENU_CLOSE_MS)
+  }
+
+  const toggleMobileMenu = () => {
+    clearMenuCloseTimer()
+
+    if (mobileMenuState.open && routeMatches && !isMenuClosing) {
+      beginCloseMenu()
+      return
+    }
+
+    setIsMenuClosing(false)
+    setMobileMenuState({ open: true, routeKey: currentRouteKey })
+  }
+
+  useEffect(
+    () => () => {
+      if (menuCloseTimerRef.current !== null) {
+        window.clearTimeout(menuCloseTimerRef.current)
+        menuCloseTimerRef.current = null
+      }
+      clearBackdropUnmountTimer()
+      clearBackdropOpenRaf()
+    },
+    [],
+  )
+
+  useEffect(() => {
+    clearMenuCloseTimer()
+    setMobileMenuState({ open: false, routeKey: currentRouteKey })
+    setIsMenuClosing(false)
+  }, [currentRouteKey])
+
+  /* Drop is-lit before paint when the menu unmounts open state so .is-lit never reapplies without :has(.is-closing) (avoids backdrop flash). */
+  useLayoutEffect(() => {
+    if (menuExpanded) {
+      return
+    }
+    setBackdropLit(false)
+  }, [menuExpanded])
+
+  useEffect(() => {
+    clearBackdropUnmountTimer()
+    clearBackdropOpenRaf()
+
+    if (menuExpanded) {
+      setBackdropMounted(true)
+      if (isMenuClosing) {
+        return () => {
+          clearBackdropOpenRaf()
+        }
+      }
+
+      setBackdropLit(false)
+      backdropOpenRafRef.current = window.requestAnimationFrame(() => {
+        backdropOpenRafRef.current = window.requestAnimationFrame(() => {
+          backdropOpenRafRef.current = null
+          setBackdropLit(true)
+        })
+      })
+      return () => {
+        clearBackdropOpenRaf()
+      }
+    }
+
+    backdropUnmountTimerRef.current = window.setTimeout(() => {
+      setBackdropMounted(false)
+      backdropUnmountTimerRef.current = null
+    }, MENU_BACKDROP_FADE_MS)
+
+    return () => {
+      clearBackdropUnmountTimer()
+    }
+  }, [menuExpanded, isMenuClosing])
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -34,27 +154,35 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setMobileMenuState({
-          open: false,
-          routeKey: currentRouteKey,
-        })
+      if (event.key !== 'Escape') {
+        return
       }
+
+      if (menuCloseTimerRef.current !== null) {
+        return
+      }
+
+      setIsMenuClosing(true)
+      menuCloseTimerRef.current = window.setTimeout(() => {
+        setMobileMenuState({ open: false, routeKey: currentRouteKey })
+        setIsMenuClosing(false)
+        menuCloseTimerRef.current = null
+      }, MENU_CLOSE_MS)
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [currentRouteKey, mobileMenuOpen])
+  }, [mobileMenuOpen, currentRouteKey])
 
   const navigateMobileMenu = (href: string) => () => {
-    setMobileMenuState({
-      open: false,
-      routeKey: currentRouteKey,
-    })
-    router.push(href)
+    clearMenuCloseTimer()
+    setIsMenuClosing(false)
+    setMobileMenuState({ open: false, routeKey: currentRouteKey })
+    window.location.assign(href)
   }
 
   return (
+    <>
     <header className="site-header">
       <div className="site-brand">
         <Link href="/dashboard">
@@ -62,15 +190,11 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
         </Link>
         <button
           aria-controls="site-mobile-menu"
-          aria-expanded={mobileMenuOpen}
-          aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-expanded={menuToggleShowsCross}
+          aria-label={menuToggleShowsCross ? 'Close navigation menu' : 'Open navigation menu'}
           className="site-mobile-menu-toggle"
-          onClick={() =>
-            setMobileMenuState((state) => ({
-              open: !(state.open && state.routeKey === currentRouteKey),
-              routeKey: currentRouteKey,
-            }))
-          }
+          data-menu-toggle={menuToggleShowsCross ? 'cross' : 'hamburger'}
+          onClick={toggleMobileMenu}
           type="button"
         >
           <span className="site-mobile-menu-toggle-line" />
@@ -107,7 +231,7 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
 
       <div
         aria-label="Mobile queue views"
-        className={`site-mobile-menu${mobileMenuOpen ? ' is-open' : ''}`}
+        className={`site-mobile-menu${menuExpanded ? ' is-open' : ''}${isMenuClosing ? ' is-closing' : ''}`}
         id="site-mobile-menu"
       >
         {queueViews.map((view) => (
@@ -137,5 +261,12 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
         </button>
       </div>
     </header>
+    {backdropMounted ? (
+      <div
+        aria-hidden
+        className={`site-mobile-menu-backdrop${backdropLit ? ' is-lit' : ''}`}
+      />
+    ) : null}
+    </>
   )
 }

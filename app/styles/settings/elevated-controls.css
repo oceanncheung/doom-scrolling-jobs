@@ -215,14 +215,24 @@
   position: relative;
 }
 
+.settings-tab-toolbar-track {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Toolbar shell stays above panel for any future overlap tricks; seam is toolbar border-bottom + mask under active chip. */
+.settings-tab-shell.has-selection .settings-tab-toolbar-shell {
+  z-index: 2;
+  overflow: visible;
+}
+
 .settings-tab-shell.has-selection .settings-tab-toolbar {
   background: var(--bg);
   box-sizing: border-box;
   padding-left: var(--queue-column-pad);
   padding-right: var(--settings-section-pad-right);
-  /* Stack above the panel so its border-top does not paint over the active chip overlap */
-  position: relative;
-  z-index: 2;
+  /* Hairline under chips: inset draws behind children so the active chip’s solid fill hides it (no clip/stacking issues). */
+  box-shadow: inset 0 -1px 0 0 var(--line);
 }
 
 .settings-tab-button {
@@ -258,12 +268,6 @@
   border-bottom: none;
 }
 
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-toolbar .settings-tab-button:not(.is-active),
-.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-toolbar .settings-tab-button:not(.is-active) {
-  margin-bottom: 0;
-  z-index: 1;
-}
-
 .settings-tab-shell.has-selection .settings-tab-button:not(.is-active) {
   background: transparent;
   color: var(--muted);
@@ -297,52 +301,64 @@
 }
 
 .settings-tab-shell.has-selection .settings-tab-button.is-active {
-  background: var(--bg);
+  background: var(--surface-soft);
   color: var(--text);
   border-color: var(--line);
-  border-bottom: none;
-  margin-bottom: -1px;
-  position: relative;
-  z-index: 2;
-}
-
-/* Open disclosure chip: grey L/T/R, no bottom; overlaps `.settings-tab-panel` border-top like `.settings-action-body` */
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active,
-.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active {
-  background: var(--surface-soft);
   border-top: 1px solid var(--line);
   border-left: 1px solid var(--line);
   border-right: 1px solid var(--line);
-  border-bottom: none;
+  border-bottom: 0;
+}
+
+/* Open disclosure chip: grey fill with L/T/R borders only; bottom hairline is toolbar inset shadow. */
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active {
+  background: var(--surface-soft);
+  border-color: var(--line);
+  border-bottom-color: var(--surface-soft);
   box-shadow: none;
 }
 
 /*
- * Inactive chips keep a right border; the active chip restores border-left (beats `+ .settings-tab-button { border-left: 0 }`).
- * That stacks two 1px edges — drop the previous sibling’s right edge only at the seam.
+ * Adjacent tabs share one vertical rule: `+ .settings-tab-button { border-left: 0 }` relies on the
+ * previous chip’s right edge. Restoring `border-left` on `.is-active` stacked two 1px lines — drop
+ * active’s inner seam side(s) and let the neighbor chip carry the line.
  */
-.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button:has(+ .settings-tab-button.is-active),
-.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button:has(+ .settings-tab-button.is-active) {
-  border-right: none;
+.settings-tab-shell.has-selection .settings-tab-button.is-active:not(:first-child) {
+  border-left-width: 0;
+}
+
+.settings-tab-shell.has-selection .settings-tab-button.is-active:not(:last-child) {
+  border-right-width: 0;
+}
+
+.settings-tab-shell.has-selection .settings-tab-button.is-active + .settings-tab-button {
+  border-left-width: 1px;
+  border-left-style: solid;
 }
 
 .settings-tab-shell.has-selection .settings-tab-button {
-  border-bottom: none;
+  border-bottom: 0;
+}
+
+.settings-tab-shell:not(.has-selection) .settings-tab-button {
+  border-bottom: 0;
 }
 
 .settings-tab-shell.has-selection .settings-tab-button.is-active:hover {
-  background: var(--bg);
+  background: var(--surface-soft);
   color: var(--text);
   border-color: var(--line);
+  border-bottom: 0;
   opacity: 1;
 }
 
 .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active:hover,
 .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active:hover {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
-  border-bottom: none;
+  background: var(--surface-soft);
+  color: var(--text);
+  border-color: var(--line);
+  border-bottom-color: var(--surface-soft);
   opacity: 1;
 }
 
@@ -393,18 +409,17 @@
   margin: 0;
 }
 
-/* One black rule under the chips (like Additional filters body); active tab overlaps via margin-bottom */
+/* Seam with toolbar is the toolbar’s `border-bottom`; no top border here (avoids a second line under the active chip). */
 .settings-tab-shell.has-selection .settings-tab-panel {
   color-scheme: light;
   margin: 0;
   padding: 24px var(--settings-section-pad-right) 24px var(--queue-column-pad);
   border: 0;
-  border-top: 1px solid var(--line);
+  border-top: 0;
   box-sizing: border-box;
   background: var(--surface-soft);
   color: var(--text);
   position: relative;
-  /* Below toolbar so border-top is not painted over the chip overlap */
   z-index: 0;
 }
 

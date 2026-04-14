@@ -1,8 +1,93 @@
 /* Hidden by default; mobile-only header controls are enabled at <=900px. */
 .site-mobile-menu-toggle,
 .site-mobile-menu,
+.site-mobile-menu-backdrop,
 .rail-collapse-handle {
   display: none;
+}
+
+/* Profile settings rail: scroll body + footer enter together (one sheet down, footer up) */
+@keyframes settings-profile-rail-scroll-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes settings-profile-rail-footer-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Transform only: menu opacity was compositing against the header and made the 1px border flicker */
+@keyframes site-mobile-menu-slide-down {
+  from {
+    transform: translateY(-18px);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Slide out + fade in one curve (open menu stays transform-only to avoid header border flicker) */
+@keyframes site-mobile-menu-slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+}
+
+@keyframes site-mobile-menu-backdrop-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+/* Mirror enter: same distance, opacity + transform together */
+@keyframes settings-profile-rail-scroll-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-28px);
+  }
+}
+
+@keyframes settings-profile-rail-footer-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(28px);
+  }
 }
 
 @media (max-width: 1440px) {
@@ -27,6 +112,23 @@
       minmax(7rem, 0.85fr)
       minmax(7rem, 0.85fr);
     gap: 12px;
+  }
+
+  /* Tighter jobs-queue gutters: must match --jobs-queue-col-gap in queue-rows.css (Save/Skip bridge). */
+  main.jobs-index .queue-list {
+    --jobs-queue-col-gap: 12px;
+  }
+
+  /*
+   * Potential jobs row: same tracks as `.screening-summary-grid` in this band (queue-rows uses var for column-gap).
+   */
+  main.jobs-index .queue-list .screening-actions-bar {
+    grid-template-columns:
+      minmax(0, 2.6fr)
+      minmax(9rem, 1.15fr)
+      minmax(9rem, 1.05fr)
+      minmax(7rem, 0.85fr)
+      minmax(7rem, 0.85fr);
   }
 
   .stage-row-grid {
@@ -71,6 +173,41 @@
 
 }
 
+/*
+ * 1181–1440px jobs queue: Fit + Posted (and Save + Skip) use equal-width columns so each control is
+ * half of the right-hand meta band (same width as one cell of the 5-col desktop 2×2-style cluster).
+ */
+@media (min-width: 1181px) and (max-width: 1440px) {
+  main.jobs-index .queue-list .screening-summary-grid,
+  main.jobs-index .queue-list .screening-actions-bar {
+    grid-template-columns:
+      minmax(0, 2.6fr)
+      minmax(9rem, 1.15fr)
+      minmax(9rem, 1.05fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+  }
+
+  /* One-row meta band: expanded tracks match summary; Risks / gaps starts at Salary (column 3). */
+  main.jobs-index .queue-list .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) {
+    grid-template-columns:
+      minmax(0, 2.6fr)
+      minmax(9rem, 1.15fr)
+      minmax(9rem, 1.05fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+    gap: var(--jobs-queue-col-gap);
+  }
+
+  main.jobs-index .queue-list .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) > .screening-match-column {
+    grid-column: 1 / 3;
+  }
+
+  main.jobs-index .queue-list .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) > .screening-match-column + div {
+    grid-column: 3 / -1;
+  }
+}
+
 @media (max-width: 1180px) {
   :root {
     --dashboard-rail-min: 15.5rem;
@@ -78,7 +215,18 @@
   }
 
   .settings-main {
-    --settings-section-pad-right: 0px;
+    --settings-section-pad-right: var(--queue-column-pad);
+  }
+
+  .dashboard-workspace .queue-column > .queue-meta,
+  .dashboard-workspace .queue-column > .operator-page-header,
+  .dashboard-workspace .queue-column > .page-stack > .page-header,
+  .dashboard-workspace .queue-column > .page-stack > .panel,
+  .dashboard-workspace .queue-column > .page-stack > .stage-section,
+  .dashboard-workspace .queue-column > .page-stack > .stage-shell,
+  .dashboard-workspace .queue-column > .page-stack > .empty-state {
+    padding-right: var(--queue-column-pad);
+    box-sizing: border-box;
   }
 
   .settings-page .dashboard-workspace .queue-column > form.settings-main.profile-form {
@@ -98,38 +246,83 @@
     min-width: 0;
   }
 
-  .settings-tab-toolbar-shell::-webkit-scrollbar {
-    display: none;
-  }
-
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-toolbar-shell,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-toolbar-shell {
+  /* Shell does not scroll (avoids clipping toolbar-shell `margin-bottom: -1px`); track handles horizontal scroll. */
+  .settings-tab-toolbar-shell {
     width: 100%;
     min-width: 0;
     max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
+    box-sizing: border-box;
+    overflow: visible;
+    background: var(--bg);
     padding-bottom: 0;
     margin-bottom: 0;
   }
 
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-toolbar-shell,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-toolbar-shell {
-    padding-bottom: 2px;
-    margin-bottom: -2px;
+  .settings-tab-toolbar-track {
+    overflow-x: auto;
+    overflow-y: visible;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    /* End padding lives on the toolbar (inside scroll width) so the last tab can scroll clear of the edge. */
+    padding-right: 0;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  .settings-tab-toolbar-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .settings-main .settings-job-targets-pair:nth-child(2) > .settings-job-targets-stack-sm:last-child {
+    align-self: start;
+  }
+
+  .settings-main .settings-job-targets-pair:nth-child(2) > .settings-job-targets-stack-sm:last-child .settings-job-targets-stack-sm-content {
+    justify-content: flex-start;
   }
 
   .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-toolbar,
   .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-toolbar {
     flex-wrap: nowrap;
+    /*
+     * min-width: 100% — when tabs are shorter than the track, inset hairline runs to the column edge.
+     * width: max-content — when tabs overflow, the bar (and hairline) is as wide as all chips + padding-right,
+     * so the rule extends with the row instead of staying viewport-sized and “sliding” with scroll.
+     */
     width: max-content;
     min-width: 100%;
+    max-width: none;
     padding-left: var(--queue-column-pad);
-    padding-right: var(--queue-column-pad);
+    padding-right: var(--settings-tab-scroll-end-pad, var(--settings-section-pad-right, var(--site-gutter, 16px)));
     box-sizing: border-box;
+  }
+
+  .system-inventory-panel .settings-tab-shell.has-selection .settings-tab-toolbar {
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+    padding-right: var(--settings-tab-scroll-end-pad, var(--queue-column-pad, var(--site-gutter, 16px)));
+    box-sizing: border-box;
+  }
+
+  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-button,
+  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-button {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-button + .settings-tab-button,
+  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-button + .settings-tab-button {
+    border-left: 0;
+    margin-left: 0;
+  }
+
+  /* Beat `+ .settings-tab-button { border-left: 0 }` above (higher specificity there): restore seam after active. */
+  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active + .settings-tab-button,
+  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active + .settings-tab-button {
+    border-left-width: 1px;
+    border-left-style: solid;
   }
 
   .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection,
@@ -138,35 +331,9 @@
     padding-bottom: 0;
   }
 
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active,
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active:hover,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active:hover {
-    background: var(--surface-soft);
-    color: var(--text);
-    border-color: var(--line);
-  }
-
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active::after,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active::after {
-    content: '';
-    position: absolute;
-    left: -1px;
-    right: -1px;
-    bottom: -2px;
-    height: 2px;
-    background: var(--surface-soft);
-    pointer-events: none;
-  }
-
   .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-panel,
   .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-panel {
     padding-bottom: calc(24px + 48px);
-  }
-
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-toolbar-shell::-webkit-scrollbar,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-toolbar-shell::-webkit-scrollbar {
-    display: none;
   }
 
   .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-button,
@@ -198,45 +365,48 @@
     padding-left: var(--queue-column-pad);
   }
 
-  .queue-meta,
-  .flow-header,
-  .packet-page-actions,
-  .job-flow-actions,
+  main.jobs-index .queue-list .screening-summary-grid,
+  main.jobs-index .queue-list .screening-actions-bar {
+    grid-template-columns:
+      minmax(0, 2.2fr)
+      minmax(7rem, 1fr)
+      minmax(7rem, 1fr)
+      minmax(6rem, 0.8fr)
+      minmax(6rem, 0.8fr);
+    gap: var(--jobs-queue-col-gap);
+  }
+
+  main.jobs-index .queue-list .stage-row-grid {
+    grid-template-columns:
+      minmax(0, 2.2fr)
+      minmax(7rem, 1fr)
+      minmax(7rem, 1fr)
+      minmax(6rem, 0.85fr)
+      minmax(5.5rem, 0.7fr)
+      auto;
+    gap: 12px;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar {
+    grid-template-columns:
+      minmax(0, 2.2fr)
+      minmax(7rem, 1fr)
+      minmax(7rem, 1fr)
+      minmax(6rem, 0.85fr)
+      minmax(5.5rem, 0.7fr);
+    column-gap: var(--jobs-queue-col-gap);
+    row-gap: 0;
+  }
+
   .stage-section-header,
   .settings-section-header,
-  .screening-summary-grid,
-  .stage-row-grid,
   .stage-summary-row,
-  .stage-actions-bar,
-  .panel-grid-2,
-  .panel-grid-3,
-  .settings-source-grid,
-  .settings-source-uploads-row,
-  .settings-core-grid,
-  .settings-job-targets-pair,
-  .settings-advanced-tags-row,
-  .strengths-experience-grid,
-  .field-grid-2,
-  .repeat-card-proof-grid,
-  .repeat-card-achievement-grid {
+  .settings-advanced-tags-row {
     grid-template-columns: 1fr;
   }
 
-  .screening-row,
-  .stage-row,
-  .stage-column-actions {
-    justify-items: start;
-  }
-
-  /* Stacked summary: each row is full width; inset from queue right (queue-column has padding-right: 0). */
-  main.jobs-index .queue-list .screening-summary-grid > .screening-cell {
-    padding-right: 10px;
-    box-sizing: border-box;
-  }
-
-  .screening-row,
-  .stage-row {
-    gap: 0;
+  .panel-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .settings-field-wide,
@@ -245,38 +415,12 @@
     grid-column: auto;
   }
 
+  .settings-search-brief {
+    grid-column: 1 / -1;
+  }
+
   .settings-source-gpt-row {
     display: grid;
-  }
-
-  .settings-main .settings-source-uploads-row--materials {
-    flex-direction: column;
-    align-items: stretch;
-    width: calc(100% + var(--site-gutter));
-    margin-right: calc(-1 * var(--site-gutter));
-  }
-
-  .settings-main .settings-source-uploads-row--materials > .upload-slot {
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: none;
-  }
-
-  .settings-main .settings-source-uploads-row--materials > .upload-slot + .upload-slot {
-    margin-left: 0;
-    margin-top: calc(-1 * var(--adjacent-control-overlap));
-  }
-
-  .settings-main .settings-source-uploads-row--materials .upload-slot-chip-btn:not(.upload-slot-chip-btn--action) {
-    max-width: none;
-    width: 100%;
-  }
-
-  .settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action {
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: none;
-    margin-left: 0;
   }
 
   .settings-source-primary,
@@ -287,153 +431,17 @@
   .stage-actions {
     justify-content: flex-start;
   }
-
-  .detail-page-header-stack,
-  .job-flow-header-stack {
-    grid-template-columns: 1fr;
-    row-gap: 24px;
-  }
-
-  .detail-page-header-stack .job-flow-heading,
-  .job-flow-header-stack .job-flow-heading {
-    grid-column: 1 / -1;
-  }
-
-  .detail-pair-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) {
-    grid-template-columns: 1fr;
-  }
-
-  .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) > .screening-match-column,
-  .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) > .screening-match-column + div {
-    grid-column: auto;
-  }
-
-  .job-review-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .job-material-grid,
-  .packet-material-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .packet-question-summary {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .packet-question-status-slot {
-    grid-column: 1 / 2;
-  }
-
-  .packet-question-controls {
-    grid-column: 2 / 3;
-    grid-row: 1 / 2;
-  }
-
-  .screening-actions-bar {
-    grid-template-columns: 1fr;
-  }
-
-  .stage-actions-bar {
-    grid-template-columns: 1fr;
-  }
-
-  .packet-form .packet-grid-section,
-  .packet-form .packet-advanced-grid,
-  .packet-form .packet-form-footer {
-    grid-template-columns: 1fr;
-  }
-
-  .screening-actions-cluster {
-    grid-column: 1 / -1;
-    width: 100%;
-    min-width: 0;
-  }
-
-  main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-  }
-
-  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot + .screening-action-slot,
-  .job-overview-actions .screening-action-slot + .screening-action-slot {
-    margin-left: 0;
-    margin-top: calc(-1 * var(--adjacent-control-overlap));
-  }
-
-  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child,
-  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child {
-    grid-column: auto;
-    width: 100%;
-  }
-
-  .job-overview-actions .screening-actions-cluster {
-    grid-column: 1 / -1;
-    grid-template-columns: 1fr;
-  }
-
-  .stage-actions-cluster {
-    grid-column: 1 / -1;
-    width: 100%;
-    min-width: 0;
-  }
-
-  main.jobs-index .queue-list .stage-actions-cluster {
-    width: 100%;
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    max-width: none;
-    grid-template-columns: unset;
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot {
-    flex: 1 1 auto;
-    grid-column: auto;
-    width: 100%;
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-action-slot {
-    margin-left: 0;
-    margin-top: calc(-1 * var(--adjacent-control-overlap));
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-action-slot .button {
-    border-left-width: 1px;
-    border-top-width: 0;
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote:has(+ .stage-action-slot--salary),
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit),
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--fit:has(+ .stage-action-slot--status) {
-    width: 100%;
-  }
-
-  .stage-actions-bar .stage-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .packet-page-actions > * + *,
-  .job-flow-actions > * + * {
-    margin-left: 0;
-    margin-top: calc(-1 * var(--adjacent-control-overlap));
-  }
 }
 
 @media (max-width: 900px) {
   :root {
     --site-header-height: calc(var(--site-header-row-height) + 1px);
     --mobile-collapsed-rail-height: var(--site-header-row-height);
+  }
+
+  /* Avoid width/layout shift when body overflow is restored after the identity sheet closes */
+  html {
+    scrollbar-gutter: stable;
   }
 
   .dashboard-workspace {
@@ -499,6 +507,10 @@
     left: 0;
     right: 0;
     width: auto;
+    height: calc(var(--mobile-collapsed-rail-height) + 2px);
+    max-height: calc(var(--mobile-collapsed-rail-height) + 2px);
+    min-height: calc(var(--mobile-collapsed-rail-height) + 2px);
+    overflow: hidden;
     z-index: 4;
     background: var(--bg);
   }
@@ -517,6 +529,11 @@
     background: var(--bg);
   }
 
+  /* Let queue column show through during exit so fading sheet is not a solid white void */
+  .dashboard-workspace .today-rail.has-rail-collapse.is-rail-closing:not(.is-rail-collapsed) {
+    background: transparent;
+  }
+
   .dashboard-workspace .today-rail.has-rail-collapse {
     padding-top: 0;
   }
@@ -526,14 +543,22 @@
     min-height: calc(var(--site-header-row-height) + 2px);
   }
 
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll,
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-footer,
   .dashboard-workspace .today-rail.settings-profile-rail > .settings-profile-rail-scroll {
     flex: none;
     min-height: 0;
     overflow: visible;
+    background-color: var(--bg);
+  }
+
+  .dashboard-workspace .today-rail.settings-profile-rail > .settings-profile-rail-footer {
+    background-color: var(--bg);
   }
 
   .rail-collapse-handle {
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--site-header-row-height);
     position: relative;
     top: -1px;
     z-index: 1;
@@ -551,7 +576,6 @@
   }
 
   .rail-collapse-handle.has-action {
-    display: grid;
     grid-template-columns: minmax(0, 1fr) auto var(--site-header-row-height);
     align-items: center;
     column-gap: 0;
@@ -562,6 +586,7 @@
     display: grid;
     align-items: center;
     width: 100%;
+    min-width: 0;
     min-height: var(--site-header-row-height);
     padding: 0 0 0 var(--today-rail-pad-left);
     border: 0;
@@ -597,10 +622,19 @@
     line-height: 1;
   }
 
+  .rail-collapse-action .settings-save-button:hover:not(:disabled),
+  .rail-collapse-action .settings-save-button:focus-visible {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+    opacity: 1;
+  }
+
   .rail-collapse-icon-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    justify-self: stretch;
     width: var(--site-header-row-height);
     min-width: var(--site-header-row-height);
     min-height: var(--site-header-row-height);
@@ -640,10 +674,46 @@
   }
 
   .rail-collapse-indicator {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
     font-family: var(--font-body), sans-serif;
     font-size: 1.5rem;
     font-weight: 400;
     line-height: 1;
+  }
+
+  .rail-collapse-indicator__arm {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: block;
+    width: 11px;
+    height: 2px;
+    margin-left: -5.5px;
+    margin-top: -1px;
+    border-radius: 1px;
+    background: currentColor;
+    transform-origin: center;
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* + : vertical bar; − : rotate to 0° so it sits on the horizontal bar (no scale) */
+  .rail-collapse-indicator__arm--v {
+    transform: rotate(90deg);
+  }
+
+  .rail-collapse-icon-toggle:not(.is-collapsed) .rail-collapse-indicator__arm--v {
+    transform: rotate(0deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail-collapse-indicator__arm {
+      transition: none;
+    }
   }
 
   .dashboard-workspace .today-rail.is-rail-collapsed > .today-rail-scroll,
@@ -655,6 +725,8 @@
 
   .dashboard-workspace .today-rail.has-rail-collapse:not(.is-rail-collapsed) > .today-rail-scroll,
   .dashboard-workspace .today-rail.has-rail-collapse:not(.is-rail-collapsed) > .settings-profile-rail-scroll {
+    position: relative;
+    z-index: 1;
     flex: 1 1 auto;
     min-height: 0;
     max-height: none;
@@ -663,9 +735,88 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* Whole scroll body (all .today-blocks) moves as one unit; footer pairs with slide-up */
+  .dashboard-workspace
+    .today-rail.has-rail-collapse:not(.is-rail-collapsed):not(.is-rail-closing)
+    > .today-rail-scroll,
+  .dashboard-workspace
+    .today-rail.settings-profile-rail.has-rail-collapse:not(.is-rail-collapsed):not(.is-rail-closing)
+    > .settings-profile-rail-scroll {
+    animation: settings-profile-rail-scroll-enter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .dashboard-workspace
+    .today-rail.has-rail-collapse:not(.is-rail-collapsed):not(.is-rail-closing)
+    > .today-rail-footer,
+  .dashboard-workspace
+    .today-rail.settings-profile-rail.has-rail-collapse:not(.is-rail-collapsed):not(.is-rail-closing)
+    > .settings-profile-rail-footer {
+    position: relative;
+    z-index: 1;
+    animation: settings-profile-rail-footer-enter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .dashboard-workspace
+    .today-rail.has-rail-collapse.is-rail-closing:not(.is-rail-collapsed)
+    > .today-rail-scroll,
+  .dashboard-workspace
+    .today-rail.settings-profile-rail.is-rail-closing:not(.is-rail-collapsed)
+    > .settings-profile-rail-scroll {
+    animation: settings-profile-rail-scroll-exit 320ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .dashboard-workspace
+    .today-rail.has-rail-collapse.is-rail-closing:not(.is-rail-collapsed)
+    > .today-rail-footer,
+  .dashboard-workspace
+    .today-rail.settings-profile-rail.is-rail-closing:not(.is-rail-collapsed)
+    > .settings-profile-rail-footer {
+    animation: settings-profile-rail-footer-exit 320ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* Stacking: below site-header (z-index 5), identity bar above sheet body (z-index 1) */
+  .dashboard-workspace .today-rail.has-rail-collapse:not(.is-rail-collapsed) .rail-collapse-handle {
+    z-index: 2;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dashboard-workspace .today-rail.has-rail-collapse:not(.is-rail-collapsed) > .today-rail-scroll,
+    .dashboard-workspace .today-rail.has-rail-collapse:not(.is-rail-collapsed) > .today-rail-footer,
+    .dashboard-workspace .today-rail.has-rail-collapse:not(.is-rail-collapsed) > .settings-profile-rail-scroll,
+    .dashboard-workspace
+      .today-rail.has-rail-collapse:not(.is-rail-collapsed):not(.is-rail-closing)
+      > .today-rail-footer,
+    .dashboard-workspace .today-rail.has-rail-collapse.is-rail-closing:not(.is-rail-collapsed) > .today-rail-scroll,
+    .dashboard-workspace .today-rail.has-rail-collapse.is-rail-closing:not(.is-rail-collapsed) > .today-rail-footer,
+    .dashboard-workspace
+      .today-rail.settings-profile-rail.has-rail-collapse:not(.is-rail-collapsed):not(.is-rail-closing)
+      > .settings-profile-rail-footer,
+    .dashboard-workspace .today-rail.settings-profile-rail.is-rail-closing:not(.is-rail-collapsed) > .settings-profile-rail-scroll,
+    .dashboard-workspace .today-rail.settings-profile-rail.is-rail-closing:not(.is-rail-collapsed) > .settings-profile-rail-footer {
+      animation: none;
+    }
+  }
+
   .settings-profile-rail {
     min-height: auto;
     padding-bottom: 0;
+  }
+
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) .today-block,
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) .today-apply-next,
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) .today-empty {
+    gap: 24px;
+  }
+
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block:first-child {
+    border-bottom: none;
+    padding-top: 24px;
+    padding-bottom: 0;
+  }
+
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block:first-child + .today-block {
+    border-top: none;
+    padding-top: 0;
   }
 
   .settings-main {
@@ -679,49 +830,93 @@
   }
 
   .settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action {
-    margin-top: 8px;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+    border-left-width: 1px;
+    border-right-width: 0;
+    border-top-width: 1px;
+    border-color: var(--text);
   }
 
+  .settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action:hover:not(:disabled),
+  .settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action:focus-visible:not(:disabled) {
+    border-color: var(--text);
+  }
+
+  .settings-action-body .settings-core-grid > .settings-job-targets-grid,
   .settings-action-body .settings-job-targets-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 12px;
+    row-gap: 16px;
   }
 
+  .settings-action-body .settings-core-grid > .settings-job-targets-grid > .settings-job-targets-pair,
   .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair {
-    display: contents;
+    display: contents !important;
   }
 
-  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair:nth-child(1) > :first-child {
-    grid-row: 1;
+  .settings-action-body .settings-core-grid > .settings-job-targets-grid > .settings-job-targets-pair > .settings-job-targets-stack-sm + .settings-job-targets-stack-sm,
+  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair > .settings-job-targets-stack-sm + .settings-job-targets-stack-sm {
+    margin-top: 0;
   }
 
-  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair:nth-child(2) > :first-child {
-    grid-row: 2;
+  .settings-action-body .settings-core-grid > .settings-job-targets-grid > .settings-job-targets-pair > .settings-job-targets-stack-sm--spacer,
+  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair > .settings-job-targets-stack-sm--spacer {
+    display: none !important;
   }
 
-  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair:nth-child(3) > :first-child {
-    grid-row: 3;
+  .settings-action-body .settings-job-targets-salary-eyebrow-band,
+  .settings-action-body .settings-job-targets-salary-inputs-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 12px;
   }
 
-  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair:nth-child(4) > :first-child {
-    grid-row: 4;
+  .settings-action-body .settings-job-targets-grid .settings-job-targets-flex-toggles {
+    grid-template-columns: 1fr !important;
   }
 
-  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair:nth-child(1) > :nth-child(2) {
-    grid-row: 5;
+  .settings-action-body .settings-job-targets-pair:nth-child(1) > .settings-job-targets-stack-sm:first-child {
+    order: 1;
+    grid-column: 1 / -1;
   }
 
-  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair:nth-child(2) > :nth-child(2) {
-    grid-row: 6;
+  .settings-action-body .settings-job-targets-pair:nth-child(2) > .settings-job-targets-stack-sm:first-child {
+    order: 2;
+    grid-column: 1 / -1;
   }
 
-  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair:nth-child(3) > :nth-child(2) {
-    grid-row: 7;
+  .settings-action-body .settings-job-targets-pair:nth-child(3) > .settings-job-targets-stack-sm:first-child {
+    order: 3;
+    grid-column: 1 / -1;
   }
 
-  .settings-action-body .settings-job-targets-grid > .settings-job-targets-pair:nth-child(4) > :nth-child(2) {
-    display: none;
+  .settings-action-body .settings-job-targets-pair:nth-child(4) > .settings-job-targets-stack-sm:first-child {
+    order: 4;
+    grid-column: 1 / -1;
+  }
+
+  .settings-action-body .settings-job-targets-pair:nth-child(1) > .settings-job-targets-stack-sm:last-child {
+    order: 5;
+    grid-column: 1;
+  }
+
+  .settings-action-body .settings-job-targets-pair:nth-child(2) > .settings-job-targets-stack-sm:last-child {
+    order: 6;
+    grid-column: 2 / -1;
+    align-self: start;
+  }
+
+  .settings-action-body .settings-job-targets-pair:nth-child(2) > .settings-job-targets-stack-sm:last-child .settings-job-targets-stack-sm-content {
+    justify-content: flex-start;
+  }
+
+  .settings-action-body .settings-job-targets-pair:nth-child(3) > .settings-job-targets-stack-sm:last-child {
+    order: 7;
+    grid-column: 1 / -1;
+  }
+
+  .settings-action-body .settings-job-targets-pair:nth-child(4) > .settings-job-targets-stack-sm:last-child {
+    grid-column: 1 / -1;
   }
 
   .settings-profile-rail-footer {
@@ -734,6 +929,8 @@
   }
 
   .dashboard-workspace .queue-column {
+    position: relative;
+    z-index: 0;
     --queue-column-pad: var(--site-gutter);
     border-left: 0;
     padding-left: var(--site-gutter);
@@ -742,11 +939,24 @@
     padding-top: 24px;
   }
 
-  .dashboard-workspace:has(.today-rail.has-rail-collapse.is-rail-collapsed) .queue-column {
-    padding-top: var(--mobile-collapsed-rail-height);
+  .dashboard-workspace .queue-column,
+  .dashboard-workspace .queue-column > .page-stack,
+  .dashboard-workspace .queue-column > .queue-meta,
+  .dashboard-workspace .queue-column > .page-stack > .page-header,
+  .dashboard-workspace .queue-column > .page-stack > .panel,
+  .dashboard-workspace .queue-column > .page-stack > .stage-section,
+  .dashboard-workspace .queue-column > .page-stack > .stage-shell,
+  .dashboard-workspace .queue-column > .page-stack > .empty-state {
+    background: var(--bg);
   }
 
-  .settings-page .dashboard-workspace:has(.today-rail.has-rail-collapse.is-rail-collapsed) .queue-column {
+  .dashboard-workspace .queue-column > .page-stack {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Collapsed rail strip + same 24px as default queue-column / Profile below Identity */
+  .dashboard-workspace:has(.today-rail.has-rail-collapse) .queue-column {
     padding-top: calc(var(--mobile-collapsed-rail-height) + 24px);
   }
 
@@ -796,20 +1006,86 @@
   .site-header {
     grid-template-columns: 1fr;
     padding: 0;
+    overflow: visible;
+    isolation: isolate;
+    min-height: var(--site-header-height);
+    /* Border drawn in ::after so it stacks above the sliding menu (menu stays underneath) */
+    border-bottom: none;
+  }
+
+  .site-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background-color: var(--line);
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .site-mobile-menu-backdrop {
+    display: block;
+    position: fixed;
+    z-index: 3;
+    top: var(--site-header-height);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: opacity 280ms ease;
+    pointer-events: none;
+  }
+
+  .site-mobile-menu-backdrop.is-lit {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Same duration/easing as menu slide-up keyframes (React keeps is-lit during close) */
+  .workspace-shell:has(.site-mobile-menu.is-open.is-closing) .site-mobile-menu-backdrop.is-lit {
+    transition: none;
+    pointer-events: none;
+    animation: site-mobile-menu-backdrop-fade-out 280ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-mobile-menu-backdrop {
+      transition: none;
+    }
+
+    .workspace-shell:has(.site-mobile-menu.is-open.is-closing) .site-mobile-menu-backdrop.is-lit {
+      animation: none;
+      opacity: 0;
+    }
   }
 
   .site-workflow-nav {
     display: none;
   }
 
+  /* Navbar row above the sliding menu (menu z-index 1; header ::after draws the bottom rule) */
   .site-brand {
+    position: relative;
+    z-index: 6;
     border-right: 0;
     padding-left: var(--site-gutter);
     padding-right: 0;
+    background: var(--bg);
   }
 
   .site-brand::after {
     display: none;
+  }
+
+  .site-brand strong {
+    font-size: 1rem;
+    line-height: 1.2;
   }
 
   .site-profile-avatar-link {
@@ -817,27 +1093,85 @@
   }
 
   .site-mobile-menu-toggle {
+    position: relative;
     display: inline-flex;
     flex: 0 0 var(--site-header-row-height);
     align-items: center;
     justify-content: center;
     align-self: stretch;
-    gap: 4px;
+    min-width: var(--site-header-row-height);
     min-height: var(--site-header-row-height);
-    padding: 0 24px;
+    padding: 0;
     border: 0;
     border-left: 1px solid var(--line-soft);
     background: var(--bg);
     color: inherit;
     cursor: pointer;
-    flex-direction: column;
+    transition:
+      background-color 0.14s ease,
+      color 0.14s ease,
+      border-color 0.14s ease;
+  }
+
+  .site-mobile-menu-toggle[data-menu-toggle='cross'] {
+    background: var(--text);
+    color: var(--bg);
+    border-left-color: var(--line);
   }
 
   .site-mobile-menu-toggle-line {
+    position: absolute;
+    left: 50%;
     display: block;
     width: 18px;
     height: 1px;
+    margin-left: -9px;
     background: currentColor;
+    transition:
+      transform 0.14s ease,
+      opacity 0.12s ease,
+      top 0.14s ease,
+      margin-top 0.14s ease;
+  }
+
+  /* Three 1px lines: centers at 50% ± 5px so gaps between centers are even (was uneven: ±5px tops vs 50% − 0.5px middle). */
+  .site-mobile-menu-toggle-line:nth-child(1) {
+    top: calc(50% - 5px - 0.5px);
+  }
+
+  .site-mobile-menu-toggle-line:nth-child(2) {
+    top: calc(50% - 0.5px);
+  }
+
+  .site-mobile-menu-toggle-line:nth-child(3) {
+    top: calc(50% + 5px - 0.5px);
+  }
+
+  .site-mobile-menu-toggle[data-menu-toggle='cross'] .site-mobile-menu-toggle-line:nth-child(1) {
+    top: calc(50% - 0.5px);
+    transform: rotate(45deg);
+  }
+
+  .site-mobile-menu-toggle[data-menu-toggle='cross'] .site-mobile-menu-toggle-line:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .site-mobile-menu-toggle[data-menu-toggle='cross'] .site-mobile-menu-toggle-line:nth-child(3) {
+    top: calc(50% - 0.5px);
+    transform: rotate(-45deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-mobile-menu-toggle,
+    .site-mobile-menu-toggle-line {
+      transition: none;
+    }
+
+    .site-mobile-menu-toggle[data-menu-toggle='cross'] .site-mobile-menu-toggle-line:nth-child(1),
+    .site-mobile-menu-toggle[data-menu-toggle='cross'] .site-mobile-menu-toggle-line:nth-child(3) {
+      transition: none;
+    }
   }
 
   .site-mobile-menu {
@@ -852,16 +1186,53 @@
   }
 
   .site-mobile-menu.is-open {
+    position: fixed;
+    top: var(--site-header-height);
+    left: 0;
+    right: 0;
+    bottom: auto;
     display: grid;
+    width: 100%;
+    max-height: calc(100dvh - var(--site-header-height));
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    z-index: 1;
+    box-sizing: border-box;
+    border-top: 0;
+  }
+
+  /* Open / close: transform-only keyframes (no menu opacity) so the header border stays a solid 1px */
+  .site-mobile-menu.is-open:not(.is-closing) {
+    animation: site-mobile-menu-slide-down 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    transition: none;
+  }
+
+  .site-mobile-menu.is-open.is-closing {
+    pointer-events: none;
+    animation: site-mobile-menu-slide-up 280ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-mobile-menu.is-open:not(.is-closing) {
+      animation: none;
+      transform: none;
+    }
+
+    .site-mobile-menu.is-open.is-closing {
+      animation: none;
+      opacity: 0;
+      transform: translateY(-18px);
+    }
   }
 
   .site-mobile-menu-link {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--site-header-row-height);
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    min-height: 56px;
-    padding: 0 24px;
+    column-gap: 16px;
+    min-height: var(--site-header-row-height);
+    padding: 0 0 0 var(--site-gutter);
     width: 100%;
     border: 0;
     border-radius: 0;
@@ -882,7 +1253,15 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    justify-self: center;
+    width: 100%;
+    min-width: var(--site-header-row-height);
     flex: 0 0 auto;
+  }
+
+  .site-mobile-menu-item-meta.site-workflow-count {
+    font-variant-numeric: tabular-nums;
+    text-align: center;
   }
 
   .site-mobile-menu-settings-mark {
@@ -909,15 +1288,48 @@
   }
 
   .settings-main .settings-source-uploads-row--materials {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     width: calc(100% + var(--queue-column-pad) + var(--settings-section-pad-right));
     margin-left: calc(-1 * var(--queue-column-pad));
     margin-right: calc(-1 * var(--settings-section-pad-right));
   }
 
-  .settings-main .settings-source-uploads-row--materials .upload-slot-chip-btn:not(.upload-slot-chip-btn--action),
+  .settings-main .settings-source-uploads-row--materials > .upload-slot {
+    width: auto;
+  }
+
+  .settings-main .settings-source-uploads-row--materials > .upload-slot + .upload-slot {
+    margin-top: 0;
+    margin-left: calc(-1 * var(--adjacent-control-overlap));
+  }
+
+  .settings-main .settings-source-uploads-row--materials > .upload-slot:first-child .upload-slot-chip-btn:not(.upload-slot-chip-btn--action) {
+    border-left-width: 0;
+  }
+
+  .settings-main
+    .settings-source-uploads-row--materials
+    > .upload-slot:first-child
+    + .upload-slot
+    .upload-slot-chip-btn:not(.upload-slot-chip-btn--action) {
+    border-right-width: 0;
+  }
+
+  /* Full-width generate: no side borders */
   .settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action {
+    grid-column: 1 / -1;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+    margin-left: 0;
     border-left-width: 0;
     border-right-width: 0;
+    border-top-width: 1px;
+    border-color: var(--text);
+  }
+
+  .settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action:hover:not(:disabled),
+  .settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action:focus-visible:not(:disabled) {
+    border-color: var(--text);
   }
 
   .settings-tab-panel .bullet-list-editor,
@@ -933,6 +1345,15 @@
     min-height: 0;
     max-height: none;
     overflow-y: hidden;
+  }
+
+  .settings-tab-panel .field-grid.field-grid-2:has(.repeat-card-history-summary) {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-tab-panel .repeat-card-proof-grid {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 
   .screening-summary-grid,
@@ -964,21 +1385,70 @@
     grid-column: 1 / -1;
   }
 
-  main.jobs-index .queue-list .screening-row,
-  main.jobs-index .queue-list .stage-row {
-    width: calc(100% + (2 * var(--queue-column-pad)));
-    margin-right: calc(-1 * var(--queue-column-pad));
-    padding-right: var(--queue-column-pad);
+  .detail-pair-grid,
+  .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) {
+    grid-template-columns: 1fr;
   }
 
-  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:last-child {
-    padding-right: 0;
+  .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) > .screening-match-column,
+  .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) > .screening-match-column + div {
+    grid-column: auto;
   }
 
-  main.jobs-index .queue-list .screening-actions-bar,
-  main.jobs-index .queue-list .stage-actions-bar {
+  .job-review-grid,
+  .job-material-grid,
+  .packet-material-grid,
+  .packet-page-actions,
+  .job-flow-actions,
+  .packet-form .packet-grid-section,
+  .packet-form .packet-advanced-grid,
+  .packet-form .packet-form-footer,
+  .screening-actions-bar,
+  .stage-actions-bar {
+    grid-template-columns: 1fr;
+  }
+
+  /*
+   * Jobs queue: mirror queue-meta bleed — symmetric horizontal padding; row rules no longer double-extend.
+   * Hairline sits full width of the queue column (same technique as .queue-meta::after).
+   */
+  main.jobs-index .queue-list {
     width: calc(100% + (2 * var(--queue-column-pad)));
     margin-left: calc(-1 * var(--queue-column-pad));
+    margin-right: calc(-1 * var(--queue-column-pad));
+    padding-left: var(--queue-column-pad);
+    padding-right: var(--queue-column-pad);
+    box-sizing: border-box;
+  }
+
+  main.jobs-index .queue-list .screening-row,
+  main.jobs-index .queue-list .stage-row {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 24px;
+    padding-bottom: 0;
+    box-sizing: border-box;
+  }
+
+  main.jobs-index .queue-list .screening-row::after,
+  main.jobs-index .queue-list .stage-row::after {
+    left: calc(-1 * var(--queue-column-pad));
+    width: calc(100% + (2 * var(--queue-column-pad)));
+  }
+
+  /*
+   * Bleed actions into queue-list’s right padding so Save/Skip span the full content column (Skip flush right).
+   * Meta cell insets: main.jobs-index .queue-list .screening-summary-grid in queue-rows.css.
+   */
+  main.jobs-index .queue-list .screening-actions-bar,
+  main.jobs-index .queue-list .stage-actions-bar {
+    width: calc(100% + var(--queue-column-pad));
+    max-width: none;
+    margin-left: 0;
     margin-right: calc(-1 * var(--queue-column-pad));
   }
 
@@ -987,10 +1457,314 @@
     border-left-width: 0;
     border-right-width: 0;
   }
+
+  .screening-actions-cluster,
+  .stage-actions-cluster {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .job-overview-actions .screening-actions-cluster {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+  }
+
+  /* Jobs queue tag layout only — do not override settings / profile TagInput */
+  main.jobs-index .queue-list .tag-list {
+    align-items: stretch;
+  }
+
+  main.jobs-index .queue-list .tag-chip {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot {
+    flex: 1 1 0;
+    width: auto;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot + .screening-action-slot {
+    margin-top: 0;
+    margin-left: calc(-1 * var(--adjacent-control-overlap));
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot + .screening-action-slot .button {
+    border-top-width: 1px;
+    border-left-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: none;
+    grid-template-columns: unset;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot {
+    flex: 1 1 auto;
+    grid-column: auto;
+    width: 100%;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-action-slot {
+    margin-left: 0;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-action-slot .button {
+    border-left-width: 1px;
+    border-top-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(2):last-child) {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+    max-width: none;
+    gap: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot {
+    flex: 1 1 0;
+    width: auto;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot + .stage-action-slot {
+    margin-top: 0;
+    margin-left: calc(-1 * var(--adjacent-control-overlap));
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot + .stage-action-slot .button {
+    border-top-width: 1px;
+    border-left-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 0;
+    row-gap: 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:first-child {
+    grid-column: 1 / -1;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2),
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) {
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) {
+    margin-left: calc(-1 * var(--adjacent-control-overlap));
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button,
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
+    border-top-width: 1px;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
+    border-left-width: 0;
+  }
+
+  .packet-page-actions > * + *,
+  .job-flow-actions > * + * {
+    margin-left: 0;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+  }
+}
+
+/* Jobs queue: four meta cells in one even row (title stays full width above). */
+@media (max-width: 900px) and (min-width: 641px) {
+  main.jobs-index .queue-list .screening-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    row-gap: var(--queue-column-pad);
+    align-items: start;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-title-cell {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(4) {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(5) {
+    grid-column: 4;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 1180px) and (min-width: 901px) {
+  .settings-rail-updated-at {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: start;
+    justify-items: start;
+    gap: 6px;
+  }
+
+  .settings-rail-updated-at-label,
+  .settings-rail-updated-at-value {
+    flex: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .settings-rail-updated-at-value {
+    white-space: normal;
+  }
+
+  /*
+   * Jobs queue: 50/50 split — title + match copy left; Remote/Salary/Fit/Posted (or Status) in 2×2 on the right.
+   * Actions use the same four-column grid (cols 3–4 = right half): Save/Skip under Fit/Posted; stage rows mirror.
+   */
+  main.jobs-index .queue-list .screening-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    column-gap: var(--jobs-queue-col-gap);
+    row-gap: var(--queue-column-pad);
+    align-items: start;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-title-cell {
+    grid-column: 1 / 3;
+    grid-row: 1 / 3;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(2) {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(3) {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(4) {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(5) {
+    grid-column: 4;
+    grid-row: 2;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--jobs-queue-col-gap);
+    row-gap: 0;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child {
+    grid-column: 3;
+    grid-row: 1;
+    width: calc(100% + var(--jobs-queue-col-gap));
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: auto;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--salary {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary {
+    grid-column: 3 / span 2;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit) {
+    width: 100%;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--fit {
+    grid-column: 3;
+    grid-row: 2;
+    width: calc(100% + var(--jobs-queue-col-gap));
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--status {
+    grid-column: 4;
+    grid-row: 2;
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .screening-row,
+  main.jobs-index .queue-list .stage-row {
+    padding-right: 0;
+    box-sizing: border-box;
+  }
+
+  /* 2×2 meta band: stack Why it matches + Risks / gaps full width. */
+  main.jobs-index .queue-list .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  main.jobs-index .queue-list .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) > .screening-match-column {
+    grid-column: 1 / -1;
+  }
+
+  main.jobs-index .queue-list .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) > .screening-match-column + div {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 640px) {
-  .workspace-main > main:not(.jobs-index):not(.workspace-surface) {
+  :root {
+    --settings-tab-scroll-end-pad: 16px;
+  }
+
+.workspace-main > main:not(.jobs-index):not(.workspace-surface) {
     padding: 16px;
   }
 
@@ -1000,6 +1774,11 @@
 
   .site-brand {
     padding-left: 16px;
+  }
+
+  .site-brand strong {
+    font-size: 0.9375rem;
+    line-height: 1.2;
   }
 
   .dashboard-workspace .today-rail {
@@ -1017,8 +1796,43 @@
     padding-right: 16px;
   }
 
-  .screening-summary-grid {
+  .screening-summary-grid,
+  .stage-row-grid {
     gap: 12px;
+  }
+
+  /* Jobs queue: explicit 2×2; row-gap tracks --queue-column-pad (settings stack rhythm). */
+  main.jobs-index .queue-list .screening-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto auto;
+    column-gap: 12px;
+    row-gap: var(--queue-column-pad);
+    align-items: start;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-title-cell {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(5) {
+    grid-column: 2;
+    grid-row: 3;
   }
 
   .page-stack {
@@ -1029,12 +1843,8 @@
     font-size: 2.1rem;
   }
 
-  .site-mobile-menu-toggle {
-    padding: 0 16px;
-  }
-
   .site-mobile-menu-link {
-    padding: 0 16px;
+    padding-left: 16px;
   }
 
   .settings-page-toolbar {
@@ -1073,6 +1883,10 @@
     align-items: stretch;
   }
 
+  .settings-main .settings-tag-row.field-grid.field-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
   .packet-question-summary {
     grid-template-columns: 1fr;
   }
@@ -1085,6 +1899,10 @@
 }
 
 @media (max-width: 390px) {
+  :root {
+    --settings-tab-scroll-end-pad: 12px;
+  }
+
   .workspace-main > main:not(.jobs-index):not(.workspace-surface) {
     padding: 12px;
   }
@@ -1094,17 +1912,53 @@
     grid-template-columns: 1fr;
   }
 
+  /* Keep jobs-queue meta 2×2 (global rule above is for non-queue contexts). */
+  main.jobs-index .queue-list .screening-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto auto;
+    column-gap: 12px;
+    row-gap: var(--queue-column-pad);
+    align-items: start;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-title-cell {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  main.jobs-index .queue-list .screening-summary-grid > .screening-cell:nth-child(5) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
   .site-brand {
     min-height: 64px;
     padding-left: 12px;
   }
 
-  .site-mobile-menu-toggle {
-    padding: 0 12px;
+  .site-brand strong {
+    font-size: 0.875rem;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
   }
 
   .site-mobile-menu-link {
-    padding: 0 12px;
+    padding-left: 12px;
   }
 
   .dashboard-workspace .today-rail {
@@ -1120,6 +1974,13 @@
     --queue-column-pad: 12px;
     padding-left: 12px;
     padding-right: 12px;
+  }
+
+  .settings-action-body .settings-core-grid > .settings-job-targets-grid,
+  .settings-action-body .settings-job-targets-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   .page-stack {
@@ -1150,3 +2011,4 @@
     padding-right: 14px;
   }
 }
+

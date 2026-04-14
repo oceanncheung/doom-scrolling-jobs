@@ -279,7 +279,7 @@ export function ExperienceStrengthsSection({
                     </div>
                   </div>
                   <div className="field-grid field-grid-2">
-                    <label className="field settings-field-autosize">
+                    <label className="field settings-field-autosize repeat-card-history-summary">
                       <span>What you did</span>
                       <AutoSizeTextarea
                         name="experienceSummary"

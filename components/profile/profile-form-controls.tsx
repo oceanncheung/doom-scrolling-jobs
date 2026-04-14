@@ -105,8 +105,10 @@ export function SettingsTabShell({
   return (
     <div className={`settings-tab-shell${hasSelection ? ' has-selection' : ''}`}>
       <div className="settings-tab-toolbar-shell">
-        <div aria-label={ariaLabel} className="settings-tab-toolbar" role="tablist">
-          {toolbar}
+        <div className="settings-tab-toolbar-track">
+          <div aria-label={ariaLabel} className="settings-tab-toolbar" role="tablist">
+            {toolbar}
+          </div>
         </div>
       </div>
       {children}

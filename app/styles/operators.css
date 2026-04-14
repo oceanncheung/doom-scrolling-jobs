@@ -85,6 +85,11 @@
   gap: 16px;
 }
 
+/* Operators rail is a single block; skip `.today-block:first-child` bottom rule (no stack below). */
+.operator-create-rail-block.today-block:first-child {
+  border-bottom: 0;
+}
+
 /* Inputs use shared `.field` rules from forms.css + placeholder in settings.css (with `.profile-fields`). */
 .operator-create-rail-block .operator-setup-form--rail .button.button-primary {
   background: var(--text);
@@ -95,10 +100,10 @@
 
 .operator-create-rail-block .operator-setup-form--rail .button.button-primary:hover:not(:disabled),
 .operator-create-rail-block .operator-setup-form--rail .button.button-primary:focus-visible {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
-  opacity: 0.92;
+  background: var(--accent);
+  color: var(--text);
+  border-color: var(--accent);
+  opacity: 1;
 }
 
 .operator-create-rail-block .operator-setup-form--rail .button.button-primary:disabled {
