@@ -1,0 +1,58 @@
+name: Deploy Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet
+
+      - name: Build container image
+        env:
+          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REPOSITORY }}/${{ vars.GCP_SERVICE_NAME }}:${{ github.sha }}
+        run: docker build -t "$IMAGE_URI" .
+
+      - name: Push container image
+        env:
+          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REPOSITORY }}/${{ vars.GCP_SERVICE_NAME }}:${{ github.sha }}
+        run: docker push "$IMAGE_URI"
+
+      - name: Deploy to Cloud Run
+        env:
+          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REPOSITORY }}/${{ vars.GCP_SERVICE_NAME }}:${{ github.sha }}
+        run: |
+          gcloud run deploy "${{ vars.GCP_SERVICE_NAME }}" \
+            --image "$IMAGE_URI" \
+            --project "${{ vars.GCP_PROJECT_ID }}" \
+            --region "${{ vars.GCP_REGION }}" \
+            --platform managed \
+            --cpu 1 \
+            --memory 1Gi \
+            --max-instances 3 \
+            --min-instances 0 \
+            --execution-environment gen2 \
+            --timeout 300 \
+            --no-invoker-iam-check

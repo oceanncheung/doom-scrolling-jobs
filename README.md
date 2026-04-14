@@ -118,7 +118,7 @@ The app now supports a direct Google Cloud Run deployment flow.
 - default region: `northamerica-northeast1`
 - default access mode: public
 
-The repo also includes `cloudbuild.yaml` so GitHub pushes can deploy the same Cloud Run service through Cloud Build.
+GitHub is now the deployment source of truth: pushes to `main` deploy the service through GitHub Actions.
 
 ## 9. Project Structure
 

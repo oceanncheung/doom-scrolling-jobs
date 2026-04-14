@@ -55,7 +55,19 @@ The script prints:
 
 ## GitHub-backed deploys
 
-The repo includes [cloudbuild.yaml](/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom%20Scrolling%20Jobs/cloudbuild.yaml) so Cloud Build can deploy the same service from GitHub pushes to `main`.
+The live deploy source is GitHub. Pushes to `main` run [.github/workflows/deploy-cloud-run.yml](/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom%20Scrolling%20Jobs/.github/workflows/deploy-cloud-run.yml), which builds a container, pushes it to Artifact Registry, and deploys the same Cloud Run service.
+
+Required GitHub repo settings:
+
+- variables:
+  - `GCP_PROJECT_ID`
+  - `GCP_REGION`
+  - `GCP_SERVICE_NAME`
+  - `GCP_ARTIFACT_REPOSITORY`
+  - `GCP_WORKLOAD_IDENTITY_PROVIDER`
+  - `GCP_SERVICE_ACCOUNT_EMAIL`
+
+The repo also includes [cloudbuild.yaml](/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom%20Scrolling%20Jobs/cloudbuild.yaml) for optional Google-native build automation later, but the current automated source of truth is GitHub Actions.
 
 ## Security note
 
