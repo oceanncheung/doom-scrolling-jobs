@@ -106,6 +106,58 @@ export function JobTargetsSection({
             />
             <small>Roles matching this get prioritized.</small>
           </label>
+
+          <div className="settings-field-wide settings-matching-controls">
+            <div className="settings-matching-controls-heading">
+              <FieldLabelRow labelClassName="settings-job-targets-eyebrow">
+                Matching controls
+              </FieldLabelRow>
+              <small>Adjust how broad the system should source and surface roles for this workspace.</small>
+            </div>
+
+            <div className="settings-matching-controls-grid">
+              <div className="settings-job-targets-stack-sm">
+                <FieldLabelRow labelClassName="settings-job-targets-eyebrow">Role breadth</FieldLabelRow>
+                <div className="settings-job-targets-stack-sm-content">
+                  <SingleSelectChipGroup
+                    hideLabel
+                    label="Role breadth"
+                    onChange={(value) => setMatchingRoleBreadth(value as MatchingRoleBreadth)}
+                    options={matchingRoleBreadthOptions}
+                    value={matchingRoleBreadth}
+                  />
+                </div>
+              </div>
+
+              <div className="settings-job-targets-stack-sm">
+                <FieldLabelRow labelClassName="settings-job-targets-eyebrow">Market strictness</FieldLabelRow>
+                <div className="settings-job-targets-stack-sm-content">
+                  <SingleSelectChipGroup
+                    hideLabel
+                    label="Market strictness"
+                    onChange={(value) =>
+                      setMatchingMarketStrictness(value as MatchingMarketStrictness)
+                    }
+                    options={matchingMarketStrictnessOptions}
+                    value={matchingMarketStrictness}
+                  />
+                </div>
+              </div>
+
+              <div className="settings-job-targets-stack-sm">
+                <FieldLabelRow labelClassName="settings-job-targets-eyebrow">Source mix</FieldLabelRow>
+                <div className="settings-job-targets-stack-sm-content">
+                  <SingleSelectChipGroup
+                    hideLabel
+                    label="Source mix"
+                    onChange={(value) => setMatchingSourceMix(value as MatchingSourceMix)}
+                    options={matchingSourceMixOptions}
+                    value={matchingSourceMix}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <details className="settings-action-disclosure">
@@ -269,59 +321,6 @@ export function JobTargetsSection({
                   </div>
                 </div>
 
-                <div className="settings-matching-controls">
-                  <div className="settings-matching-controls-heading">
-                    <FieldLabelRow labelClassName="settings-job-targets-eyebrow">
-                      Matching controls
-                    </FieldLabelRow>
-                    <small>Slightly tune how this workspace surfaces roles, markets, and source types.</small>
-                  </div>
-
-                  <div className="settings-matching-controls-grid">
-                    <div className="settings-job-targets-stack-sm">
-                      <FieldLabelRow labelClassName="settings-job-targets-eyebrow">Role breadth</FieldLabelRow>
-                      <div className="settings-job-targets-stack-sm-content">
-                        <SingleSelectChipGroup
-                          hideLabel
-                          label="Role breadth"
-                          onChange={(value) =>
-                            setMatchingRoleBreadth(value as MatchingRoleBreadth)
-                          }
-                          options={matchingRoleBreadthOptions}
-                          value={matchingRoleBreadth}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="settings-job-targets-stack-sm">
-                      <FieldLabelRow labelClassName="settings-job-targets-eyebrow">Market strictness</FieldLabelRow>
-                      <div className="settings-job-targets-stack-sm-content">
-                        <SingleSelectChipGroup
-                          hideLabel
-                          label="Market strictness"
-                          onChange={(value) =>
-                            setMatchingMarketStrictness(value as MatchingMarketStrictness)
-                          }
-                          options={matchingMarketStrictnessOptions}
-                          value={matchingMarketStrictness}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="settings-job-targets-stack-sm">
-                      <FieldLabelRow labelClassName="settings-job-targets-eyebrow">Source mix</FieldLabelRow>
-                      <div className="settings-job-targets-stack-sm-content">
-                        <SingleSelectChipGroup
-                          hideLabel
-                          label="Source mix"
-                          onChange={(value) => setMatchingSourceMix(value as MatchingSourceMix)}
-                          options={matchingSourceMixOptions}
-                          value={matchingSourceMix}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
