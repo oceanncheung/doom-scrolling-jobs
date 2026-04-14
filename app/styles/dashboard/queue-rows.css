@@ -123,8 +123,10 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--status {
 }
 
 /*
- * Three controls (e.g. Continue prep | Potential | Archive): ½ + ¼ + ¼ of the full action bar at every width.
- * Overrides the 5-column meta grid above so slots map to columns 1–3 of a dedicated 3-track row.
+ * Three controls (e.g. Prepare | Potential | Archive):
+ * — ≤900px: compact 2fr + 1fr + 1fr strip (flush seams).
+ * — 901–1180px: same compact strip (meta summary is 2×2 — widths stay proportional, not five-column aligned).
+ * — ≥1181px: same five tracks as `.screening-summary-grid` — Prepare = Remote+Salary (cols 2–3), Fit = 4, Status = 5.
  */
 main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
   display: grid;
@@ -155,6 +157,55 @@ main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-
   grid-row: 1;
   width: 100%;
   min-width: 0;
+}
+
+/*
+ * Full meta grid (same five tracks as `.screening-summary-grid` on wide jobs index only).
+ * 901–1180px uses a 2×2 meta band — keep the compact 2fr / 1fr / 1fr three-slot row from the mobile-first rules above.
+ */
+@media (min-width: 1181px) {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
+    grid-template-columns:
+      minmax(0, 2.8fr)
+      minmax(10rem, 1.25fr)
+      minmax(10rem, 1.15fr)
+      minmax(8rem, 0.9fr)
+      minmax(8rem, 0.9fr);
+    column-gap: var(--jobs-queue-col-gap);
+    row-gap: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--remote-salary {
+    grid-column: 2 / span 2;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--fit {
+    grid-column: 4;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status {
+    grid-column: 5;
+  }
+
+  /* Gaps separate columns — restore full seams so hover fill height matches across primary + secondary. */
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot + .stage-action-slot .button {
+    border-left-width: 1px;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button {
+    min-height: 40px;
+    height: 100%;
+    align-self: stretch;
+    box-sizing: border-box;
+  }
+}
+
+/* 901–1180: same three-slot strip as base; unify hover target height (flush seams still use adjacent overlap rules). */
+@media (min-width: 901px) and (max-width: 1180px) {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button {
+    min-height: 40px;
+    box-sizing: border-box;
+  }
 }
 
 /* Bridge column-gaps so adjacent buttons share an edge (5-column meta grid only; not ½/¼/¼ three-slot row). */
@@ -602,47 +653,53 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-actio
 }
 
 /*
- * Jobs index — three stage buttons in one row (e.g. Prepare | Potential | Archive):
- * `.button-secondary { border-color }` above would wipe explicit dividers; these rules sit after it.
- * Grey rule above Potential + Archive; grey vertical between them (Potential | Archive). Continue prep’s right edge uses --line (dark).
+ * Jobs index — three stage buttons, flush strip (≤900px only):
+ * Grey rule above Potential + Archive; Prepare’s right edge uses --line. ≥1181px uses meta grid gaps — see @media (min-width: 1181px) above.
  */
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot + .stage-action-slot {
-  margin-left: 0;
-}
+@media (max-width: 900px) {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot + .stage-action-slot {
+    margin-left: 0;
+  }
 
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(1) .button {
-  border-right-width: 1px;
-  border-right-style: solid;
-  border-right-color: var(--line);
-  z-index: auto;
-}
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(1) .button {
+    border-right-width: 1px;
+    border-right-style: solid;
+    border-right-color: var(--line);
+    z-index: auto;
+  }
 
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button {
-  border-right-width: 0;
-  border-left-width: 0;
-  border-top-width: 1px;
-  border-top-style: solid;
-  border-top-color: var(--line-soft);
-}
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button {
+    border-right-width: 0;
+    border-left-width: 0;
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: var(--line-soft);
+  }
 
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
-  border-left-width: 1px;
-  border-left-style: solid;
-  border-left-color: var(--line-soft);
-  border-top-width: 1px;
-  border-top-style: solid;
-  border-top-color: var(--line-soft);
-}
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
+    border-left-width: 1px;
+    border-left-style: solid;
+    border-left-color: var(--line-soft);
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: var(--line-soft);
+  }
 
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:hover:not(:disabled),
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:focus-visible:not(:disabled) {
-  border-top-color: var(--line-soft);
-}
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:hover:not(:disabled),
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:focus-visible:not(:disabled) {
+    border-top-color: var(--line-soft);
+  }
 
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:hover:not(:disabled),
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:focus-visible:not(:disabled) {
-  border-top-color: var(--line-soft);
-  border-left-color: var(--line-soft);
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:hover:not(:disabled),
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:focus-visible:not(:disabled) {
+    border-top-color: var(--line-soft);
+    border-left-color: var(--line-soft);
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button {
+    min-height: 40px;
+    box-sizing: border-box;
+  }
 }
 
 main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button:hover:not(:disabled),
