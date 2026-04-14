@@ -107,8 +107,20 @@ Useful scripts:
 - `npm run typecheck`
 - `npm run build`
 - `npm run check`
+- `npm run deploy:cloud-run`
 
-## 8. Project Structure
+## 8. Deployment
+
+The app now supports a direct Google Cloud Run deployment flow.
+
+- deployment guide: `docs/cloud-run-deployment.md`
+- default service name: `doomscrollingjobs-web`
+- default region: `northamerica-northeast1`
+- default access mode: private
+
+The private default is intentional because the current product is still a single-user internal tool and does not yet have a built-in login wall.
+
+## 9. Project Structure
 
 Current structure and intended ownership:
 
@@ -121,7 +133,7 @@ Current structure and intended ownership:
 - `supabase/` -> SQL schema, policies, seeds, and local config
 - `docs/` -> later home for long-form docs if the root gets too crowded
 
-## 9. Next Steps
+## 10. Next Steps
 
 1. Build the normalization pipeline and source-selection logic behind the new job intake contracts.
 2. Replace seeded `job_scores` with the first real scoring service using the model in `SCORING.md`.
