@@ -6,9 +6,9 @@ This app can deploy to Google Cloud Run directly from source. The deployment flo
 
 - Service name: `doomscrollingjobs-web`
 - Region: `northamerica-northeast1`
-- Access: private by default (`--no-allow-unauthenticated`)
+- Access: public by default (`--no-invoker-iam-check`)
 
-The private default is intentional. The app is still a single-user internal tool with no built-in login, so public deployment should be treated as an explicit choice.
+This project’s Google Cloud org policy blocks `allUsers` IAM bindings, so the public path uses Cloud Run with invoker IAM checks disabled instead of `--allow-unauthenticated`.
 
 ## Prerequisites
 
@@ -36,14 +36,14 @@ Optional overrides:
 ```bash
 SERVICE_NAME=doomscrollingjobs-web \
 REGION=northamerica-northeast1 \
-ALLOW_UNAUTHENTICATED=false \
+DISABLE_INVOKER_IAM_CHECK=true \
 npm run deploy:cloud-run
 ```
 
-If you explicitly want a public URL while the app still has no login wall:
+If you want to keep the service private:
 
 ```bash
-ALLOW_UNAUTHENTICATED=true npm run deploy:cloud-run
+DISABLE_INVOKER_IAM_CHECK=false npm run deploy:cloud-run
 ```
 
 ## After deploy
@@ -52,6 +52,10 @@ The script prints:
 
 - the service URL
 - the health URL at `/api/health`
+
+## GitHub-backed deploys
+
+The repo includes [cloudbuild.yaml](/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom%20Scrolling%20Jobs/cloudbuild.yaml) so Cloud Build can deploy the same service from GitHub pushes to `main`.
 
 ## Security note
 

@@ -116,9 +116,9 @@ The app now supports a direct Google Cloud Run deployment flow.
 - deployment guide: `docs/cloud-run-deployment.md`
 - default service name: `doomscrollingjobs-web`
 - default region: `northamerica-northeast1`
-- default access mode: private
+- default access mode: public
 
-The private default is intentional because the current product is still a single-user internal tool and does not yet have a built-in login wall.
+The repo also includes `cloudbuild.yaml` so GitHub pushes can deploy the same Cloud Run service through Cloud Build.
 
 ## 9. Project Structure
 

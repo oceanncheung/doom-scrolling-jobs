@@ -122,18 +122,65 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--status {
   grid-column: 5;
 }
 
-/* Bridge column-gaps so adjacent buttons share an edge; gutter width must match --jobs-queue-col-gap */
-main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote:has(+ .stage-action-slot--salary) {
+/*
+ * Three controls (e.g. Continue prep | Potential | Archive): ½ + ¼ + ¼ of the full action bar at every width.
+ * Overrides the 5-column meta grid above so slots map to columns 1–3 of a dedicated 3-track row.
+ */
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 0;
+  row-gap: 0;
+  width: 100%;
+  min-width: 0;
+  isolation: isolate;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--remote-salary {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--fit {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status {
+  grid-column: 3;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Bridge column-gaps so adjacent buttons share an edge (5-column meta grid only; not ½/¼/¼ three-slot row). */
+main.jobs-index
+  .queue-list
+  .stage-actions-bar
+  .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child))
+  .stage-action-slot--remote:has(+ .stage-action-slot--salary) {
   width: calc(100% + var(--jobs-queue-col-gap));
   min-width: 0;
 }
 
-main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit) {
+main.jobs-index
+  .queue-list
+  .stage-actions-bar
+  .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child))
+  .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit) {
   width: calc(100% + var(--jobs-queue-col-gap));
   min-width: 0;
 }
 
-main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--fit:has(+ .stage-action-slot--status) {
+main.jobs-index
+  .queue-list
+  .stage-actions-bar
+  .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child))
+  .stage-action-slot--fit:has(+ .stage-action-slot--status) {
   width: calc(100% + var(--jobs-queue-col-gap));
   min-width: 0;
 }
@@ -552,6 +599,55 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-actio
   background: var(--muted);
   color: var(--bg);
   border-color: var(--muted);
+}
+
+/*
+ * Jobs index — three stage buttons in one row (e.g. Prepare | Potential | Archive):
+ * `.button-secondary { border-color }` above would wipe explicit dividers; these rules sit after it.
+ * Grey rule above Potential + Archive; grey vertical between them (Potential | Archive). Continue prep’s right edge uses --line (dark).
+ */
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot + .stage-action-slot {
+  margin-left: 0;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(1) .button {
+  border-right-width: 1px;
+  border-right-style: solid;
+  border-right-color: var(--line);
+  z-index: auto;
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button {
+  border-right-width: 0;
+  border-left-width: 0;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--line-soft);
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
+  border-left-width: 1px;
+  border-left-style: solid;
+  border-left-color: var(--line-soft);
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--line-soft);
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:hover:not(:disabled),
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:focus-visible:not(:disabled) {
+  border-top-color: var(--line-soft);
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:hover:not(:disabled),
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:focus-visible:not(:disabled) {
+  border-top-color: var(--line-soft);
+  border-left-color: var(--line-soft);
+}
+
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button:hover:not(:disabled),
+main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button:focus-visible:not(:disabled) {
+  z-index: auto;
 }
 
 .screening-actions-bar .button:disabled {

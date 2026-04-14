@@ -213,11 +213,28 @@
 
 .settings-tab-toolbar-shell {
   position: relative;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+  background: var(--bg);
 }
 
+/* Horizontal scroll when tab labels exceed the column (all viewports; track stays in the shell). */
 .settings-tab-toolbar-track {
   min-width: 0;
   box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  padding-right: 0;
+}
+
+.settings-tab-toolbar-track::-webkit-scrollbar {
+  display: none;
 }
 
 /* Toolbar shell stays above panel for any future overlap tricks; seam is toolbar border-bottom + mask under active chip. */
@@ -250,12 +267,52 @@
  * Experience background tabs: mirror Job targets `.settings-action-summary` + `.settings-action-toggle`
  * (those rules are scoped to `section.panel.settings-section`, so disclosure experience needs its own copy).
  */
+.settings-main > section.panel.disclosure.disclosure-experience .settings-section-state-content,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-section-state-content {
+  min-width: 0;
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience > .settings-section-state-shell > .settings-section-state-content > .settings-tab-shell,
+.settings-main > section.panel.disclosure.disclosure-cover-letter > .settings-section-state-shell > .settings-section-state-content > .settings-tab-shell {
+  min-width: 0;
+}
+
 .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-toolbar,
 .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-toolbar {
   background-color: var(--bg);
   padding-left: var(--queue-column-pad);
-  padding-right: var(--settings-section-pad-right);
+  padding-right: var(--settings-tab-scroll-end-pad, var(--settings-section-pad-right, var(--site-gutter, 16px)));
   box-sizing: border-box;
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+}
+
+.system-inventory-panel .settings-tab-shell.has-selection .settings-tab-toolbar {
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  padding-right: var(--settings-tab-scroll-end-pad, var(--queue-column-pad, var(--site-gutter, 16px)));
+  box-sizing: border-box;
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-button,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-button {
+  flex: 0 0 auto;
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-button + .settings-tab-button,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-button + .settings-tab-button {
+  border-left: 0;
+  margin-left: 0;
+}
+
+.settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active + .settings-tab-button,
+.settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active + .settings-tab-button {
+  border-left-width: 1px;
+  border-left-style: solid;
 }
 
 /*
@@ -448,12 +505,19 @@
   margin: 0;
 }
 
-.settings-section-header h2 {
+.settings-section-header h2,
+.settings-matching-controls-heading small {
   font-family: var(--font-display), sans-serif;
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.2;
+}
+
+.settings-matching-controls-heading small {
+  display: block;
+  margin: 0;
+  color: var(--text);
 }
 
 .settings-section-note {

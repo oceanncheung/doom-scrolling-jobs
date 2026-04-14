@@ -238,40 +238,8 @@
   .settings-main > section.panel.disclosure.disclosure-experience,
   .settings-main > section.panel.disclosure.disclosure-cover-letter,
   .settings-main > section.panel.disclosure.disclosure-experience > .settings-section-state-shell,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter > .settings-section-state-shell,
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-section-state-content,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-section-state-content,
-  .settings-main > section.panel.disclosure.disclosure-experience > .settings-section-state-shell > .settings-section-state-content > .settings-tab-shell,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter > .settings-section-state-shell > .settings-section-state-content > .settings-tab-shell {
+  .settings-main > section.panel.disclosure.disclosure-cover-letter > .settings-section-state-shell {
     min-width: 0;
-  }
-
-  /* Shell does not scroll (avoids clipping toolbar-shell `margin-bottom: -1px`); track handles horizontal scroll. */
-  .settings-tab-toolbar-shell {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: visible;
-    background: var(--bg);
-    padding-bottom: 0;
-    margin-bottom: 0;
-  }
-
-  .settings-tab-toolbar-track {
-    overflow-x: auto;
-    overflow-y: visible;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    /* End padding lives on the toolbar (inside scroll width) so the last tab can scroll clear of the edge. */
-    padding-right: 0;
-    box-sizing: border-box;
-    min-width: 0;
-  }
-
-  .settings-tab-toolbar-track::-webkit-scrollbar {
-    display: none;
   }
 
   .settings-main .settings-job-targets-pair:nth-child(2) > .settings-job-targets-stack-sm:last-child {
@@ -280,49 +248,6 @@
 
   .settings-main .settings-job-targets-pair:nth-child(2) > .settings-job-targets-stack-sm:last-child .settings-job-targets-stack-sm-content {
     justify-content: flex-start;
-  }
-
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-toolbar,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-toolbar {
-    flex-wrap: nowrap;
-    /*
-     * min-width: 100% — when tabs are shorter than the track, inset hairline runs to the column edge.
-     * width: max-content — when tabs overflow, the bar (and hairline) is as wide as all chips + padding-right,
-     * so the rule extends with the row instead of staying viewport-sized and “sliding” with scroll.
-     */
-    width: max-content;
-    min-width: 100%;
-    max-width: none;
-    padding-left: var(--queue-column-pad);
-    padding-right: var(--settings-tab-scroll-end-pad, var(--settings-section-pad-right, var(--site-gutter, 16px)));
-    box-sizing: border-box;
-  }
-
-  .system-inventory-panel .settings-tab-shell.has-selection .settings-tab-toolbar {
-    width: max-content;
-    min-width: 100%;
-    max-width: none;
-    padding-right: var(--settings-tab-scroll-end-pad, var(--queue-column-pad, var(--site-gutter, 16px)));
-    box-sizing: border-box;
-  }
-
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-button,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-button {
-    flex: 0 1 auto;
-    min-width: 0;
-  }
-
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-button + .settings-tab-button,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-button + .settings-tab-button {
-    border-left: 0;
-    margin-left: 0;
-  }
-
-  /* Beat `+ .settings-tab-button { border-left: 0 }` above (higher specificity there): restore seam after active. */
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-button.is-active + .settings-tab-button,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-button.is-active + .settings-tab-button {
-    border-left-width: 1px;
-    border-left-style: solid;
   }
 
   .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection,
@@ -334,11 +259,6 @@
   .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-shell.has-selection .settings-tab-panel,
   .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-shell.has-selection .settings-tab-panel {
     padding-bottom: calc(24px + 48px);
-  }
-
-  .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-button,
-  .settings-main > section.panel.disclosure.disclosure-cover-letter .settings-tab-button {
-    flex: 0 0 auto;
   }
 
   .settings-main > section.panel.disclosure.disclosure-experience .settings-tab-button,
@@ -413,6 +333,11 @@
   .settings-source-primary,
   .settings-source-secondary {
     grid-column: auto;
+  }
+
+  /* Do not let `.settings-field-wide { grid-column: auto }` shrink matching controls to one half of `.settings-core-grid`. */
+  .settings-main .settings-core-grid > .settings-matching-controls {
+    grid-column: 1 / -1;
   }
 
   .settings-search-brief {
@@ -924,8 +849,11 @@
     grid-column: 1 / -1;
   }
 
+  /* Role breadth / market / source sliders: one per row at ≤900px (profile + action disclosure). */
+  .settings-main .settings-matching-controls-grid,
   .settings-action-body .settings-matching-controls-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
+    row-gap: var(--settings-stack-gap);
   }
 
   .settings-profile-rail-footer {
@@ -1474,7 +1402,7 @@
     width: calc(100% + (2 * var(--queue-column-pad)));
     max-width: none;
     margin-left: calc(-1 * var(--queue-column-pad));
-    margin-right: 0;
+    margin-right: calc(-1 * var(--queue-column-pad));
     margin-top: 24px;
   }
 
@@ -1483,8 +1411,9 @@
     width: calc(100% + (2 * var(--queue-column-pad)));
     max-width: none;
     margin-left: calc(-1 * var(--queue-column-pad));
-    margin-right: 0;
+    margin-right: calc(-1 * var(--queue-column-pad));
     margin-top: 24px;
+    box-sizing: border-box;
   }
 
   main.jobs-index .queue-list .screening-actions-bar .button,
@@ -1582,35 +1511,70 @@
     border-left-width: 1px;
   }
 
+  /*
+   * Three actions (Continue prep | Potential | Archive): one row ½ + ¼ + ¼ — override flex column above.
+   * Dividers + hover: queue-rows.css
+   */
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+    flex-direction: unset;
+    align-items: stretch;
     column-gap: 0;
     row-gap: 0;
     width: 100%;
     max-width: none;
+    isolation: isolate;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:first-child {
-    grid-column: 1 / -1;
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot {
+    flex: unset;
+    width: auto;
+    min-width: 0;
+    margin-top: 0;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2),
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) {
-    margin-top: calc(-1 * var(--adjacent-control-overlap));
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot + .stage-action-slot {
+    margin-top: 0;
+    margin-left: 0;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) {
-    margin-left: calc(-1 * var(--adjacent-control-overlap));
+  /*
+   * Three-slot borders: restore after generic resets (1492, 1557–1559). Grey top on Potential + Archive;
+   * grey vertical between them — must match queue-rows.css for all breakpoints.
+   */
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(1) .button {
+    border-right-width: 1px;
+    border-right-style: solid;
+    border-right-color: var(--line);
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button,
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button {
+    border-right-width: 0;
+    border-left-width: 0;
     border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: var(--line-soft);
   }
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
     border-left-width: 1px;
+    border-left-style: solid;
+    border-left-color: var(--line-soft);
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: var(--line-soft);
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:hover:not(:disabled),
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:focus-visible:not(:disabled) {
+    border-top-color: var(--line-soft);
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:hover:not(:disabled),
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:focus-visible:not(:disabled) {
+    border-top-color: var(--line-soft);
+    border-left-color: var(--line-soft);
   }
 
   .packet-page-actions > * + *,
@@ -1730,40 +1694,43 @@
     grid-row: 1;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions {
+  /* Three-slot layout: queue-rows.css */
+
+  /* Rows that only use Remote + Salary (two slots) keep the four-column band */
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-auto-rows: auto;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--remote {
     grid-column: 3;
     grid-row: 1;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--salary {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--salary {
     grid-column: 4;
     grid-row: 1;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--remote-salary {
     grid-column: 3 / span 2;
     grid-row: 1;
     width: 100%;
     min-width: 0;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit) {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit) {
     width: 100%;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--fit {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--fit {
     grid-column: 3;
     grid-row: 2;
     width: calc(100% + var(--jobs-queue-col-gap));
     min-width: 0;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--status {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--status {
     grid-column: 4;
     grid-row: 2;
     min-width: 0;
@@ -2012,10 +1979,6 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-  }
-
-  .settings-matching-controls-grid {
-    grid-template-columns: 1fr;
   }
 
   .page-stack {
