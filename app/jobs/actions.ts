@@ -45,6 +45,9 @@ export interface PacketGenerationActionState {
   status: 'error' | 'idle' | 'success'
 }
 
+const MISSING_COVER_LETTER_CHANGE_SUMMARY_COLUMN =
+  "Could not find the 'cover_letter_change_summary' column of 'application_packets' in the schema cache"
+
 function asTextValue(value: FormDataEntryValue | null) {
   return String(value ?? '').trim()
 }
@@ -97,6 +100,33 @@ function parseJsonArray<T>(value: FormDataEntryValue | null, fallback: T[]) {
 
 function asPacketStatus(value: string): PacketStatus {
   return packetStatuses.includes(value as PacketStatus) ? (value as PacketStatus) : 'draft'
+}
+
+function isMissingCoverLetterChangeSummaryColumnError(message?: string | null) {
+  return Boolean(message?.includes(MISSING_COVER_LETTER_CHANGE_SUMMARY_COLUMN))
+}
+
+async function upsertApplicationPacketRecord(
+  supabase: ReturnType<typeof createClient>,
+  payload: Record<string, unknown>,
+) {
+  const result = await supabase.from('application_packets').upsert(payload, {
+    onConflict: 'id',
+  })
+
+  if (
+    !result.error ||
+    !isMissingCoverLetterChangeSummaryColumnError(String(result.error.message ?? ''))
+  ) {
+    return result
+  }
+
+  const legacyPayload = { ...payload }
+  delete legacyPayload.cover_letter_change_summary
+
+  return supabase.from('application_packets').upsert(legacyPayload, {
+    onConflict: 'id',
+  })
 }
 
 interface ParsedApplicationAnswer {
@@ -497,8 +527,7 @@ export async function saveApplicationPacket(
     }
   }
 
-  const packetResult = await supabase.from('application_packets').upsert(
-    {
+  const packetResult = await upsertApplicationPacketRecord(supabase, {
       application_checklist: asList(formData.get('checklistItems')),
       case_study_selection: caseStudySelection,
       cover_letter_change_summary: asOptionalText(formData.get('coverLetterChangeSummary')),
@@ -528,9 +557,7 @@ export async function saveApplicationPacket(
       question_snapshot_status: existingPacket.question_snapshot_status,
       resume_version_id: persistedResumeVersionId,
       user_id: operatorContext.userId,
-    },
-    { onConflict: 'id' },
-  )
+    })
 
   if (packetResult.error) {
     return {

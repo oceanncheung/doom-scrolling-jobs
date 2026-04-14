@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { RawJobIntakeRecord } from '@/lib/jobs/contracts'
+import { fetchWithTimeout } from '@/lib/jobs/fetch-with-timeout'
 
 import type { ImportedSourceBatch } from './greenhouse'
 
@@ -265,7 +266,7 @@ function normalizeRemotiveRawJob(item: RemotiveJobRecord, capturedAt: string): R
 }
 
 async function fetchRemotivePayload(query: URLSearchParams) {
-  const response = await fetch(`${remotiveBaseUrl}?${query.toString()}`, {
+  const response = await fetchWithTimeout(`${remotiveBaseUrl}?${query.toString()}`, {
     cache: 'no-store',
     headers: {
       Accept: 'application/json',

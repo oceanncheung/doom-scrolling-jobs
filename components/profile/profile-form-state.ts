@@ -107,6 +107,9 @@ export function createProfileFormInitialState(workspace: OperatorWorkspaceRecord
     industriesPreferredTags: [...workspace.profile.industriesPreferred],
     keyDifferentiatorTags: [...workspace.coverLetterMaster.keyDifferentiators],
     languageTags: [...workspace.profile.languages],
+    matchingPreferences: {
+      ...workspace.profile.matchingPreferences,
+    },
     portfolioItems: workspace.portfolioItems,
     positioningPhilosophy: workspace.coverLetterMaster.positioningPhilosophy,
     proofBankEntries:

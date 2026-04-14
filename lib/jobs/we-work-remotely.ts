@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { RawJobIntakeRecord } from '@/lib/jobs/contracts'
+import { fetchWithTimeout } from '@/lib/jobs/fetch-with-timeout'
 import {
   extractSalaryMetadata,
   extractXmlItems,
@@ -120,7 +121,7 @@ export async function fetchWeWorkRemotelyJobs(): Promise<ImportedSourceBatch> {
   try {
     const feedResults = await Promise.allSettled(
       weWorkRemotelyFeeds.map(async (feed) => {
-        const response = await fetch(feed.url, {
+        const response = await fetchWithTimeout(feed.url, {
           cache: 'no-store',
           headers: {
             Accept: 'application/rss+xml,application/xml,text/xml',

@@ -269,7 +269,7 @@
 
 .job-review-column {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   align-content: start;
 }
 
@@ -285,7 +285,7 @@
 
 .job-material-card {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   align-content: start;
 }
 
@@ -349,10 +349,11 @@
   box-sizing: border-box;
 }
 
+/* Equal-width pair (Generate + Review, Save + Skip, etc.); avoids one narrow cell forcing two-line labels. */
 .job-overview-actions--pair-right .screening-actions-cluster {
-  grid-template-columns: repeat(2, minmax(0, var(--workflow-action-control-width)));
-  align-items: end;
-  justify-content: end;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  justify-content: stretch;
 }
 
 .job-overview-actions--triple-right .screening-actions-cluster {
@@ -378,3 +379,5 @@
 .job-overview-actions--single-right .screening-actions-cluster {
   grid-template-columns: minmax(0, 1fr);
 }
+
+/* Desktop overview 5-col + actions in cols 3–5: see responsive.css (.job-overview-section-inner, min-width 901px). */

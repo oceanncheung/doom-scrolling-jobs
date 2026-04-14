@@ -10,6 +10,9 @@ import { persistPreferenceSignal } from '@/lib/jobs/learning'
 import { shouldBeginPacketPrep } from '@/lib/jobs/workflow-state'
 import { createClient } from '@/lib/supabase/server'
 
+const MISSING_COVER_LETTER_CHANGE_SUMMARY_COLUMN =
+  "Could not find the 'cover_letter_change_summary' column of 'application_packets' in the schema cache"
+
 function asTextValue(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
@@ -30,6 +33,34 @@ function getPacketGenerationMessage(error: unknown) {
 
 function getUserFacingPacketGenerationMessage(error: unknown) {
   return getPacketGenerationUserMessage(getPacketGenerationMessage(error))
+}
+
+function isMissingCoverLetterChangeSummaryColumnError(error: unknown) {
+  if (!error || typeof error !== 'object' || !('message' in error)) {
+    return false
+  }
+
+  return String(error.message).includes(MISSING_COVER_LETTER_CHANGE_SUMMARY_COLUMN)
+}
+
+async function upsertApplicationPacketRecord(
+  supabase: ReturnType<typeof createClient>,
+  payload: Record<string, unknown>,
+) {
+  const result = await supabase.from('application_packets').upsert(payload, {
+    onConflict: 'id',
+  })
+
+  if (!result.error || !isMissingCoverLetterChangeSummaryColumnError(result.error)) {
+    return result
+  }
+
+  const legacyPayload = { ...payload }
+  delete legacyPayload.cover_letter_change_summary
+
+  return supabase.from('application_packets').upsert(legacyPayload, {
+    onConflict: 'id',
+  })
 }
 
 export interface GenerateAndPersistApplicationPacketResult {
@@ -127,8 +158,7 @@ export async function generateAndPersistApplicationPacket(
     asPersistedId(existingPacket?.resume_version_id ?? null) ?? crypto.randomUUID()
   const now = new Date().toISOString()
 
-  const runningPacketResult = await supabase.from('application_packets').upsert(
-    {
+  const runningPacketResult = await upsertApplicationPacketRecord(supabase, {
       generated_at: existingPacket ? review.packet.generatedAt ?? now : null,
       generation_error: null,
       generation_model: packetModel,
@@ -144,9 +174,7 @@ export async function generateAndPersistApplicationPacket(
       question_snapshot_refreshed_at: review.packet.questionSnapshotRefreshedAt ?? null,
       question_snapshot_status: review.packet.questionSnapshotStatus,
       user_id: operatorContext.userId,
-    },
-    { onConflict: 'id' },
-  )
+    })
 
   if (runningPacketResult.error) {
     return {
@@ -192,8 +220,7 @@ export async function generateAndPersistApplicationPacket(
       throw new Error(resumeVersionResult.error.message)
     }
 
-    const packetResult = await supabase.from('application_packets').upsert(
-      {
+    const packetResult = await upsertApplicationPacketRecord(supabase, {
         application_checklist: review.packet.checklistItems,
         case_study_selection: review.packet.caseStudySelection,
         cover_letter_change_summary: generated.coverLetter.changeSummaryForUser,
@@ -219,9 +246,7 @@ export async function generateAndPersistApplicationPacket(
         question_snapshot_status: review.packet.questionSnapshotStatus,
         resume_version_id: resumeVersionId,
         user_id: operatorContext.userId,
-      },
-      { onConflict: 'id' },
-    )
+      })
 
     if (packetResult.error) {
       throw new Error(packetResult.error.message)

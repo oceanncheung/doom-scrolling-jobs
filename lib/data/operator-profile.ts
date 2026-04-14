@@ -14,6 +14,7 @@ import {
   normalizeCoverLetterMasterRecord,
   normalizeResumeMasterRecord,
 } from '@/lib/profile/master-assets'
+import { defaultMatchingPreferences, normalizeMatchingPreferences } from '@/lib/profile/matching-preferences'
 import { ensureLocationCountryFirst } from '@/lib/profile/location-market'
 import { getTargetSeniorityLevels } from '@/lib/profile/seniority-level'
 import { deriveProfileWorkspaceStatus } from '@/lib/profile/workspace-status'
@@ -63,6 +64,7 @@ const seededProfile: OperatorProfileRecord = {
   personalSiteUrl: '',
   bioSummary: '',
   preferencesNotes: '',
+  matchingPreferences: defaultMatchingPreferences,
   canonicalProfileReviewedAt: undefined,
 }
 
@@ -365,6 +367,7 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
     personalSiteUrl: asString(profile.personal_site_url),
     bioSummary: asString(profile.bio_summary),
     preferencesNotes: asString(profile.preferences_notes),
+    matchingPreferences: normalizeMatchingPreferences(profile.matching_preferences),
     canonicalProfileReviewedAt: asString(profile.canonical_profile_reviewed_at) || undefined,
   }
 

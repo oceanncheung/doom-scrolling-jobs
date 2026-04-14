@@ -41,7 +41,9 @@ export function JobOverviewSection({
           !prepOpen ? ' detail-review-section--terminal' : ''
         }${hasOverviewActions ? ' detail-review-section--with-actions' : ''}`}
       >
-        <div className="job-flow-section-inner">
+        <div
+          className={`job-flow-section-inner${hasOverviewActions ? ' job-overview-section-inner' : ''}`}
+        >
           <div className="job-review-grid">
             <div className="job-review-column">
               <p className="panel-label">Job overview</p>

@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 
 import { ProfileSettingsIcon } from '@/components/navigation/profile-settings-icon'
@@ -14,8 +14,6 @@ import {
 import { getQueueViewLabel } from '@/lib/jobs/workflow-state'
 
 const MENU_CLOSE_MS = 280
-const MENU_BACKDROP_FADE_MS = 280
-
 export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView, number>> }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -25,11 +23,7 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
     routeKey: currentRouteKey,
   })
   const [isMenuClosing, setIsMenuClosing] = useState(false)
-  const [backdropLit, setBackdropLit] = useState(false)
-  const [backdropMounted, setBackdropMounted] = useState(false)
   const menuCloseTimerRef = useRef<number | null>(null)
-  const backdropUnmountTimerRef = useRef<number | null>(null)
-  const backdropOpenRafRef = useRef<number | null>(null)
 
   const activeView =
     pathname === '/dashboard' ? getQueueView(searchParams.get('view') ?? undefined) : null
@@ -45,20 +39,6 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
     if (menuCloseTimerRef.current !== null) {
       window.clearTimeout(menuCloseTimerRef.current)
       menuCloseTimerRef.current = null
-    }
-  }
-
-  const clearBackdropUnmountTimer = () => {
-    if (backdropUnmountTimerRef.current !== null) {
-      window.clearTimeout(backdropUnmountTimerRef.current)
-      backdropUnmountTimerRef.current = null
-    }
-  }
-
-  const clearBackdropOpenRaf = () => {
-    if (backdropOpenRafRef.current !== null) {
-      window.cancelAnimationFrame(backdropOpenRafRef.current)
-      backdropOpenRafRef.current = null
     }
   }
 
@@ -94,59 +74,9 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
         window.clearTimeout(menuCloseTimerRef.current)
         menuCloseTimerRef.current = null
       }
-      clearBackdropUnmountTimer()
-      clearBackdropOpenRaf()
     },
     [],
   )
-
-  useEffect(() => {
-    clearMenuCloseTimer()
-    setMobileMenuState({ open: false, routeKey: currentRouteKey })
-    setIsMenuClosing(false)
-  }, [currentRouteKey])
-
-  /* Drop is-lit before paint when the menu unmounts open state so .is-lit never reapplies without :has(.is-closing) (avoids backdrop flash). */
-  useLayoutEffect(() => {
-    if (menuExpanded) {
-      return
-    }
-    setBackdropLit(false)
-  }, [menuExpanded])
-
-  useEffect(() => {
-    clearBackdropUnmountTimer()
-    clearBackdropOpenRaf()
-
-    if (menuExpanded) {
-      setBackdropMounted(true)
-      if (isMenuClosing) {
-        return () => {
-          clearBackdropOpenRaf()
-        }
-      }
-
-      setBackdropLit(false)
-      backdropOpenRafRef.current = window.requestAnimationFrame(() => {
-        backdropOpenRafRef.current = window.requestAnimationFrame(() => {
-          backdropOpenRafRef.current = null
-          setBackdropLit(true)
-        })
-      })
-      return () => {
-        clearBackdropOpenRaf()
-      }
-    }
-
-    backdropUnmountTimerRef.current = window.setTimeout(() => {
-      setBackdropMounted(false)
-      backdropUnmountTimerRef.current = null
-    }, MENU_BACKDROP_FADE_MS)
-
-    return () => {
-      clearBackdropUnmountTimer()
-    }
-  }, [menuExpanded, isMenuClosing])
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -261,12 +191,10 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
         </button>
       </div>
     </header>
-    {backdropMounted ? (
-      <div
-        aria-hidden
-        className={`site-mobile-menu-backdrop${backdropLit ? ' is-lit' : ''}`}
-      />
-    ) : null}
+    <div
+      aria-hidden
+      className={`site-mobile-menu-backdrop${menuExpanded ? ' is-lit' : ''}`}
+    />
     </>
   )
 }

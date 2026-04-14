@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { RawJobIntakeRecord } from '@/lib/jobs/contracts'
+import { fetchWithTimeout } from '@/lib/jobs/fetch-with-timeout'
 import {
   extractSalaryMetadata,
   extractXmlItems,
@@ -70,7 +71,7 @@ function normalizeAuthenticJobsItem(item: string, capturedAt: string): RawJobInt
 
 export async function fetchAuthenticJobs(): Promise<ImportedSourceBatch> {
   try {
-    const response = await fetch(authenticJobsSourceUrl, {
+    const response = await fetchWithTimeout(authenticJobsSourceUrl, {
       cache: 'no-store',
       headers: {
         Accept: 'application/rss+xml,application/xml,text/xml',

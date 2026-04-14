@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 
 import { activeOperatorCookieName } from '@/lib/data/operators'
 import { hasSupabaseServerEnv } from '@/lib/env'
+import { defaultMatchingPreferences } from '@/lib/profile/matching-preferences'
 import { createClient } from '@/lib/supabase/server'
 
 export interface OperatorSetupActionState {
@@ -193,6 +194,7 @@ export async function createOperator(
     industries_avoid: [],
     industries_preferred: [],
     location_label: 'Toronto, Canada',
+    matching_preferences: defaultMatchingPreferences,
     operator_id: operatorId,
     phone_number: '',
     portfolio_primary_url: '',

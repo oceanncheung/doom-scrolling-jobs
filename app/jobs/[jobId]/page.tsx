@@ -55,6 +55,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
           profileMaterialReady={profileMaterialReady}
           readinessPresentation={readinessPresentation}
           screeningLocked={Boolean(screeningLocked)}
+          workspace={workspace}
         />
       </WorkspaceSurface>
     </main>

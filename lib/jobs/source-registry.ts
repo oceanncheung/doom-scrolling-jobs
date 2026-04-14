@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { getActiveOperatorContext } from '@/lib/data/operators'
+import type { MatchingSourceMix } from '@/lib/domain/types'
 import type { JobSourceKind, SourceDiagnostics } from '@/lib/jobs/contracts'
 import { createClient } from '@/lib/supabase/server'
 
@@ -104,87 +105,362 @@ const defaultSourceRegistry: SourceRegistryEntry[] = [
     slug: 'greenhouse-ats',
     sourceKind: 'ats_hosted_job_page',
   },
-]
-
-const defaultCompanyWatchlist: CompanyWatchlistEntry[] = [
   {
-    atsBoardToken: 'fluxon',
-    careerPageUrl: 'https://job-boards.greenhouse.io/fluxon',
-    companyName: 'Fluxon',
-    companySlug: 'fluxon',
+    baseUrl: 'https://api.lever.co/v0/postings',
+    displayName: 'Lever ATS',
     metadata: {
-      regionHint: 'Europe',
+      canonicalHostPattern: 'jobs.lever.co',
     },
-    priority: 5,
-    sourceKey: 'greenhouse:fluxon',
-    sourceName: 'Fluxon Careers',
-    sourceRegistrySlug: 'greenhouse-ats',
+    provider: 'lever',
+    slug: 'lever-ats',
+    sourceKind: 'ats_hosted_job_page',
   },
   {
+    baseUrl: 'https://jobs.ashbyhq.com',
+    displayName: 'Ashby ATS',
+    metadata: {
+      canonicalHostPattern: 'jobs.ashbyhq.com',
+    },
+    provider: 'ashby',
+    slug: 'ashby-ats',
+    sourceKind: 'ats_hosted_job_page',
+  },
+]
+
+function createWatchlistEntry(options: {
+  atsBoardToken?: string
+  careerPageUrl: string
+  companyName: string
+  companySlug: string
+  priority: number
+  sourceKey: string
+  sourceName: string
+  sourceRegistrySlug: string
+}) {
+  return {
+    atsBoardToken: options.atsBoardToken,
+    careerPageUrl: options.careerPageUrl,
+    companyName: options.companyName,
+    companySlug: options.companySlug,
+    metadata: {},
+    priority: options.priority,
+    sourceKey: options.sourceKey,
+    sourceName: options.sourceName,
+    sourceRegistrySlug: options.sourceRegistrySlug,
+  } satisfies CompanyWatchlistEntry
+}
+
+const defaultCompanyWatchlist: CompanyWatchlistEntry[] = [
+  createWatchlistEntry({
+    atsBoardToken: 'life360',
+    careerPageUrl: 'https://job-boards.greenhouse.io/life360',
+    companyName: 'Life360',
+    companySlug: 'life360',
+    priority: 5,
+    sourceKey: 'greenhouse:life360',
+    sourceName: 'Life360 Careers',
+    sourceRegistrySlug: 'greenhouse-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'mercury',
+    careerPageUrl: 'https://job-boards.greenhouse.io/mercury',
+    companyName: 'Mercury',
+    companySlug: 'mercury',
+    priority: 10,
+    sourceKey: 'greenhouse:mercury',
+    sourceName: 'Mercury Careers',
+    sourceRegistrySlug: 'greenhouse-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'clickhouse',
+    careerPageUrl: 'https://job-boards.greenhouse.io/clickhouse',
+    companyName: 'ClickHouse',
+    companySlug: 'clickhouse',
+    priority: 15,
+    sourceKey: 'greenhouse:clickhouse',
+    sourceName: 'ClickHouse Careers',
+    sourceRegistrySlug: 'greenhouse-ats',
+  }),
+  createWatchlistEntry({
     atsBoardToken: 'metalab',
     careerPageUrl: 'https://job-boards.greenhouse.io/metalab',
     companyName: 'Metalab',
     companySlug: 'metalab',
-    metadata: {
-      regionHint: 'Americas',
-    },
-    priority: 10,
+    priority: 20,
     sourceKey: 'greenhouse:metalab',
     sourceName: 'Metalab Careers',
     sourceRegistrySlug: 'greenhouse-ats',
-  },
-  {
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'designmehair',
+    careerPageUrl: 'https://job-boards.greenhouse.io/designmehair',
+    companyName: 'DESIGNME',
+    companySlug: 'designme',
+    priority: 25,
+    sourceKey: 'greenhouse:designmehair',
+    sourceName: 'DESIGNME Careers',
+    sourceRegistrySlug: 'greenhouse-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'navtechnologies',
+    careerPageUrl: 'https://job-boards.greenhouse.io/navtechnologies',
+    companyName: 'Nav',
+    companySlug: 'nav',
+    priority: 30,
+    sourceKey: 'greenhouse:navtechnologies',
+    sourceName: 'Nav Careers',
+    sourceRegistrySlug: 'greenhouse-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'steercrm',
+    careerPageUrl: 'https://job-boards.greenhouse.io/steercrm',
+    companyName: 'Steer',
+    companySlug: 'steer',
+    priority: 35,
+    sourceKey: 'greenhouse:steercrm',
+    sourceName: 'Steer Careers',
+    sourceRegistrySlug: 'greenhouse-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'figma',
+    careerPageUrl: 'https://job-boards.greenhouse.io/figma',
+    companyName: 'Figma',
+    companySlug: 'figma',
+    priority: 40,
+    sourceKey: 'greenhouse:figma',
+    sourceName: 'Figma Careers',
+    sourceRegistrySlug: 'greenhouse-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'gusto',
+    careerPageUrl: 'https://job-boards.greenhouse.io/gusto',
+    companyName: 'Gusto',
+    companySlug: 'gusto',
+    priority: 45,
+    sourceKey: 'greenhouse:gusto',
+    sourceName: 'Gusto Careers',
+    sourceRegistrySlug: 'greenhouse-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'fluxon',
+    careerPageUrl: 'https://job-boards.greenhouse.io/fluxon',
+    companyName: 'Fluxon',
+    companySlug: 'fluxon',
+    priority: 50,
+    sourceKey: 'greenhouse:fluxon',
+    sourceName: 'Fluxon Careers',
+    sourceRegistrySlug: 'greenhouse-ats',
+  }),
+  createWatchlistEntry({
     atsBoardToken: 'ninjatrader',
     careerPageUrl: 'https://job-boards.greenhouse.io/ninjatrader',
     companyName: 'NinjaTrader',
     companySlug: 'ninjatrader',
-    metadata: {
-      regionHint: 'United States',
-    },
-    priority: 20,
+    priority: 55,
     sourceKey: 'greenhouse:ninjatrader',
     sourceName: 'NinjaTrader Careers',
     sourceRegistrySlug: 'greenhouse-ats',
-  },
-  {
+  }),
+  createWatchlistEntry({
     atsBoardToken: 'universalaudio',
     careerPageUrl: 'https://job-boards.greenhouse.io/universalaudio',
     companyName: 'Universal Audio',
     companySlug: 'universalaudio',
-    metadata: {
-      regionHint: 'United States',
-    },
-    priority: 30,
+    priority: 60,
     sourceKey: 'greenhouse:universalaudio',
     sourceName: 'Universal Audio Careers',
     sourceRegistrySlug: 'greenhouse-ats',
-  },
-  {
+  }),
+  createWatchlistEntry({
     atsBoardToken: 'flohealth',
     careerPageUrl: 'https://job-boards.greenhouse.io/flohealth',
     companyName: 'Flo Health',
     companySlug: 'flohealth',
-    metadata: {
-      regionHint: 'Europe',
-    },
-    priority: 40,
+    priority: 65,
     sourceKey: 'greenhouse:flohealth',
     sourceName: 'Flo Health Careers',
     sourceRegistrySlug: 'greenhouse-ats',
-  },
-  {
+  }),
+  createWatchlistEntry({
     atsBoardToken: 'appspace',
     careerPageUrl: 'https://job-boards.greenhouse.io/appspace',
     companyName: 'Appspace',
     companySlug: 'appspace',
-    metadata: {
-      regionHint: 'Europe',
-    },
-    priority: 50,
+    priority: 70,
     sourceKey: 'greenhouse:appspace',
     sourceName: 'Appspace Careers',
     sourceRegistrySlug: 'greenhouse-ats',
-  },
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'owner',
+    careerPageUrl: 'https://jobs.ashbyhq.com/owner',
+    companyName: 'Owner.com',
+    companySlug: 'owner-com',
+    priority: 75,
+    sourceKey: 'ashby:owner',
+    sourceName: 'Owner.com Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'revenuecat',
+    careerPageUrl: 'https://jobs.ashbyhq.com/revenuecat',
+    companyName: 'RevenueCat',
+    companySlug: 'revenuecat',
+    priority: 80,
+    sourceKey: 'ashby:revenuecat',
+    sourceName: 'RevenueCat Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'runway-ml',
+    careerPageUrl: 'https://jobs.ashbyhq.com/runway-ml',
+    companyName: 'Runway',
+    companySlug: 'runway',
+    priority: 85,
+    sourceKey: 'ashby:runway-ml',
+    sourceName: 'Runway Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'jump-app',
+    careerPageUrl: 'https://jobs.ashbyhq.com/jump-app',
+    companyName: 'Jump',
+    companySlug: 'jump',
+    priority: 90,
+    sourceKey: 'ashby:jump-app',
+    sourceName: 'Jump Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'dandy',
+    careerPageUrl: 'https://jobs.ashbyhq.com/dandy',
+    companyName: 'Dandy',
+    companySlug: 'dandy',
+    priority: 95,
+    sourceKey: 'ashby:dandy',
+    sourceName: 'Dandy Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'standardbots',
+    careerPageUrl: 'https://jobs.ashbyhq.com/standardbots',
+    companyName: 'Standard Bots',
+    companySlug: 'standard-bots',
+    priority: 100,
+    sourceKey: 'ashby:standardbots',
+    sourceName: 'Standard Bots Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'Improbable',
+    careerPageUrl: 'https://jobs.ashbyhq.com/Improbable',
+    companyName: 'Improbable',
+    companySlug: 'improbable',
+    priority: 105,
+    sourceKey: 'ashby:improbable',
+    sourceName: 'Improbable Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'firecrawl',
+    careerPageUrl: 'https://jobs.ashbyhq.com/firecrawl',
+    companyName: 'Firecrawl',
+    companySlug: 'firecrawl',
+    priority: 110,
+    sourceKey: 'ashby:firecrawl',
+    sourceName: 'Firecrawl Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'tavahealth',
+    careerPageUrl: 'https://jobs.ashbyhq.com/tavahealth',
+    companyName: 'Tava Health',
+    companySlug: 'tava-health',
+    priority: 115,
+    sourceKey: 'ashby:tavahealth',
+    sourceName: 'Tava Health Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'whatnot',
+    careerPageUrl: 'https://jobs.ashbyhq.com/whatnot',
+    companyName: 'Whatnot',
+    companySlug: 'whatnot',
+    priority: 120,
+    sourceKey: 'ashby:whatnot',
+    sourceName: 'Whatnot Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'directive',
+    careerPageUrl: 'https://jobs.ashbyhq.com/directive',
+    companyName: 'Directive',
+    companySlug: 'directive',
+    priority: 125,
+    sourceKey: 'ashby:directive',
+    sourceName: 'Directive Careers',
+    sourceRegistrySlug: 'ashby-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'Huckleberrylabs',
+    careerPageUrl: 'https://jobs.lever.co/Huckleberrylabs',
+    companyName: 'Huckleberry Labs',
+    companySlug: 'huckleberry-labs',
+    priority: 130,
+    sourceKey: 'lever:Huckleberrylabs',
+    sourceName: 'Huckleberry Labs Careers',
+    sourceRegistrySlug: 'lever-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'Flex',
+    careerPageUrl: 'https://jobs.lever.co/Flex',
+    companyName: 'Flex',
+    companySlug: 'flex',
+    priority: 135,
+    sourceKey: 'lever:Flex',
+    sourceName: 'Flex Careers',
+    sourceRegistrySlug: 'lever-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'greenlight',
+    careerPageUrl: 'https://jobs.lever.co/greenlight',
+    companyName: 'Greenlight Financial Technology',
+    companySlug: 'greenlight-financial-technology',
+    priority: 140,
+    sourceKey: 'lever:greenlight',
+    sourceName: 'Greenlight Careers',
+    sourceRegistrySlug: 'lever-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'vrchat',
+    careerPageUrl: 'https://jobs.lever.co/vrchat',
+    companyName: 'VRChat',
+    companySlug: 'vrchat',
+    priority: 145,
+    sourceKey: 'lever:vrchat',
+    sourceName: 'VRChat Careers',
+    sourceRegistrySlug: 'lever-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'protective',
+    careerPageUrl: 'https://jobs.lever.co/protective',
+    companyName: 'Protective',
+    companySlug: 'protective',
+    priority: 150,
+    sourceKey: 'lever:protective',
+    sourceName: 'Protective Careers',
+    sourceRegistrySlug: 'lever-ats',
+  }),
+  createWatchlistEntry({
+    atsBoardToken: 'everlywell',
+    careerPageUrl: 'https://jobs.lever.co/everlywell',
+    companyName: 'Everlywell',
+    companySlug: 'everlywell',
+    priority: 155,
+    sourceKey: 'lever:everlywell',
+    sourceName: 'Everlywell Careers',
+    sourceRegistrySlug: 'lever-ats',
+  }),
 ]
 
 const seededDemoSourceNames = new Set(['Company Careers', 'Remote Design Board'])
@@ -385,8 +661,10 @@ export function getImportedSourceNames(
   ])
 }
 
-async function getSourceDescriptorBySourceName() {
-  const [registry, watchlist] = await Promise.all([getSourceRegistry(), getCompanyWatchlist()])
+export function buildSourceDescriptorBySourceName(
+  registry: SourceRegistryEntry[],
+  watchlist: CompanyWatchlistEntry[],
+) {
   const descriptors = new Map<
     string,
     Pick<SourceDiagnostics, 'provider' | 'sourceKey' | 'sourceKind' | 'sourceName'>
@@ -413,6 +691,12 @@ async function getSourceDescriptorBySourceName() {
   }
 
   return descriptors
+}
+
+export async function getSourceDescriptorBySourceName() {
+  const [registry, watchlist] = await Promise.all([getSourceRegistry(), getCompanyWatchlist()])
+
+  return buildSourceDescriptorBySourceName(registry, watchlist)
 }
 
 export async function saveSourceDiagnostics(diagnostics: SourceDiagnostics[]) {
@@ -537,15 +821,33 @@ export function summarizeSourceDiagnostics(diagnostics: SourceDiagnostics[]) {
     .join(' · ')
 }
 
-export function sourcePreferenceWeight(sourceKind: JobSourceKind) {
-  switch (sourceKind) {
-    case 'company_career_page':
-      return 3
-    case 'ats_hosted_job_page':
-      return 2
-    default:
-      return 1
+export function sourcePreferenceWeight(
+  sourceKind: JobSourceKind,
+  sourceMix: MatchingSourceMix = 'balanced',
+) {
+  const balancedWeights: Record<JobSourceKind, number> = {
+    ats_hosted_job_page: 2,
+    company_career_page: 3,
+    remote_board: 1,
   }
+
+  if (sourceMix === 'ats_first') {
+    return {
+      ats_hosted_job_page: 2.5,
+      company_career_page: 3.5,
+      remote_board: 1,
+    }[sourceKind]
+  }
+
+  if (sourceMix === 'discovery') {
+    return {
+      ats_hosted_job_page: 1.5,
+      company_career_page: 2,
+      remote_board: 3,
+    }[sourceKind]
+  }
+
+  return balancedWeights[sourceKind]
 }
 
 export function isRemoteBoardSource(entry: SourceRegistryEntry) {

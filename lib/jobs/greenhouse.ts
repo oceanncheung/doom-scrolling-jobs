@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { fetchWithTimeout } from '@/lib/jobs/fetch-with-timeout'
 import type { JobSourceKind, RawJobIntakeRecord } from '@/lib/jobs/contracts'
 import type { CompanyWatchlistEntry } from '@/lib/jobs/source-registry'
 
@@ -143,7 +144,7 @@ export async function fetchGreenhouseCompanyJobs(company: CompanyWatchlistEntry)
   }
 
   try {
-    const response = await fetch(`https://boards-api.greenhouse.io/v1/boards/${boardToken}/jobs?content=true`, {
+    const response = await fetchWithTimeout(`https://boards-api.greenhouse.io/v1/boards/${boardToken}/jobs?content=true`, {
       cache: 'no-store',
       headers: {
         Accept: 'application/json',

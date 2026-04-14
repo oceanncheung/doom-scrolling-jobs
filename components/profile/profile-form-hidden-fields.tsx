@@ -7,6 +7,9 @@ interface ProfileFormHiddenFieldsProps {
   industriesPreferredTags: string[]
   keyDifferentiatorTags: string[]
   languageTags: string[]
+  matchingMarketStrictness: string
+  matchingRoleBreadth: string
+  matchingSourceMix: string
   outputConstraintTags: string[]
   selectionRuleTags: string[]
   skillsTags: string[]
@@ -30,6 +33,9 @@ export function ProfileFormHiddenFields({
   industriesPreferredTags,
   keyDifferentiatorTags,
   languageTags,
+  matchingMarketStrictness,
+  matchingRoleBreadth,
+  matchingSourceMix,
   outputConstraintTags,
   selectionRuleTags,
   skillsTags,
@@ -47,6 +53,9 @@ export function ProfileFormHiddenFields({
       <input name="targetSeniorityLevels" type="hidden" value={targetSeniorityLevels.join('\n')} />
       <input name="targetRoles" type="hidden" value={targetRoleTags.join('\n')} />
       <input name="allowedAdjacentRoles" type="hidden" value={adjacentRoleTags.join('\n')} />
+      <input name="matchingRoleBreadth" type="hidden" value={matchingRoleBreadth} />
+      <input name="matchingMarketStrictness" type="hidden" value={matchingMarketStrictness} />
+      <input name="matchingSourceMix" type="hidden" value={matchingSourceMix} />
       <input name="skills" type="hidden" value={skillsTags.join('\n')} />
       <input name="tools" type="hidden" value={toolsTags.join('\n')} />
       <input name="languages" type="hidden" value={languageTags.join('\n')} />

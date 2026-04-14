@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { CompensationPeriod, RawJobIntakeRecord } from '@/lib/jobs/contracts'
+import { fetchWithTimeout } from '@/lib/jobs/fetch-with-timeout'
 import { normalizeWhitespace } from '@/lib/jobs/source-parsing'
 
 import type { ImportedSourceBatch } from './greenhouse'
@@ -286,7 +287,7 @@ export async function fetchRemoteSourceJobs(): Promise<ImportedSourceBatch> {
       offset: '0',
       sortBy: 'recent',
     })
-    const initialResponse = await fetch(`${remoteSourceApiUrl}?${initialQuery.toString()}`, {
+    const initialResponse = await fetchWithTimeout(`${remoteSourceApiUrl}?${initialQuery.toString()}`, {
       cache: 'no-store',
       headers: {
         Accept: 'application/json',
@@ -314,7 +315,7 @@ export async function fetchRemoteSourceJobs(): Promise<ImportedSourceBatch> {
           sortBy: 'recent',
         })
 
-        return fetch(`${remoteSourceApiUrl}?${query.toString()}`, {
+        return fetchWithTimeout(`${remoteSourceApiUrl}?${query.toString()}`, {
           cache: 'no-store',
           headers: {
             Accept: 'application/json',
@@ -370,7 +371,7 @@ export async function fetchRemoteSourceJobs(): Promise<ImportedSourceBatch> {
     }
   } catch (error) {
     try {
-      const response = await fetch(remoteSourceListingsUrl, {
+      const response = await fetchWithTimeout(remoteSourceListingsUrl, {
         cache: 'no-store',
         headers: {
           Accept: 'text/html,application/xhtml+xml',

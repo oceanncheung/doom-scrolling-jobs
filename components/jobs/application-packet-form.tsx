@@ -8,7 +8,7 @@ import { PacketFormFooterMessage } from '@/components/jobs/packet-form-footer-me
 import { PacketMaterialsSection } from '@/components/jobs/packet-materials-section'
 import { PacketPreGenerationSection } from '@/components/jobs/packet-pre-generation-section'
 import { PacketQuestionsSection } from '@/components/jobs/packet-questions-section'
-import { type ApplicationPacketRecord } from '@/lib/domain/types'
+import { type ApplicationPacketRecord, type OperatorWorkspaceRecord } from '@/lib/domain/types'
 import type { RankedJobRecord } from '@/lib/jobs/contracts'
 import { getPacketLifecycle } from '@/lib/jobs/packet-lifecycle'
 import { buildPacketMaterialsViewModel } from '@/lib/jobs/packet-view-model'
@@ -27,6 +27,7 @@ interface ApplicationPacketFormProps {
   profileMaterialReady: boolean
   readinessPresentation?: ProfileReadinessPresentation | null
   screeningLocked?: boolean
+  workspace: OperatorWorkspaceRecord
 }
 
 export function ApplicationPacketForm({
@@ -35,6 +36,7 @@ export function ApplicationPacketForm({
   profileMaterialReady,
   readinessPresentation,
   screeningLocked = false,
+  workspace,
 }: ApplicationPacketFormProps) {
   const [state, formAction] = useActionState(saveApplicationPacket, initialState)
   const lifecycle = getPacketLifecycle(packet)
@@ -47,12 +49,17 @@ export function ApplicationPacketForm({
       {lifecycle.hasGeneratedContent ? (
         <>
           <PacketMaterialsSection
+            companyName={job.companyName}
             coverLetterChangeSummary={viewModel.coverLetterChangeSummary}
             coverLetterReady={viewModel.coverLetterReady}
             coverLetterSummary={viewModel.coverLetterSummary}
+            jobId={job.id}
+            jobTitle={job.title}
+            packet={packet}
             resumeChangeSummary={viewModel.resumeChangeSummary}
             resumeReady={viewModel.resumeReady}
             resumeSummary={viewModel.resumeSummary}
+            workspace={workspace}
           />
           {viewModel.showQuestionSection ? (
             <PacketQuestionsSection answers={packet.answers} readyAnswerCount={viewModel.readyAnswerCount} />

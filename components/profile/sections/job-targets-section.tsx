@@ -9,8 +9,19 @@ import { FieldLabelRow } from '@/components/ui/field-label-row'
 import { ChevronDownIcon } from '@/components/ui/icons/chevron-down-icon'
 import { OverlayOptionField } from '@/components/ui/overlay-option-field'
 import { SectionHeading } from '@/components/ui/section-heading'
+import { SingleSelectChipGroup } from '@/components/ui/single-select-chip-group'
 import { TagToggleGroup } from '@/components/ui/tag-toggle-group'
 import { TagInput } from '@/components/ui/tag-input'
+import type {
+  MatchingMarketStrictness,
+  MatchingRoleBreadth,
+  MatchingSourceMix,
+} from '@/lib/domain/types'
+import {
+  matchingMarketStrictnessOptions,
+  matchingRoleBreadthOptions,
+  matchingSourceMixOptions,
+} from '@/lib/profile/matching-preferences'
 import { REGION_SUGGESTIONS } from '@/lib/profile/autocomplete-options'
 import type { ReviewState } from '@/lib/profile/master-assets'
 import { SALARY_CURRENCY_OPTIONS } from '@/lib/profile/salary-currency'
@@ -21,6 +32,9 @@ interface JobTargetsSectionProps {
   searchBrief: string
   hiringMarketTags: string[]
   lockedMessage?: string | null
+  matchingMarketStrictness: MatchingMarketStrictness
+  matchingRoleBreadth: MatchingRoleBreadth
+  matchingSourceMix: MatchingSourceMix
   searchBriefReviewState: ReviewState
   salaryFloorCurrency: string
   salaryTargetMin: string
@@ -31,6 +45,9 @@ interface JobTargetsSectionProps {
   targetSeniorityLevels: string[]
   targetRolesReviewState: ReviewState
   setHiringMarketTags: Dispatch<SetStateAction<string[]>>
+  setMatchingMarketStrictness: Dispatch<SetStateAction<MatchingMarketStrictness>>
+  setMatchingRoleBreadth: Dispatch<SetStateAction<MatchingRoleBreadth>>
+  setMatchingSourceMix: Dispatch<SetStateAction<MatchingSourceMix>>
   setSearchBrief: Dispatch<SetStateAction<string>>
   setTargetSeniorityLevels: Dispatch<SetStateAction<string[]>>
   targetRoleTags: string[]
@@ -44,6 +61,9 @@ export function JobTargetsSection({
   searchBrief,
   hiringMarketTags,
   lockedMessage,
+  matchingMarketStrictness,
+  matchingRoleBreadth,
+  matchingSourceMix,
   searchBriefReviewState,
   salaryFloorCurrency,
   salaryTargetMin,
@@ -54,6 +74,9 @@ export function JobTargetsSection({
   targetSeniorityLevels,
   targetRolesReviewState,
   setHiringMarketTags,
+  setMatchingMarketStrictness,
+  setMatchingRoleBreadth,
+  setMatchingSourceMix,
   setSearchBrief,
   setTargetSeniorityLevels,
   targetRoleTags,
@@ -243,6 +266,60 @@ export function JobTargetsSection({
                       <span className="settings-job-targets-eyebrow">&nbsp;</span>
                     </span>
                     <div className="settings-job-targets-stack-sm-content" />
+                  </div>
+                </div>
+
+                <div className="settings-matching-controls">
+                  <div className="settings-matching-controls-heading">
+                    <FieldLabelRow labelClassName="settings-job-targets-eyebrow">
+                      Matching controls
+                    </FieldLabelRow>
+                    <small>Slightly tune how this workspace surfaces roles, markets, and source types.</small>
+                  </div>
+
+                  <div className="settings-matching-controls-grid">
+                    <div className="settings-job-targets-stack-sm">
+                      <FieldLabelRow labelClassName="settings-job-targets-eyebrow">Role breadth</FieldLabelRow>
+                      <div className="settings-job-targets-stack-sm-content">
+                        <SingleSelectChipGroup
+                          hideLabel
+                          label="Role breadth"
+                          onChange={(value) =>
+                            setMatchingRoleBreadth(value as MatchingRoleBreadth)
+                          }
+                          options={matchingRoleBreadthOptions}
+                          value={matchingRoleBreadth}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="settings-job-targets-stack-sm">
+                      <FieldLabelRow labelClassName="settings-job-targets-eyebrow">Market strictness</FieldLabelRow>
+                      <div className="settings-job-targets-stack-sm-content">
+                        <SingleSelectChipGroup
+                          hideLabel
+                          label="Market strictness"
+                          onChange={(value) =>
+                            setMatchingMarketStrictness(value as MatchingMarketStrictness)
+                          }
+                          options={matchingMarketStrictnessOptions}
+                          value={matchingMarketStrictness}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="settings-job-targets-stack-sm">
+                      <FieldLabelRow labelClassName="settings-job-targets-eyebrow">Source mix</FieldLabelRow>
+                      <div className="settings-job-targets-stack-sm-content">
+                        <SingleSelectChipGroup
+                          hideLabel
+                          label="Source mix"
+                          onChange={(value) => setMatchingSourceMix(value as MatchingSourceMix)}
+                          options={matchingSourceMixOptions}
+                          value={matchingSourceMix}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

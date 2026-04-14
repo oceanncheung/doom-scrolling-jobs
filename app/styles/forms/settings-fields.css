@@ -233,6 +233,26 @@
   min-width: 0;
 }
 
+.settings-matching-controls {
+  display: grid;
+  gap: 12px;
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.settings-matching-controls-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-matching-controls-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
 .settings-job-targets-pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -402,6 +422,18 @@
 .settings-tag-row .field small,
 .settings-job-targets-grid .field small {
   margin-top: 0;
+}
+
+.settings-matching-controls .tag-input-field {
+  min-width: 0;
+}
+
+.settings-matching-controls .tag-toggle-group {
+  padding-top: 4px;
+  padding-bottom: 0;
+  min-height: 0;
+  align-items: flex-start;
+  align-content: flex-start;
 }
 
 .settings-core-grid .settings-tag-row {

@@ -2,7 +2,12 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState } from 'react'
 
-import type { OperatorWorkspaceRecord } from '@/lib/domain/types'
+import type {
+  MatchingMarketStrictness,
+  MatchingRoleBreadth,
+  MatchingSourceMix,
+  OperatorWorkspaceRecord,
+} from '@/lib/domain/types'
 
 import { saveOperatorProfile, type ProfileActionState } from '@/app/profile/actions'
 import { ProfileFormHiddenFields } from '@/components/profile/profile-form-hidden-fields'
@@ -70,6 +75,7 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
   const [bioSummary, setBioSummary] = useState(initialFormState.bioSummary)
   const [searchBrief, setSearchBrief] = useState(initialFormState.searchBrief)
   const [hiringMarketTags, setHiringMarketTags] = useState(initialFormState.hiringMarketTags)
+  const [matchingPreferences, setMatchingPreferences] = useState(initialFormState.matchingPreferences)
   const [targetSeniorityLevels, setTargetSeniorityLevels] = useState(
     initialFormState.targetSeniorityLevels,
   )
@@ -388,6 +394,9 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
         industriesPreferredTags={industriesPreferredTags}
         keyDifferentiatorTags={keyDifferentiatorTags}
         languageTags={languageTags}
+        matchingMarketStrictness={matchingPreferences.marketStrictness}
+        matchingRoleBreadth={matchingPreferences.roleBreadth}
+        matchingSourceMix={matchingPreferences.sourceMix}
         outputConstraintTags={outputConstraintTags}
         selectionRuleTags={selectionRuleTags}
         skillsTags={skillsTags}
@@ -423,6 +432,9 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
             adjacentRoleTags={adjacentRoleTags}
             adjacentRolesReviewState={adjacentRolesReviewState}
             hiringMarketTags={hiringMarketTags}
+            matchingMarketStrictness={matchingPreferences.marketStrictness}
+            matchingRoleBreadth={matchingPreferences.roleBreadth}
+            matchingSourceMix={matchingPreferences.sourceMix}
             relocationOpen={workspace.profile.relocationOpen}
             remoteRequired={workspace.profile.remoteRequired}
             salaryFloorCurrency={normalizeSalaryFloorCurrency(workspace.profile.salaryFloorCurrency)}
@@ -431,6 +443,24 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
             searchBrief={searchBrief}
             searchBriefReviewState={searchBriefReviewState}
             setHiringMarketTags={setHiringMarketTags}
+            setMatchingMarketStrictness={(value) =>
+              setMatchingPreferences((current) => ({
+                ...current,
+                marketStrictness: value as MatchingMarketStrictness,
+              }))
+            }
+            setMatchingRoleBreadth={(value) =>
+              setMatchingPreferences((current) => ({
+                ...current,
+                roleBreadth: value as MatchingRoleBreadth,
+              }))
+            }
+            setMatchingSourceMix={(value) =>
+              setMatchingPreferences((current) => ({
+                ...current,
+                sourceMix: value as MatchingSourceMix,
+              }))
+            }
             setAdjacentRoleTags={setAdjacentRoleTags}
             setSearchBrief={setSearchBrief}
             setTargetSeniorityLevels={setTargetSeniorityLevels}

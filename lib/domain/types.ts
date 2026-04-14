@@ -68,6 +68,24 @@ export const recommendationLevels = [
 
 export type RecommendationLevel = (typeof recommendationLevels)[number]
 
+export const matchingRoleBreadths = ['tight', 'balanced', 'broad'] as const
+
+export type MatchingRoleBreadth = (typeof matchingRoleBreadths)[number]
+
+export const matchingMarketStrictnessLevels = ['strict', 'balanced', 'flexible'] as const
+
+export type MatchingMarketStrictness = (typeof matchingMarketStrictnessLevels)[number]
+
+export const matchingSourceMixes = ['ats_first', 'balanced', 'discovery'] as const
+
+export type MatchingSourceMix = (typeof matchingSourceMixes)[number]
+
+export interface MatchingPreferencesRecord {
+  marketStrictness: MatchingMarketStrictness
+  roleBreadth: MatchingRoleBreadth
+  sourceMix: MatchingSourceMix
+}
+
 export type RemoteType = 'remote' | 'hybrid' | 'onsite' | 'unknown'
 
 export type CanonicalConfidence = 'high' | 'medium' | 'low'
@@ -93,6 +111,7 @@ export interface UserProfileSnapshot {
   salaryTargetMin?: number
   salaryTargetMax?: number
   portfolioPrimaryUrl?: string
+  matchingPreferences: MatchingPreferencesRecord
 }
 
 export interface PortfolioItemSummary {
@@ -258,6 +277,7 @@ export interface OperatorProfileRecord {
   personalSiteUrl: string
   bioSummary: string
   preferencesNotes: string
+  matchingPreferences: MatchingPreferencesRecord
   canonicalProfileReviewedAt?: string
 }
 

@@ -220,11 +220,11 @@
 
   .dashboard-workspace .queue-column > .queue-meta,
   .dashboard-workspace .queue-column > .operator-page-header,
-  .dashboard-workspace .queue-column > .page-stack > .page-header,
-  .dashboard-workspace .queue-column > .page-stack > .panel,
-  .dashboard-workspace .queue-column > .page-stack > .stage-section,
-  .dashboard-workspace .queue-column > .page-stack > .stage-shell,
-  .dashboard-workspace .queue-column > .page-stack > .empty-state {
+  .dashboard-workspace .queue-column > .page-header,
+  .dashboard-workspace .queue-column > .panel,
+  .dashboard-workspace .queue-column > .stage-section,
+  .dashboard-workspace .queue-column > .stage-shell,
+  .dashboard-workspace .queue-column > .empty-state {
     padding-right: var(--queue-column-pad);
     box-sizing: border-box;
   }
@@ -919,6 +919,15 @@
     grid-column: 1 / -1;
   }
 
+  .settings-action-body .settings-matching-controls {
+    order: 8;
+    grid-column: 1 / -1;
+  }
+
+  .settings-action-body .settings-matching-controls-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .settings-profile-rail-footer {
     margin-top: 0;
     padding-bottom: 24px;
@@ -940,17 +949,17 @@
   }
 
   .dashboard-workspace .queue-column,
-  .dashboard-workspace .queue-column > .page-stack,
   .dashboard-workspace .queue-column > .queue-meta,
-  .dashboard-workspace .queue-column > .page-stack > .page-header,
-  .dashboard-workspace .queue-column > .page-stack > .panel,
-  .dashboard-workspace .queue-column > .page-stack > .stage-section,
-  .dashboard-workspace .queue-column > .page-stack > .stage-shell,
-  .dashboard-workspace .queue-column > .page-stack > .empty-state {
+  .dashboard-workspace .queue-column > .page-header,
+  .dashboard-workspace .queue-column > .panel,
+  .dashboard-workspace .queue-column > .stage-section,
+  .dashboard-workspace .queue-column > .stage-shell,
+  .dashboard-workspace .queue-column > .empty-state {
     background: var(--bg);
   }
 
-  .dashboard-workspace .queue-column > .page-stack {
+  /* main.page-stack wraps .dashboard-workspace; it is not a child of .queue-column */
+  .workspace-main > main.page-stack {
     width: 100%;
     min-width: 0;
   }
@@ -974,11 +983,13 @@
   }
 
   .dashboard-workspace .queue-column > .queue-meta,
-  .dashboard-workspace .queue-column > .page-stack > .page-header,
-  .dashboard-workspace .queue-column > .page-stack > .panel,
-  .dashboard-workspace .queue-column > .page-stack > .stage-section,
-  .dashboard-workspace .queue-column > .page-stack > .stage-shell,
-  .dashboard-workspace .queue-column > .page-stack > .empty-state,
+  .dashboard-workspace .queue-column > .page-header,
+  .dashboard-workspace .queue-column > .job-flow-prep-overview-wrap,
+  .dashboard-workspace .queue-column > .job-prep-direct,
+  .dashboard-workspace .queue-column > .panel,
+  .dashboard-workspace .queue-column > .stage-section,
+  .dashboard-workspace .queue-column > .stage-shell,
+  .dashboard-workspace .queue-column > .empty-state,
   .settings-main > .queue-meta,
   .settings-main > section.panel.settings-section,
   .settings-main > section.panel.disclosure {
@@ -1380,6 +1391,14 @@
     column-gap: 0;
   }
 
+  .job-overview-section-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .job-overview-section-inner > .screening-actions-bar.job-overview-actions {
+    grid-column: auto;
+  }
+
   .detail-page-header-stack .job-flow-heading,
   .job-flow-header-stack .job-flow-heading {
     grid-column: 1 / -1;
@@ -1403,9 +1422,14 @@
   .packet-form .packet-grid-section,
   .packet-form .packet-advanced-grid,
   .packet-form .packet-form-footer,
-  .screening-actions-bar,
+  .screening-actions-bar:not(.job-overview-actions),
   .stage-actions-bar {
     grid-template-columns: 1fr;
+  }
+
+  .job-flow-header-stack .job-flow-snapshot.detail-page-snapshot {
+    padding-inline-end: var(--queue-column-pad);
+    box-sizing: border-box;
   }
 
   /*
@@ -1423,12 +1447,12 @@
 
   main.jobs-index .queue-list .screening-row,
   main.jobs-index .queue-list .stage-row {
-    width: 100%;
+    width: calc(100% + (2 * var(--queue-column-pad)));
     max-width: none;
-    margin-left: 0;
+    margin-left: calc(-1 * var(--queue-column-pad));
     margin-right: 0;
-    padding-left: 0;
-    padding-right: 0;
+    padding-left: var(--queue-column-pad);
+    padding-right: var(--queue-column-pad);
     padding-top: 24px;
     padding-bottom: 0;
     box-sizing: border-box;
@@ -1436,20 +1460,31 @@
 
   main.jobs-index .queue-list .screening-row::after,
   main.jobs-index .queue-list .stage-row::after {
-    left: calc(-1 * var(--queue-column-pad));
-    width: calc(100% + (2 * var(--queue-column-pad)));
+    left: 0;
+    width: 100%;
   }
 
   /*
-   * Bleed actions into queue-list’s right padding so Save/Skip span the full content column (Skip flush right).
-   * Meta cell insets: main.jobs-index .queue-list .screening-summary-grid in queue-rows.css.
+   * Compact queue actions:
+   * - Potential and stage action rows both bleed through the queue paddings so the action surface
+   *   reads edge-to-edge while the row copy stays on the normal inset.
    */
-  main.jobs-index .queue-list .screening-actions-bar,
-  main.jobs-index .queue-list .stage-actions-bar {
-    width: calc(100% + var(--queue-column-pad));
+  main.jobs-index .queue-list .screening-actions-bar {
+    grid-template-columns: 1fr;
+    width: calc(100% + (2 * var(--queue-column-pad)));
     max-width: none;
-    margin-left: 0;
-    margin-right: calc(-1 * var(--queue-column-pad));
+    margin-left: calc(-1 * var(--queue-column-pad));
+    margin-right: 0;
+    margin-top: 24px;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar {
+    grid-template-columns: 1fr;
+    width: calc(100% + (2 * var(--queue-column-pad)));
+    max-width: none;
+    margin-left: calc(-1 * var(--queue-column-pad));
+    margin-right: 0;
+    margin-top: 24px;
   }
 
   main.jobs-index .queue-list .screening-actions-bar .button,
@@ -1463,11 +1498,6 @@
     grid-column: 1 / -1;
     width: 100%;
     min-width: 0;
-  }
-
-  .job-overview-actions .screening-actions-cluster {
-    grid-column: 1 / -1;
-    grid-template-columns: 1fr;
   }
 
   /* Jobs queue tag layout only — do not override settings / profile TagInput */
@@ -1499,7 +1529,8 @@
 
   main.jobs-index .queue-list .screening-actions-bar .screening-action-slot + .screening-action-slot .button {
     border-top-width: 1px;
-    border-left-width: 0;
+    border-left-width: 1px;
+    border-left-color: var(--line);
   }
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions {
@@ -1548,7 +1579,7 @@
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot + .stage-action-slot .button {
     border-top-width: 1px;
-    border-left-width: 0;
+    border-left-width: 1px;
   }
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
@@ -1579,7 +1610,7 @@
   }
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
-    border-left-width: 0;
+    border-left-width: 1px;
   }
 
   .packet-page-actions > * + *,
@@ -1983,6 +2014,10 @@
     gap: 16px;
   }
 
+  .settings-matching-controls-grid {
+    grid-template-columns: 1fr;
+  }
+
   .page-stack {
     gap: 12px;
   }
@@ -2012,3 +2047,120 @@
   }
 }
 
+/*
+ * Job detail — overview actions only (.job-flow-prep-overview-wrap). Second max-width:900 block so it wins over
+ * job-flow.css pair/triple grids. ≤900px: stack, equal full width, bar bleeds past section inset (flush column edges).
+ * Excludes packet materials (.packet-material-review-sticky-action).
+ * Note: main.page-stack wraps .dashboard-workspace; .job-flow-prep-overview-wrap is inside .queue-column, not under .page-stack.
+ * Bleed: bar lives in .job-flow-section-inner (padding-right) inside .job-flow-prep-overview-wrap (horizontal padding from the
+ * mobile queue-column rules). Cancel wrap pad left (−1×) and inner + wrap on the right (−2×) so controls flush the column edges.
+ */
+@media (max-width: 900px) {
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    width: calc(100% + (3 * var(--queue-column-pad)));
+    max-width: none;
+    margin-left: calc(-1 * var(--queue-column-pad));
+    margin-right: calc(-2 * var(--queue-column-pad));
+    box-sizing: border-box;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-actions-cluster {
+    grid-column: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    justify-self: stretch;
+    justify-items: stretch;
+    align-items: stretch;
+    box-sizing: border-box;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot,
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot {
+    justify-content: flex-start;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot .stage-action-form {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot .stage-action-form .button {
+    width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot + .screening-action-slot {
+    margin-left: 0;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot + .screening-action-slot .button {
+    border-top-width: 1px;
+    border-top-color: var(--line);
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button {
+    border-left-width: 0;
+    border-right-width: 0;
+    white-space: nowrap;
+  }
+}
+
+/*
+ * Job detail overview (Generate / Archive, etc.): same 5 tracks as .job-flow-header-stack / .job-flow-snapshot.
+ * Actions sit in cols 3–5 (Posted → Salary band). Hook class is set in JobOverviewSection when actions exist.
+ * Placed last so it wins over job-flow.css + earlier responsive rules.
+ */
+@media (min-width: 901px) {
+  .job-overview-section-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2fr) minmax(0, 2fr);
+    column-gap: 16px;
+    row-gap: 24px;
+    align-items: start;
+  }
+
+  .job-overview-section-inner > .job-review-grid {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .job-overview-section-inner > .screening-actions-bar.job-overview-actions {
+    grid-column: 3 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    justify-self: stretch;
+    box-sizing: border-box;
+  }
+
+  .job-overview-section-inner .screening-actions-bar.job-overview-actions .screening-actions-cluster {
+    grid-column: 1 / -1;
+    width: calc(100% + var(--queue-column-pad));
+    margin-right: calc(-1 * var(--queue-column-pad));
+    min-width: 0;
+    justify-self: stretch;
+    box-sizing: border-box;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1440px) {
+  .job-overview-section-inner {
+    column-gap: 12px;
+  }
+}

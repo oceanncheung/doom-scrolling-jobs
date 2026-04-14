@@ -22,6 +22,7 @@ interface MarketDefinition {
 interface OperatorScope {
   allowedMarketKeys: Set<string>
   hasMarketPreferences: boolean
+  marketStrictness: OperatorProfileRecord['matchingPreferences']['marketStrictness']
   portfolioReady: boolean
   primaryMarketKeys: Set<string>
   primaryMarketLabel: string
@@ -337,6 +338,7 @@ function buildOperatorScope(profile: OperatorProfileRecord): OperatorScope {
   return {
     allowedMarketKeys,
     hasMarketPreferences: allowedMarketKeys.size > 0,
+    marketStrictness: profile.matchingPreferences.marketStrictness,
     portfolioReady: Boolean(profile.portfolioPrimaryUrl),
     primaryMarketKeys,
     primaryMarketLabel,
@@ -366,8 +368,17 @@ function assessEligibility(job: RankedJobRecord) {
   return createDimension('strong', 8, 'Remote-only eligibility passes.')
 }
 
-function assessRoleFit(job: RankedJobRecord) {
+function assessRoleFit(job: RankedJobRecord, profile: OperatorProfileRecord) {
   const topReason = job.fitReasons[0] ?? `Role title still aligns with ${job.title}.`
+  const roleBreadth = profile.matchingPreferences.roleBreadth
+
+  if (roleBreadth === 'tight' && job.roleRelevanceScore < 10) {
+    return createDimension(
+      'blocked',
+      -8,
+      'Tight role breadth hides adjacent titles that do not clearly overlap with your saved targets.',
+    )
+  }
 
   if (job.roleRelevanceScore >= 16) {
     return createDimension('strong', 8, topReason)
@@ -522,19 +533,44 @@ function assessMarketFit(job: RankedJobRecord, scope: OperatorScope) {
     )
   }
 
-  if (closestTimeDifference != null && closestTimeDifference <= scope.timezoneToleranceHours) {
+  if (scope.marketStrictness === 'strict') {
     return createDimension(
-      'mixed',
-      1,
+      'blocked',
+      -12,
+      `Remote region does not include ${scope.primaryMarketLabel || 'your current markets'}.`,
+    )
+  }
+
+  if (closestTimeDifference != null && closestTimeDifference <= scope.timezoneToleranceHours) {
+    const score = scope.marketStrictness === 'flexible' ? 3 : 1
+
+    return createDimension(
+      scope.marketStrictness === 'flexible' ? 'good' : 'mixed',
+      score,
       `Region is outside your main markets, but the timezone gap stays within ${scope.timezoneToleranceHours} hours.`,
     )
   }
 
   if (scope.relocationOpen) {
+    const band = scope.marketStrictness === 'flexible' ? 'mixed' : 'weak'
+    const score = scope.marketStrictness === 'flexible' ? 1 : -3
+
     return createDimension(
-      'weak',
-      -3,
+      band,
+      score,
       `Region is outside ${scope.primaryMarketLabel || 'your current markets'}, but relocation openness keeps it in view.`,
+    )
+  }
+
+  if (
+    scope.marketStrictness === 'flexible' &&
+    closestTimeDifference != null &&
+    closestTimeDifference <= scope.timezoneToleranceHours + 3
+  ) {
+    return createDimension(
+      'mixed',
+      0,
+      `Region is outside your main markets, but the timezone gap is still close enough to keep monitoring.`,
     )
   }
 
@@ -680,6 +716,7 @@ function buildQueueSegment(
   if (
     dimensions.eligibility.band === 'blocked' ||
     dimensions.marketFit.band === 'blocked' ||
+    dimensions.roleFit.band === 'blocked' ||
     job.listingStatus === 'closed'
   ) {
     return 'hidden'
@@ -701,8 +738,7 @@ function buildQueueSegment(
   if (
     !stale &&
     queueScore >= worthReviewingThreshold &&
-    dimensions.roleFit.band !== 'weak' &&
-    dimensions.roleFit.band !== 'blocked'
+    dimensions.roleFit.band !== 'weak'
   ) {
     return 'worth_reviewing'
   }
@@ -798,7 +834,7 @@ export function applyQualificationEngine(
   return jobs
     .map((job) => {
       const eligibility = assessEligibility(job)
-      const roleFit = assessRoleFit(job)
+      const roleFit = assessRoleFit(job, profile)
       const marketFit = assessMarketFit(job, scope)
       const freshnessAssessment = assessFreshness(job)
       const portfolioFitSignal = assessPortfolioFit(job, scope)

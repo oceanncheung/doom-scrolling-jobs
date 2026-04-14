@@ -18,7 +18,7 @@ import type {
   ResumeExperienceRecord,
 } from '@/lib/domain/types'
 import { hasOpenAIEnv, hasSupabaseServerEnv } from '@/lib/env'
-import { ensurePrimaryImportedJobs } from '@/lib/jobs/real-feed'
+import { rescorePersistedImportedJobs } from '@/lib/jobs/real-feed'
 import {
   collectCoverLetterMasterIssues,
   collectProfileDraftBlockingIssues,
@@ -28,6 +28,7 @@ import {
   renderMasterCoverLetterMarkdown,
   renderMasterResumeMarkdown,
 } from '@/lib/profile/master-assets'
+import { defaultMatchingPreferences, normalizeMatchingPreferences } from '@/lib/profile/matching-preferences'
 import { createClient } from '@/lib/supabase/server'
 
 export interface ProfileActionState {
@@ -487,6 +488,11 @@ export async function saveOperatorProfile(
   let searchBrief = asOptionalText(formData.get('searchBrief')) ?? ''
   let targetRoles = asList(formData.get('targetRoles'))
   let allowedAdjacentRoles = asList(formData.get('allowedAdjacentRoles'))
+  const matchingPreferences = normalizeMatchingPreferences({
+    marketStrictness: asTextValue(formData.get('matchingMarketStrictness')),
+    roleBreadth: asTextValue(formData.get('matchingRoleBreadth')),
+    sourceMix: asTextValue(formData.get('matchingSourceMix')),
+  })
   let targetSeniorityLevels = asList(formData.get('targetSeniorityLevels'))
   let skills = asList(formData.get('skills'))
   let tools = asList(formData.get('tools'))
@@ -1007,6 +1013,7 @@ export async function saveOperatorProfile(
     experience_summary: baseResumeMaster.experienceEntries,
     education_summary: baseResumeMaster.educationEntries,
     preferences_notes: '',
+    matching_preferences: matchingPreferences,
   }
 
   const resumePayload = {
@@ -1149,7 +1156,7 @@ export async function saveOperatorProfile(
   let rankingRefreshNote = ''
 
   try {
-    const rankingRefresh = await ensurePrimaryImportedJobs({ force: true })
+    const rankingRefresh = await rescorePersistedImportedJobs()
 
     if (rankingRefresh.issue) {
       rankingRefreshNote = ` Queue refresh note: ${rankingRefresh.issue}`
@@ -1324,6 +1331,7 @@ export async function resetProfileWorkspaceForTesting(
         phone_number: '',
         portfolio_primary_url: null,
         preferences_notes: null,
+        matching_preferences: defaultMatchingPreferences,
         primary_market: '',
         relocation_open: false,
         remote_required: true,

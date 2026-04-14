@@ -65,7 +65,8 @@ insert into public.user_profiles (
   bio_summary,
   experience_summary,
   education_summary,
-  preferences_notes
+  preferences_notes,
+  matching_preferences
 )
 values (
   '22222222-2222-4222-8222-222222222222',
@@ -126,7 +127,8 @@ values (
       "notes": "Focused on visual communication and brand systems."
     }
   ]'::jsonb,
-  'Internal single-user mode for Ocean / Alvis. Replace these defaults as the real operator profile is filled in.'
+  'Internal single-user mode for Ocean / Alvis. Replace these defaults as the real operator profile is filled in.',
+  '{"roleBreadth":"balanced","marketStrictness":"balanced","sourceMix":"balanced"}'::jsonb
 )
 on conflict (id) do update
 set
@@ -151,7 +153,8 @@ set
   bio_summary = excluded.bio_summary,
   experience_summary = excluded.experience_summary,
   education_summary = excluded.education_summary,
-  preferences_notes = excluded.preferences_notes;
+  preferences_notes = excluded.preferences_notes,
+  matching_preferences = excluded.matching_preferences;
 
 insert into public.source_registry (
   slug,

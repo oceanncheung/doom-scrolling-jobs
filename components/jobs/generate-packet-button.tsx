@@ -33,8 +33,14 @@ export function GeneratePacketButton({
       >
         {isPending ? 'Generating...' : 'Generate Content'}
       </button>
-      {state.message && state.status === 'success' ? (
-        <p className="action-note action-note-success">{state.message}</p>
+      {state.message ? (
+        <p
+          className={`action-note ${
+            state.status === 'error' ? 'action-note-error' : 'action-note-success'
+          }`}
+        >
+          {state.message}
+        </p>
       ) : null}
     </form>
   )

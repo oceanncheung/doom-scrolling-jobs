@@ -206,6 +206,8 @@ Every element snaps to the same spatial rhythm. Spacing follows a strict base-8 
 - Row dividers: default rules between list/table items
 - Rules replace padding as the primary visual separator throughout
 
+**Workspace column hairlines (implementation):** In the main queue column, content is often inset with `padding-right: var(--queue-column-pad)` while the column may have no right padding. A hairline on a **full-width section** (`<section>`) can use `left: calc(-1 * var(--queue-column-pad)); width: calc(100% + var(--queue-column-pad));` so the rule meets the right edge. For a **nested** block whose `width: 100%` is only the **inner content** box (already inset on both sides by the column’s horizontal padding), use `left: calc(-1 * var(--queue-column-pad)); width: calc(100% + (2 * var(--queue-column-pad)));` so the same black rule runs flush to the column edges. Do not stack two top rules for the same boundary—use one `::before` (e.g. on a stack) or one child section line, not both.
+
 ### Sidebar Components
 - Section container: no background, separated by `1px solid #E5E5E5` bottom border
 - Section label ("Today", "Source"): Label style (12px, uppercase, 0.08em tracking, Grey 600)

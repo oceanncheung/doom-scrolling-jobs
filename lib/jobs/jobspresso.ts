@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { RawJobIntakeRecord } from '@/lib/jobs/contracts'
+import { fetchWithTimeout } from '@/lib/jobs/fetch-with-timeout'
 import { extractSalaryMetadata, normalizeWhitespace, stripHtml } from '@/lib/jobs/source-parsing'
 
 import type { ImportedSourceBatch } from './greenhouse'
@@ -221,7 +222,7 @@ function extractSourceJobId(sourceUrl: string, posting: JobspressoPostingRecord 
 }
 
 async function fetchJobspressoDetail(url: string, capturedAt: string): Promise<RawJobIntakeRecord | null> {
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     cache: 'no-store',
     headers: {
       Accept: 'text/html,application/xhtml+xml',
@@ -285,7 +286,7 @@ export async function fetchJobspressoJobs(): Promise<ImportedSourceBatch> {
         const params = new URLSearchParams(query.params)
         params.set('page', String(page))
 
-        const response = await fetch(`${jobspressoListingsEndpoint}?${params.toString()}`, {
+        const response = await fetchWithTimeout(`${jobspressoListingsEndpoint}?${params.toString()}`, {
           cache: 'no-store',
           headers: {
             Accept: 'application/json',

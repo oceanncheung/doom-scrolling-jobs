@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { fetchWithTimeout } from '@/lib/jobs/fetch-with-timeout'
 import type { ImportedSourceBatch } from './greenhouse'
 
 const wellfoundSourceKey = 'wellfound'
@@ -9,7 +10,7 @@ const browserUserAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
 
 export async function fetchWellfoundJobs(): Promise<ImportedSourceBatch> {
   try {
-    const response = await fetch(wellfoundRemoteDesignUrl, {
+    const response = await fetchWithTimeout(wellfoundRemoteDesignUrl, {
       cache: 'no-store',
       headers: {
         Accept: 'text/html,application/xhtml+xml',

@@ -123,6 +123,169 @@
   align-content: start;
 }
 
+.packet-material-review-stack {
+  display: grid;
+  /* Sections are separated by 1px rules on each article; avoid extra band of whitespace */
+  gap: 0;
+  position: relative;
+}
+
+/* Single strong line between summary grid and draft sections (avoids doubling with first .job-flow-section::before). */
+.packet-section-inner .packet-material-review-stack::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--queue-column-pad));
+  width: calc(100% + (2 * var(--queue-column-pad)));
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+
+/*
+ * Nested draft blocks sit in .packet-section-inner (content-width); hairlines must use +2 pad to reach both column edges.
+ * See DESIGN.md — Workspace column hairlines (implementation).
+ * Section divider under each draft is not article::after — it’s a full-bleed ::after on the sticky bar (flush with the control row).
+ */
+.packet-section-inner .packet-material-review-block.job-flow-section::before {
+  left: calc(-1 * var(--queue-column-pad));
+  width: calc(100% + (2 * var(--queue-column-pad)));
+}
+
+.packet-section-inner .packet-material-review-block.job-flow-section.detail-review-section::after {
+  display: none;
+}
+
+/* Top line for first draft comes from .packet-material-review-stack::before only. */
+.packet-section-inner .packet-material-review-stack > .packet-material-review-block:first-child.job-flow-section::before {
+  display: none;
+}
+
+/* With stack gap: 0, first block’s ::after + second block’s ::before stacked = double line between drafts */
+.packet-section-inner .packet-material-review-stack > .packet-material-review-block:not(:first-child).job-flow-section::before {
+  display: none;
+}
+
+/*
+ * Packet prep: `overflow-x: clip` on workspace shells pairs with computed `overflow-y: auto` (CSS Overflow 3),
+ * which traps `position: sticky` so it cannot stick to the viewport. Scoped to pages that mount `#packet-form`.
+ */
+section.dashboard-workspace:has(#packet-form),
+.workspace-main > main.workspace-surface:has(#packet-form) {
+  overflow: visible;
+}
+
+/* Layout + hairlines: .job-flow-section + .detail-review-section (see job-flow.css). */
+.packet-material-review-block {
+  display: block;
+}
+
+/* Draft text first, download row last so the control sits on the section hairline (::after), not above the draft. */
+.packet-material-review-block.detail-review-section--with-sticky-action > .job-flow-section-inner {
+  padding-bottom: 0;
+}
+
+/* Last row in section: `bottom: 0` pins to the viewport bottom while scrolling the draft above (needs visible overflow on ancestors — see block above). */
+.packet-material-review-sticky-action {
+  position: sticky;
+  bottom: 0;
+  top: auto;
+  z-index: 3;
+  margin-top: 0;
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
+.packet-material-review-sticky-action > * {
+  pointer-events: auto;
+}
+
+/* Black hairline: left bleed matches stack top line; right needs 2× pad — sticky sits inside .job-flow-section-inner (pad) inside .packet-section-inner (pad), same as .screening-actions-cluster. */
+.packet-material-review-sticky-action.screening-actions-bar.job-overview-actions {
+  margin-top: 0;
+  overflow: visible;
+}
+
+.packet-material-review-sticky-action.screening-actions-bar.job-overview-actions::after {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--queue-column-pad));
+  right: calc(-2 * var(--queue-column-pad));
+  bottom: 0;
+  height: 1px;
+  background: var(--text);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Nested in .packet-section-inner + .job-flow-section-inner: bleed past both right paddings (see job-flow .screening-actions-cluster). */
+.packet-material-review-sticky-action.screening-actions-bar.job-overview-actions .screening-actions-cluster {
+  width: calc(100% + (2 * var(--queue-column-pad)));
+  margin-right: calc(-2 * var(--queue-column-pad));
+  min-width: 0;
+}
+
+/* Same vertical metrics as Mark Ready / .screening-actions-bar .button (padding + min-height: auto from queue-rows). */
+.packet-material-review-block .packet-material-download-button {
+  min-height: auto;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  border-right: none;
+  border-bottom: none;
+}
+
+.packet-material-review-block .packet-material-download-button:hover:not(:disabled),
+.packet-material-review-block .packet-material-download-button:focus-visible:not(:disabled) {
+  background: var(--text);
+  border-top-color: var(--line);
+  border-left-color: var(--line);
+  border-bottom: none;
+}
+
+.packet-material-review-block .packet-material-download-button:disabled {
+  background: var(--bg);
+  border-right: none;
+  border-bottom: none;
+}
+
+.packet-material-download-button__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: 100%;
+}
+
+.packet-material-download-button__label {
+  text-align: center;
+}
+
+.packet-material-review-block .packet-material-download-button .upload-slot-chip-trailing-icon {
+  flex-shrink: 0;
+}
+
+.packet-material-review-block .packet-material-download-button .upload-slot-chip-icon-svg {
+  display: block;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+.packet-material-review-title-stack {
+  min-width: 0;
+}
+
+/* Match .packet-section-heading h2 / LabeledHeading on the same page */
+.packet-material-review-title {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--text);
+}
+
 .packet-material-heading {
   display: block;
 }
@@ -141,6 +304,18 @@
   margin: 0;
   color: var(--text);
   line-height: 1.55;
+}
+
+.packet-material-draft {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .packet-question-card .disclosure-summary h3 {
