@@ -1,0 +1,76 @@
+.dashboard-workspace .queue-column {
+  --edge-bleed-start: calc(-1 * var(--queue-column-pad));
+  --edge-bleed-width: calc(100% + var(--queue-column-pad));
+  --edge-bleed-width-nested: calc(100% + (2 * var(--queue-column-pad)));
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 0;
+  padding: 0 0 3px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.16px;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, opacity 200ms ease;
+}
+
+.button::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+.button:hover {
+  opacity: 0.6;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.button-primary {
+  font-weight: 600;
+}
+
+.button-ghost {
+  color: var(--muted);
+  border-bottom-color: var(--line-soft);
+}
+
+.button-small {
+  font-size: 0.9rem;
+}
+
+.button__label {
+  display: block;
+  min-width: 0;
+}
+
+.action-note {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.action-note-error {
+  color: var(--text);
+}
+
+.action-note-success {
+  color: var(--muted);
+}

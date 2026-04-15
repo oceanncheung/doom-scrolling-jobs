@@ -18,6 +18,24 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate UI and app contracts
+        run: npm run check
+
+      - name: Run UI contract tests
+        run: npm run test:ui-contracts
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:

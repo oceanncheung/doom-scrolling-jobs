@@ -14,6 +14,11 @@ Before editing UI:
 4. Prefer shared fixes over local overrides.
 5. Verify all affected routes after the change.
 
+Important shared contracts:
+- Base button ownership lives in `app/styles/controls.css`.
+- Queue-edge hairline math should use the shared edge variables, not new raw `calc(...)` rules.
+- Preserve the current UI visually unless the user explicitly requests a visible change.
+
 Do not:
 - patch multiple files blindly without mapping ownership first
 - introduce alternate spacing systems or new visual patterns when an existing contract already exists

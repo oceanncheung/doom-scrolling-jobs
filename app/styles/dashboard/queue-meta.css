@@ -150,8 +150,8 @@ main.jobs-index .queue-list > .empty-state p:last-child {
   content: '';
   position: absolute;
   bottom: 0;
-  left: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + var(--queue-column-pad));
+  left: var(--edge-bleed-start);
+  width: var(--edge-bleed-width);
   height: 1px;
   background: var(--line);
   pointer-events: none;

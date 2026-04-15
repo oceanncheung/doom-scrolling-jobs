@@ -96,7 +96,7 @@ Commands:
 
 Notes:
 
-- No app login is required right now.
+- No external auth is required right now; the app uses local operator selection instead.
 - The app reads and writes against one seeded internal operator profile.
 - The first preference input should be one freeform search brief, not a long questionnaire.
 - Server-side profile reads and writes should use the service role key, not the public publishable key.
@@ -105,6 +105,7 @@ Useful scripts:
 
 - `npm run lint`
 - `npm run typecheck`
+- `npm run check:ui-system`
 - `npm run build`
 - `npm run check`
 - `npm run deploy:cloud-run`

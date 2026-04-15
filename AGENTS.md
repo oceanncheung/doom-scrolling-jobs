@@ -17,6 +17,7 @@ Use this when editing UI code in this repo, especially:
 
 - `app/styles/tokens.css`: variables and global tokens
 - `app/styles/shell.css`: app shell, header, shared rail/container scaffolding
+- `app/styles/controls.css`: shared button/control primitives and edge-bleed utilities
 - `app/styles/dashboard.css`: queue rows, left rail, detail/prep shared surfaces
 - `app/styles/settings.css`: settings-page layout contracts and elevated controls
 - `app/styles/forms.css`: shared fields, uploads, disclosures, form states
@@ -29,6 +30,13 @@ Use this when editing UI code in this repo, especially:
 2. Prefer shared contract fixes over local overrides.
 3. Keep zero visual diff during cleanup unless the user explicitly asks for a visible change.
 4. Verify every affected route after CSS or TSX changes.
+
+## Shared control + hairline contract
+
+- The base `.button` contract lives in `app/styles/controls.css`. Do not define root `.button`, `.button-primary`, `.button-ghost`, `.button-small`, `.button__label`, or `.action-note*` selectors anywhere else.
+- Surface styles may size or place buttons, but they should not re-own button reset/centering mechanics unless the user explicitly asks for a visual change.
+- Queue-column hairlines must use the shared edge-bleed variables from `app/styles/controls.css` instead of reintroducing raw `calc(-1 * var(--queue-column-pad))` math in pseudo-element rules.
+- Treat UI cleanups as zero-diff by default. If a request is about a bug like centering or flush edges, fix the contract without redesigning the surrounding UI.
 
 ## Elevated controls (single pattern)
 

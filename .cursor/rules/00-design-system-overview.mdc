@@ -8,6 +8,7 @@ alwaysApply: true
 ---
 
 - Preserve the current layout unless the request explicitly changes behavior or copy.
+- Treat UI cleanup as zero-diff unless the request explicitly allows visible changes.
 - Read `DESIGN.md`, `AGENTS.md`, and `UI_CHANGE_PROTOCOL.md` before making UI edits.
 - This project uses the editorial grid system: structured lines, rigid spacing, and shared layout contracts.
 - Prefer changing shared rules in the owning stylesheet/component instead of patching one-off overrides.

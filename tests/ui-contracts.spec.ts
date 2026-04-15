@@ -1,11 +1,87 @@
 import { expect, test } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
 function round(value: number | null | undefined) {
   return value == null ? null : Math.round(value)
 }
 
+async function signInFromEntry(page: Page) {
+  await page.goto('/', { waitUntil: 'networkidle' })
+
+  const revealButton = page.locator('.operator-entry-reveal-button')
+  if (await revealButton.count()) {
+    await expect(revealButton).toBeVisible()
+    await revealButton.click()
+  }
+
+  const operatorRow = page.locator('.operator-row-button').first()
+  if (await operatorRow.count()) {
+    await expect(operatorRow).toBeVisible()
+    await operatorRow.click()
+    await page.waitForURL(/\/dashboard(?:\?.*)?$/)
+  }
+}
+
+async function ensureSignedIn(page: Page) {
+  await page.goto('/dashboard', { waitUntil: 'networkidle' })
+  if (page.url().includes('/dashboard')) {
+    return
+  }
+
+  await signInFromEntry(page)
+}
+
+async function expectHorizontalHairlineFlush(locator: Locator, pseudo: '::before' | '::after') {
+  const metrics = await locator.evaluate(
+    (node, pseudoSelector) => {
+      const queueColumn = node.closest<HTMLElement>('.queue-column')
+      const targetRect = node.getBoundingClientRect()
+      const containerRect = queueColumn?.getBoundingClientRect()
+      const styles = getComputedStyle(node, pseudoSelector)
+      const left = Number.parseFloat(styles.left || '0')
+      const queuePad = Number.parseFloat(
+        getComputedStyle(queueColumn ?? document.documentElement).getPropertyValue('--queue-column-pad') || '0',
+      )
+      let width = Number.parseFloat(styles.width || '0')
+
+      if (Number.isNaN(width) && styles.width.includes('calc(')) {
+        const multiplier = styles.width.includes('2 *') ? 2 : 1
+        width = targetRect.width + (queuePad * multiplier)
+      }
+
+      const start = targetRect.left + left
+      const end = start + width
+
+      return {
+        containerEnd: Math.round(containerRect?.right ?? 0),
+        containerStart: Math.round(containerRect?.left ?? 0),
+        end: Math.round(end),
+        start: Math.round(start),
+      }
+    },
+    pseudo,
+  )
+
+  expect(metrics.start).toBe(metrics.containerStart)
+  expect(Math.abs(metrics.end - metrics.containerEnd)).toBeLessThanOrEqual(1)
+}
+
 test.describe('UI contracts', () => {
+  test('operator list stays hidden until sign in is requested', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' })
+
+    const revealButton = page.locator('.operator-entry-reveal-button')
+    await expect(revealButton).toBeVisible()
+    await expect(page.locator('.operator-row-button')).toHaveCount(0)
+
+    await revealButton.click()
+
+    await expect(page.locator('.operator-row-button').first()).toBeVisible()
+  })
+
   test('site header stays fixed across scroll extremes', async ({ page }) => {
+    await ensureSignedIn(page)
+
     for (const route of ['/profile', '/dashboard']) {
       await page.goto(route, { waitUntil: 'networkidle' })
 
@@ -39,6 +115,7 @@ test.describe('UI contracts', () => {
   })
 
   test('profile source upload row keeps the frozen seam and edge contract', async ({ page }) => {
+    await ensureSignedIn(page)
     await page.goto('/profile', { waitUntil: 'networkidle' })
 
     const row = page.locator('.settings-source-uploads-row--materials')
@@ -71,6 +148,7 @@ test.describe('UI contracts', () => {
   })
 
   test('additional filters chip keeps a stable label position on open', async ({ page }) => {
+    await ensureSignedIn(page)
     await page.goto('/profile', { waitUntil: 'networkidle' })
 
     const summary = page.locator('.settings-action-disclosure summary').first()
@@ -121,5 +199,117 @@ test.describe('UI contracts', () => {
     expect(transitionProperty).not.toContain('background-color')
 
     await expect(label).toBeVisible()
+  })
+
+  test('experience tabs keep a single closed seam and mask the open seam under the active tab', async ({
+    page,
+  }) => {
+    await ensureSignedIn(page)
+    await page.goto('/profile', { waitUntil: 'networkidle' })
+
+    const shell = page.locator('.disclosure-experience .settings-tab-shell').first()
+    const toolbar = shell.locator('.settings-tab-toolbar').first()
+    await expect(toolbar).toBeVisible()
+    const closedButtonBox = await shell.locator('.settings-tab-button').first().boundingBox()
+    expect(closedButtonBox).not.toBeNull()
+
+    const closedAfter = await toolbar.evaluate((node) => ({
+      background: getComputedStyle(node, '::after').backgroundColor,
+      content: getComputedStyle(node, '::after').content,
+      display: getComputedStyle(node, '::after').display,
+    }))
+    expect(closedAfter.content).toBe('""')
+    expect(closedAfter.display).toBe('block')
+    expect(closedAfter.background).toBe('rgb(0, 0, 0)')
+
+    const nextDisclosureLine = await page
+      .locator('.disclosure-experience + .disclosure-cover-letter')
+      .evaluate((node) => getComputedStyle(node, '::before').display)
+    expect(nextDisclosureLine).toBe('none')
+
+    await shell.locator('.settings-tab-button').first().click()
+    await page.waitForTimeout(150)
+
+    const openAfter = await toolbar.evaluate((node) => ({
+      background: getComputedStyle(node, '::after').backgroundColor,
+      content: getComputedStyle(node, '::after').content,
+      display: getComputedStyle(node, '::after').display,
+    }))
+    expect(openAfter.content).toBe('""')
+    expect(openAfter.display).toBe('block')
+    expect(openAfter.background).toBe('rgb(0, 0, 0)')
+
+    const shellBox = await shell.boundingBox()
+    const toolbarShellBox = await shell.locator('.settings-tab-toolbar-shell').boundingBox()
+    const activeBox = await shell.locator('.settings-tab-button.is-active').boundingBox()
+
+    expect(shellBox).not.toBeNull()
+    expect(toolbarShellBox).not.toBeNull()
+    expect(activeBox).not.toBeNull()
+    expect(Math.abs(activeBox!.height - closedButtonBox!.height)).toBeLessThanOrEqual(1)
+
+    const seamY = Math.round(toolbarShellBox!.y + toolbarShellBox!.height - shellBox!.y - 1)
+    const activeX = Math.round(activeBox!.x + (activeBox!.width / 2) - shellBox!.x)
+
+    const screenshot = await shell.screenshot()
+    const sharp = (await import('sharp')).default
+    const { data, info } = await sharp(screenshot).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+
+    function readPixel(x: number, y: number) {
+      const index = ((y * info.width) + x) * info.channels
+      return [data[index], data[index + 1], data[index + 2]]
+    }
+
+    const activePixel = readPixel(activeX, seamY)
+    expect(Math.min(...activePixel)).toBeGreaterThan(180)
+  })
+
+  test('skip action label stays centered within its button', async ({ page }) => {
+    await ensureSignedIn(page)
+    await page.goto('/dashboard', { waitUntil: 'networkidle' })
+
+    const skipButton = page.locator('.screening-actions-bar .button', { hasText: 'Skip' }).first()
+    await expect(skipButton).toBeVisible()
+
+    const alignment = await skipButton.evaluate((node) => {
+      const label = node.querySelector<HTMLElement>('.button__label')
+      if (!label) {
+        return null
+      }
+
+      const buttonRect = node.getBoundingClientRect()
+      const labelRect = label.getBoundingClientRect()
+
+      return {
+        deltaX: Math.round((labelRect.left + labelRect.width / 2) - (buttonRect.left + buttonRect.width / 2)),
+        deltaY: Math.round((labelRect.top + labelRect.height / 2) - (buttonRect.top + buttonRect.height / 2)),
+      }
+    })
+
+    expect(alignment).not.toBeNull()
+    expect(Math.abs(alignment!.deltaX)).toBeLessThanOrEqual(1)
+    expect(Math.abs(alignment!.deltaY)).toBeLessThanOrEqual(1)
+  })
+
+  test('dashboard, profile, and job detail hairlines stay flush to the queue edge', async ({ page }) => {
+    await ensureSignedIn(page)
+
+    await page.goto('/dashboard', { waitUntil: 'networkidle' })
+    await expectHorizontalHairlineFlush(page.locator('.dashboard-workspace .queue-column > .queue-meta').first(), '::after')
+
+    await page.goto('/profile', { waitUntil: 'networkidle' })
+    await expectHorizontalHairlineFlush(page.locator('.settings-main > section.panel.settings-section').first(), '::before')
+
+    await page.goto('/dashboard', { waitUntil: 'networkidle' })
+    const firstSummary = page.locator('.screening-summary').first()
+    await expect(firstSummary).toBeVisible()
+    await firstSummary.click()
+
+    const firstJobLink = page.getByRole('link', { name: 'More details' }).first()
+    await expect(firstJobLink).toBeVisible()
+    await firstJobLink.click()
+    await page.waitForURL(/\/jobs\/.+$/)
+
+    await expectHorizontalHairlineFlush(page.locator('.job-flow-prep-overview-wrap > .job-flow-section.detail-review-section').first(), '::after')
   })
 })

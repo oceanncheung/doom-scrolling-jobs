@@ -3,7 +3,8 @@ import type { ReactNode } from 'react'
 interface LabeledHeadingProps {
   children?: ReactNode
   className?: string
-  label: string
+  /** Omitted or empty: no eyebrow line (title only). */
+  label?: string
   stackClassName?: string
   title: string
   titleLevel?: 'h1' | 'h2' | 'h3'
@@ -22,7 +23,7 @@ export function LabeledHeading({
   return (
     <div className={className}>
       <div className={stackClassName}>
-        <p className="panel-label">{label}</p>
+        {label ? <p className="panel-label">{label}</p> : null}
         <TitleTag>{title}</TitleTag>
       </div>
       {children}

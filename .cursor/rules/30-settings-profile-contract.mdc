@@ -14,6 +14,7 @@ The profile/settings workspace must stay aligned with `AGENTS.md`.
 Key rules:
 - `Additional filters` and `Experience tabs` share one elevated-control contract.
 - Keep profile/settings cleanup zero-diff unless the request explicitly changes the layout.
+- Shared button resets and queue-edge hairlines should come from `app/styles/controls.css`, not new local base selectors.
 - Text fields are transparent with bottom-border treatment unless a listed exception already exists.
 - Keep upload, disclosure, and footer spacing consistent with the current settings surface.
 - Do not invent new settings layout patterns when the existing section/disclosure structure already covers the need.

@@ -135,6 +135,41 @@
   box-sizing: border-box;
 }
 
+/*
+ * Login rail — site title is a sibling above `.today-rail-scroll` (see `beforeScroll` in WorkspaceRailShell).
+ * No top inset on aside; scroll insets live on inner blocks (operators.css).
+ */
+.dashboard-workspace .today-rail:not(.settings-profile-rail).today-rail--split-scroll {
+  /* Same 24px rhythm as `.today-rail-scroll` grid gap when the brand lived inside the scroller. */
+  gap: 24px;
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-right: 0;
+}
+
+/* Default: line tracks the aside box (dashboard rails that don’t use split-scroll keep border-right). */
+.dashboard-workspace .today-rail:not(.settings-profile-rail).today-rail--split-scroll::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dashboard-workspace .today-rail:not(.settings-profile-rail).today-rail--split-scroll > .today-rail-scroll {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.dashboard-workspace .today-rail:not(.settings-profile-rail).today-rail--split-scroll > .queue-meta.today-rail-site-header {
+  flex-shrink: 0;
+}
+
 /* Locked to the viewport while the page scrolls (not position:sticky — that still moves with the document). */
 .dashboard-workspace .today-rail:not(.settings-profile-rail) {
   display: flex;
@@ -150,6 +185,45 @@
   min-height: 0;
   overflow: visible;
   background: var(--bg);
+}
+
+/*
+ * Login / operator entry: no app header (WorkspaceChrome omitted), so the rail must not reserve
+ * --site-header-height — otherwise the title sits under empty space and the rail ::after divider
+ * stops short of the viewport top.
+ */
+@media (min-width: 901px) {
+  .dashboard-workspace.operator-entry-workspace {
+    min-height: 100dvh;
+  }
+
+  .dashboard-workspace.operator-entry-workspace .today-rail:not(.settings-profile-rail) {
+    top: 0;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  /* Viewport-anchored rule: aside padding/scroll quirks won’t shorten the line. */
+  .dashboard-workspace.operator-entry-workspace .today-rail.today-rail--split-scroll::after {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--dashboard-rail-width) - 1px);
+    right: auto;
+    width: 1px;
+    height: auto;
+  }
+
+  /* Align with main-column intro rhythm (no site header on this surface — match ~24px below chrome on other pages). */
+  .dashboard-workspace.operator-entry-workspace .queue-column {
+    padding-top: 24px;
+  }
+}
+
+@media (min-width: 1180px) {
+  .dashboard-workspace.operator-entry-workspace .queue-column {
+    padding-top: 24px;
+  }
 }
 
 .dashboard-workspace .today-rail > .today-rail-scroll {
@@ -349,17 +423,15 @@
 .today-resume-status .button,
 .today-block .button {
   width: 100%;
-  padding: 12px 20px;
+  min-height: 2.5rem;
+  padding: 0 20px;
   border: 1px solid var(--line);
-  border-radius: 0;
-  font-family: var(--font-body), sans-serif;
   font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  line-height: 1;
   background: transparent;
-  text-align: center;
-  justify-content: center;
   transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 }
 

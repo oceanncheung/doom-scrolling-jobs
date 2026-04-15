@@ -20,5 +20,6 @@ Use the shared dashboard/job-flow contract:
 
 When editing these surfaces:
 - prefer shared job-flow or stage-row fixes over per-page drift
+- keep button centering/seams and edge hairlines on the shared control contract instead of per-surface hacks
 - keep copy and behavior consistent across queue, detail, prep, and rail
 - do not redesign the visual system while doing cleanup

@@ -155,8 +155,8 @@
   content: '';
   position: absolute;
   top: 0;
-  left: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + var(--queue-column-pad));
+  left: var(--edge-bleed-start);
+  width: var(--edge-bleed-width);
   height: 1px;
   background: var(--line);
 }
@@ -183,8 +183,8 @@
   content: '';
   position: absolute;
   bottom: 0;
-  left: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + var(--queue-column-pad));
+  left: var(--edge-bleed-start);
+  width: var(--edge-bleed-width);
   height: 1px;
   background: var(--line);
   pointer-events: none;
@@ -259,4 +259,3 @@
 .settings-section .disclosure-summary .panel-label {
   margin: 0;
 }
-

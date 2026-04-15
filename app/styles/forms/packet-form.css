@@ -17,8 +17,8 @@
   content: '';
   position: absolute;
   top: 0;
-  left: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + var(--queue-column-pad));
+  left: var(--edge-bleed-start);
+  width: var(--edge-bleed-width);
   height: 1px;
   background: var(--line);
 }
@@ -135,8 +135,8 @@
   content: '';
   position: absolute;
   top: 0;
-  left: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + (2 * var(--queue-column-pad)));
+  left: var(--edge-bleed-start);
+  width: var(--edge-bleed-width-nested);
   height: 1px;
   background: var(--line);
   pointer-events: none;
@@ -148,8 +148,8 @@
  * Section divider under each draft is not article::after — it’s a full-bleed ::after on the sticky bar (flush with the control row).
  */
 .packet-section-inner .packet-material-review-block.job-flow-section::before {
-  left: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + (2 * var(--queue-column-pad)));
+  left: var(--edge-bleed-start);
+  width: var(--edge-bleed-width-nested);
 }
 
 .packet-section-inner .packet-material-review-block.job-flow-section.detail-review-section::after {
@@ -209,7 +209,7 @@ section.dashboard-workspace:has(#packet-form),
 .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions::after {
   content: '';
   position: absolute;
-  left: calc(-1 * var(--queue-column-pad));
+  left: var(--edge-bleed-start);
   right: calc(-2 * var(--queue-column-pad));
   bottom: 0;
   height: 1px;

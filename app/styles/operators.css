@@ -85,8 +85,51 @@
   gap: 16px;
 }
 
-/* Operators rail is a single block; skip `.today-block:first-child` bottom rule (no stack below). */
-.operator-create-rail-block.today-block:first-child {
+.operator-entry-secondary-action {
+  display: grid;
+}
+
+.operator-entry-secondary-action .button {
+  width: 100%;
+}
+
+/*
+ * Login rail brand — same building blocks as main-column `PageIntroHeader` (queue-meta + settings-page-header
+ * + queue-meta-heading + h1). Rail-only: hairline + horizontal inset; vertical rhythm uses aside `gap` + padding.
+ */
+.dashboard-workspace .today-rail.today-rail--split-scroll > .queue-meta.today-rail-site-header.settings-page-header {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 24px var(--today-rail-pad-left) 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+
+/* Same h1 as main-column queue-meta (queue-meta.css); rail inherits no extra weight from today-block rules. */
+.dashboard-workspace .today-rail.today-rail--split-scroll > .queue-meta.today-rail-site-header .queue-meta-heading h1 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 300;
+  font-style: normal;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+/* settings/page-shell.css also sets `.settings-page-header .queue-meta-heading` — no duplicate rules here. */
+
+/* Create-account block: horizontal inset only; vertical gap comes from `.today-rail-scroll` grid gap. */
+.dashboard-workspace .today-rail.today-rail--split-scroll > .today-rail-scroll > .today-block:first-child {
+  margin: 0;
+  padding: 0 var(--today-rail-pad-left);
+  width: 100%;
+  box-sizing: border-box;
+  border-top: none;
+}
+
+/* Operators rail create block is no longer `:first-child` when the site header precedes it. */
+.operator-create-rail-block.today-block {
   border-bottom: 0;
 }
 

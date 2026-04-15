@@ -10,6 +10,7 @@ Use this ownership map:
 
 - `app/styles/tokens.css`: variables, theme tokens, global measurements
 - `app/styles/shell.css`: app shell, header, shared rail/container scaffolding
+- `app/styles/controls.css`: shared button/control primitives and edge-bleed utilities
 - `app/styles/dashboard.css`: queue rows, left rail blocks, job detail + prep shared surfaces
 - `app/styles/settings.css`: settings-page layout contracts and elevated controls
 - `app/styles/forms.css`: shared fields, uploads, disclosures, form states
@@ -18,5 +19,6 @@ Use this ownership map:
 
 Rules:
 - Do not move layout logic into random component-level selectors when a shared file already owns it.
+- Root `.button` selectors and queue-edge hairline utilities belong in `app/styles/controls.css`.
 - `app/globals.css` is import order only, not the place for surface-specific styling.
 - Keep zero visual diff when reorganizing CSS ownership.

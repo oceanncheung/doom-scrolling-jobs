@@ -124,8 +124,8 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot--status {
 
 /*
  * Three controls (e.g. Prepare | Potential | Archive):
- * — ≤900px: compact 2fr + 1fr + 1fr strip (flush seams).
- * — 901–1180px: same compact strip (meta summary is 2×2 — widths stay proportional, not five-column aligned).
+ * — ≤900px: Prepare full width; Potential + Archive one row — see responsive.css.
+ * — 901–1180px: compact 2fr + 1fr + 1fr strip (flush seams).
  * — ≥1181px: same five tracks as `.screening-summary-grid` — Prepare = Remote+Salary (cols 2–3), Fit = 4, Status = 5.
  */
 main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
@@ -171,7 +171,8 @@ main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-
       minmax(10rem, 1.15fr)
       minmax(8rem, 0.9fr)
       minmax(8rem, 0.9fr);
-    column-gap: var(--jobs-queue-col-gap);
+    /* Same five tracks as the meta row, but no gutters between the three buttons — only 1px seams. */
+    column-gap: 0;
     row-gap: 0;
   }
 
@@ -187,10 +188,7 @@ main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-
     grid-column: 5;
   }
 
-  /* Gaps separate columns — restore full seams so hover fill height matches across primary + secondary. */
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot + .stage-action-slot .button {
-    border-left-width: 1px;
-  }
+  /* Do not re-add border-left here — `.stage-action-slot + .stage-action-slot .button { border-left-width: 0 }` + overlap already yields a single 1px seam. */
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button {
     min-height: 40px;
@@ -236,19 +234,10 @@ main.jobs-index
   min-width: 0;
 }
 
-/* Potential queue: Save under Fit, Skip under Posted; bridge Fit–Posted gutter (same as stage rows) */
+/* Potential queue: Save under Fit, Skip under Posted; shared cluster layout owns equal widths. */
 main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster {
-  display: contents;
-}
-
-main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child {
-  grid-column: 4;
-  width: calc(100% + var(--jobs-queue-col-gap));
-  min-width: 0;
-}
-
-main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child {
-  grid-column: 5;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   min-width: 0;
 }
 
@@ -452,7 +441,8 @@ main.jobs-index .queue-list .screening-summary-grid > .screening-cell:not(.scree
 
 .screening-actions-cluster {
   grid-column: 4 / -1;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   width: 100%;
   min-width: 0;
   justify-self: stretch;
@@ -474,10 +464,6 @@ main.jobs-index .queue-list .screening-summary-grid > .screening-cell:not(.scree
   align-items: stretch;
   min-height: auto;
   min-width: 0;
-}
-
-.screening-action-slot:first-child {
-  border-right: none;
 }
 
 .screening-actions-bar .stage-action-form {
@@ -539,18 +525,15 @@ main.jobs-index .queue-list .screening-summary-grid > .screening-cell:not(.scree
 .screening-actions-bar .button {
   width: 100%;
   flex: 1;
-  min-height: auto;
-  padding: 10px 20px;
-  margin: 0;
+  min-height: 2.5rem;
+  padding: 0 20px;
   border: 1px solid var(--line);
-  border-radius: 0;
-  justify-content: center;
-  font-family: var(--font-body), sans-serif;
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1;
+  white-space: nowrap;
   background: transparent;
   color: var(--text);
   position: relative;
@@ -562,15 +545,10 @@ main.jobs-index .queue-list .screening-summary-grid > .screening-cell:not(.scree
 .stage-actions-bar .button {
   width: 100%;
   flex: 1;
-  min-height: auto;
-  padding: 10px 14px;
-  margin: 0;
+  min-height: 2.5rem;
+  padding: 0 20px;
   border: 1px solid var(--line);
-  border-radius: 0;
-  justify-content: center;
-  text-align: center;
-  font-family: var(--font-body), sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -595,6 +573,15 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-actio
 
 .screening-action-slot + .screening-action-slot {
   margin-left: calc(-1 * var(--adjacent-control-overlap));
+}
+
+.screening-actions-cluster > .screening-action-slot:last-child .button,
+.stage-actions-bar .stage-actions .stage-action-slot:last-child .button {
+  width: calc(100% + var(--adjacent-control-overlap));
+}
+
+.stage-actions-bar .stage-actions .stage-action-slot:last-child .button {
+  margin-right: calc(-1 * var(--adjacent-control-overlap));
 }
 
 .screening-actions-bar .button:hover:not(:disabled),
@@ -652,50 +639,8 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-actio
   border-color: var(--muted);
 }
 
-/*
- * Jobs index — three stage buttons, flush strip (≤900px only):
- * Grey rule above Potential + Archive; Prepare’s right edge uses --line. ≥1181px uses meta grid gaps — see @media (min-width: 1181px) above.
- */
+/* Jobs index — three stage buttons at ≤900px: layout + seams live in responsive.css (Prepare row + two-up). */
 @media (max-width: 900px) {
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot + .stage-action-slot {
-    margin-left: 0;
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(1) .button {
-    border-right-width: 1px;
-    border-right-style: solid;
-    border-right-color: var(--line);
-    z-index: auto;
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button {
-    border-right-width: 0;
-    border-left-width: 0;
-    border-top-width: 1px;
-    border-top-style: solid;
-    border-top-color: var(--line-soft);
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
-    border-left-width: 1px;
-    border-left-style: solid;
-    border-left-color: var(--line-soft);
-    border-top-width: 1px;
-    border-top-style: solid;
-    border-top-color: var(--line-soft);
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:hover:not(:disabled),
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:focus-visible:not(:disabled) {
-    border-top-color: var(--line-soft);
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:hover:not(:disabled),
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:focus-visible:not(:disabled) {
-    border-top-color: var(--line-soft);
-    border-left-color: var(--line-soft);
-  }
-
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button {
     min-height: 40px;
     box-sizing: border-box;
@@ -773,60 +718,6 @@ main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-
 .stage-action-form {
   display: grid;
   gap: 8px;
-}
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 0 3px;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-  color: var(--text);
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: 0.16px;
-  line-height: 1.2;
-  cursor: pointer;
-  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, opacity 200ms ease;
-}
-
-.button:hover {
-  opacity: 0.6;
-}
-
-.button:disabled {
-  cursor: not-allowed;
-  opacity: 0.35;
-}
-
-.button-primary {
-  font-weight: 600;
-}
-
-.button-ghost {
-  color: var(--muted);
-  border-bottom-color: var(--line-soft);
-}
-
-.button-small {
-  font-size: 0.9rem;
-}
-
-.action-note {
-  font-size: 0.82rem;
-  line-height: 1.4;
-}
-
-.action-note-error {
-  color: var(--text);
-}
-
-.action-note-success {
-  color: var(--muted);
 }
 
 .stage-row-reason {
@@ -1055,13 +946,4 @@ details[open].disclosure .disclosure-caret {
 
 .score-pill {
   color: var(--muted);
-}
-
-@media (min-width: 1181px) {
-  /* Skip meets queue edge; width/margin track --queue-column-pad (replaces legacy 10px). */
-  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child {
-    width: calc(100% + var(--queue-column-pad));
-    margin-right: calc(-1 * var(--queue-column-pad));
-    box-sizing: border-box;
-  }
 }

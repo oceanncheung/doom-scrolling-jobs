@@ -188,6 +188,16 @@
       minmax(0, 1fr);
   }
 
+  /* Prepare | Potential | Archive — same five tracks as `.screening-summary-grid` in this band (queue-rows min-width:1181 uses wider 2.8fr defaults). */
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
+    grid-template-columns:
+      minmax(0, 2.6fr)
+      minmax(9rem, 1.15fr)
+      minmax(9rem, 1.05fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+  }
+
   /* One-row meta band: expanded tracks match summary; Risks / gaps starts at Salary (column 3). */
   main.jobs-index .queue-list .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) {
     grid-template-columns:
@@ -408,6 +418,27 @@
     min-height: auto;
     overflow: visible;
     border-right: 0;
+  }
+
+  /*
+   * Login rail: no viewport-pinned ::after here — it used to hit the viewport’s right edge when
+   * `position: static` broke the aside’s containing block. Hide the hairline; separation is horizontal rules.
+   */
+  .dashboard-workspace.operator-entry-workspace .today-rail.today-rail--split-scroll {
+    position: relative;
+  }
+
+  .dashboard-workspace.operator-entry-workspace .today-rail.today-rail--split-scroll::after {
+    display: none;
+  }
+
+  /* Brand block gets the inset; scroll uses aside `gap` for rhythm — don’t double pad here. */
+  .dashboard-workspace.operator-entry-workspace .today-rail.today-rail--split-scroll > .today-rail-scroll {
+    padding-top: 0;
+  }
+
+  .dashboard-workspace.operator-entry-workspace .today-rail.today-rail--split-scroll > .queue-meta.today-rail-site-header {
+    padding-top: 16px;
   }
 
   .dashboard-workspace .today-rail > .today-rail-scroll {
@@ -733,13 +764,22 @@
     gap: 24px;
   }
 
-  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block:first-child {
+  .dashboard-workspace .today-rail:not(.settings-profile-rail):not(.today-rail--split-scroll) > .today-rail-scroll > .today-block:first-child {
     border-bottom: none;
     padding-top: 24px;
     padding-bottom: 0;
   }
 
-  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block:first-child + .today-block {
+  .dashboard-workspace .today-rail:not(.settings-profile-rail):not(.today-rail--split-scroll) > .today-rail-scroll > .today-block:first-child + .today-block {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .dashboard-workspace .today-rail:not(.settings-profile-rail):not(.today-rail--split-scroll) > .today-rail-scroll > .queue-meta.today-rail-site-header {
+    padding-bottom: 16px;
+  }
+
+  .dashboard-workspace .today-rail:not(.settings-profile-rail):not(.today-rail--split-scroll) > .today-rail-scroll > .queue-meta.today-rail-site-header + .today-block {
     border-top: none;
     padding-top: 0;
   }
@@ -906,8 +946,8 @@
   }
 
   .dashboard-workspace .queue-column > .queue-meta::after {
-    left: calc(-1 * var(--queue-column-pad));
-    width: calc(100% + (2 * var(--queue-column-pad)));
+    left: var(--edge-bleed-start);
+    width: var(--edge-bleed-width-nested);
   }
 
   .dashboard-workspace .queue-column > .queue-meta,
@@ -932,8 +972,8 @@
   .settings-main > section.panel.settings-section::before,
   .settings-main > section.panel.disclosure::before,
   .settings-main > section.panel.settings-section#source-files.is-standalone::after {
-    left: calc(-1 * var(--queue-column-pad));
-    width: calc(100% + (2 * var(--queue-column-pad)));
+    left: var(--edge-bleed-start);
+    width: var(--edge-bleed-width-nested);
   }
 
   .profile-testing-reset {
@@ -1458,8 +1498,7 @@
 
   main.jobs-index .queue-list .screening-actions-bar .screening-action-slot + .screening-action-slot .button {
     border-top-width: 1px;
-    border-left-width: 1px;
-    border-left-color: var(--line);
+    border-left-width: 0;
   }
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions {
@@ -1512,12 +1551,13 @@
   }
 
   /*
-   * Three actions (Continue prep | Potential | Archive): one row ½ + ¼ + ¼ — override flex column above.
-   * Dividers + hover: queue-rows.css
+   * Three actions — ≤900px: Prepare full width; Potential + Archive one row (½ + ½), flush seams.
+   * ≥901px: queue-rows.css tracks.
    */
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto;
     flex-direction: unset;
     align-items: stretch;
     column-gap: 0;
@@ -1529,52 +1569,38 @@
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot {
     flex: unset;
-    width: auto;
+    width: 100%;
     min-width: 0;
-    margin-top: 0;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot + .stage-action-slot {
-    margin-top: 0;
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--remote-salary {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--fit {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
     margin-left: 0;
   }
 
-  /*
-   * Three-slot borders: restore after generic resets (1492, 1557–1559). Grey top on Potential + Archive;
-   * grey vertical between them — must match queue-rows.css for all breakpoints.
-   */
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(1) .button {
-    border-right-width: 1px;
-    border-right-style: solid;
-    border-right-color: var(--line);
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 0;
+    margin-left: calc(-1 * var(--adjacent-control-overlap));
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button {
-    border-right-width: 0;
+  /* Row 2: single seam between columns — fit’s right border only; status has no left border (avoids 2px stack). */
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--fit .button {
+    border-top-width: 0;
     border-left-width: 0;
-    border-top-width: 1px;
-    border-top-style: solid;
-    border-top-color: var(--line-soft);
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button {
-    border-left-width: 1px;
-    border-left-style: solid;
-    border-left-color: var(--line-soft);
-    border-top-width: 1px;
-    border-top-style: solid;
-    border-top-color: var(--line-soft);
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:hover:not(:disabled),
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(2) .button:focus-visible:not(:disabled) {
-    border-top-color: var(--line-soft);
-  }
-
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:hover:not(:disabled),
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot:nth-child(3) .button:focus-visible:not(:disabled) {
-    border-top-color: var(--line-soft);
-    border-left-color: var(--line-soft);
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status .button {
+    border-top-width: 0;
+    border-left-width: 0;
   }
 
   .packet-page-actions > * + *,
@@ -1860,7 +1886,14 @@
     flex-direction: column;
   }
 
-  .button {
+  .settings-section .button,
+  .settings-profile .button,
+  .profile-card .button,
+  .today-block .button,
+  .today-resume-status .button,
+  .workflow-quick-actions .button,
+  .workflow-select-row .button,
+  .operator-entry-secondary-action .button {
     justify-content: flex-start;
   }
 
@@ -2060,9 +2093,15 @@
   }
 
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot .stage-action-form .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
     width: 100%;
     box-sizing: border-box;
     white-space: nowrap;
+    appearance: none;
+    -webkit-appearance: none;
   }
 
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot + .screening-action-slot {

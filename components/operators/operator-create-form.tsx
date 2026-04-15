@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useActionState } from 'react'
 
 import { createOperator, type OperatorSetupActionState } from '@/app/operators/actions'
@@ -10,7 +11,13 @@ const initialState: OperatorSetupActionState = {
   status: 'idle',
 }
 
-export function OperatorCreateForm({ hasOperators }: { hasOperators: boolean }) {
+export function OperatorCreateForm({
+  hasOperators,
+  secondaryAction,
+}: {
+  hasOperators: boolean
+  secondaryAction?: ReactNode
+}) {
   const [state, formAction, isPending] = useActionState(createOperator, initialState)
 
   return (
@@ -47,6 +54,8 @@ export function OperatorCreateForm({ hasOperators }: { hasOperators: boolean }) 
           </p>
         ) : null}
       </form>
+
+      {secondaryAction ? <div className="operator-entry-secondary-action">{secondaryAction}</div> : null}
     </section>
   )
 }

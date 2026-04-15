@@ -21,20 +21,30 @@
   box-shadow: none;
 }
 
+.settings-main > section.panel.settings-section .settings-action-disclosure[open] .settings-action-summary {
+  box-shadow: none;
+}
+
 .settings-main .disclosure-body > .settings-tab-shell {
   margin-top: 0;
 }
 
 .settings-action-summary {
-  display: inline-flex;
+  display: flex;
   justify-content: flex-start;
   align-items: stretch;
   margin: 0;
   padding-bottom: 0;
   list-style: none;
-  width: max-content;
+  width: 100%;
   max-width: 100%;
   cursor: default;
+  position: relative;
+  overflow: visible;
+}
+
+.settings-action-summary::after {
+  content: none;
 }
 
 .settings-action-summary::-webkit-details-marker {
@@ -69,7 +79,7 @@
   cursor: pointer;
   position: relative;
   z-index: 1;
-  transition: color 200ms ease, border-color 200ms ease, opacity 200ms ease;
+  transition: none;
   appearance: none;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
@@ -208,7 +218,6 @@
   padding-bottom: 0;
   border: 0;
   position: relative;
-  z-index: 1;
 }
 
 .settings-tab-toolbar-shell {
@@ -219,6 +228,22 @@
   box-sizing: border-box;
   overflow: visible;
   background: var(--bg);
+}
+
+.settings-tab-toolbar-shell::after {
+  content: none;
+}
+
+.settings-tab-toolbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Horizontal scroll when tab labels exceed the column (all viewports; track stays in the shell). */
@@ -243,13 +268,15 @@
   overflow: visible;
 }
 
+.settings-tab-shell:not(.has-selection) .settings-tab-toolbar-shell {
+  box-shadow: none;
+}
+
 .settings-tab-shell.has-selection .settings-tab-toolbar {
   background: var(--bg);
   box-sizing: border-box;
   padding-left: var(--queue-column-pad);
   padding-right: var(--settings-section-pad-right);
-  /* Hairline under chips: inset draws behind children so the active chip’s solid fill hides it (no clip/stacking issues). */
-  box-shadow: inset 0 -1px 0 0 var(--line);
 }
 
 .settings-tab-button {
@@ -257,6 +284,7 @@
   top: 0;
   margin-bottom: 0;
   border-bottom: 0;
+  z-index: 0;
 }
 
 .settings-tab-button + .settings-tab-button {
@@ -325,6 +353,14 @@
   border-bottom: none;
 }
 
+/*
+ * Closed tab disclosures own the seam at their bottom edge. Hide the following disclosure's top rule
+ * in that specific handoff so the line doesn't double up.
+ */
+.settings-main > section.panel.disclosure:has(.settings-tab-shell:not(.has-selection)) + section.panel.disclosure::before {
+  display: none;
+}
+
 .settings-tab-shell.has-selection .settings-tab-button:not(.is-active) {
   background: transparent;
   color: var(--muted);
@@ -365,6 +401,19 @@
   border-left: 1px solid var(--line);
   border-right: 1px solid var(--line);
   border-bottom: 0;
+  z-index: 2;
+}
+
+.settings-tab-shell.has-selection .settings-tab-button.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--surface-soft);
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* Open disclosure chip: grey fill with L/T/R borders only; bottom hairline is toolbar inset shadow. */
@@ -394,7 +443,7 @@
   border-left-style: solid;
 }
 
-.settings-tab-shell.has-selection .settings-tab-button {
+.settings-tab-shell.has-selection .settings-tab-button:not(.is-active) {
   border-bottom: 0;
 }
 
@@ -466,7 +515,6 @@
   margin: 0;
 }
 
-/* Seam with toolbar is the toolbar’s `border-bottom`; no top border here (avoids a second line under the active chip). */
 .settings-tab-shell.has-selection .settings-tab-panel {
   color-scheme: light;
   margin: 0;

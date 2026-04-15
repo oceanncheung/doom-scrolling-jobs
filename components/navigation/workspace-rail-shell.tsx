@@ -7,6 +7,8 @@ const RAIL_CLOSE_MS = 320
 
 interface WorkspaceRailShellProps {
   ariaLabel?: string
+  /** Rendered above the scroll region (e.g. site title) so it stays pinned while the rail body scrolls. */
+  beforeScroll?: ReactNode
   children: ReactNode
   className?: string
   collapseAction?: ReactNode
@@ -18,6 +20,7 @@ interface WorkspaceRailShellProps {
 
 export function WorkspaceRailShell({
   ariaLabel,
+  beforeScroll,
   children,
   className = 'today-rail',
   collapseAction,
@@ -132,6 +135,7 @@ export function WorkspaceRailShell({
             </button>
           </div>
         ) : null}
+        {beforeScroll}
         <div className={scrollClassName}>{children}</div>
         {footer}
       </aside>

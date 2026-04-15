@@ -6,16 +6,18 @@ import type { OperatorRecord } from '@/lib/domain/types'
 interface OperatorAccessFormProps {
   activeOperatorId?: string
   operators: OperatorRecord[]
+  sectionId?: string
 }
 
 export function OperatorAccessForm({
   activeOperatorId,
   operators,
+  sectionId,
 }: OperatorAccessFormProps) {
   return (
     <div className="operator-access-shell">
       {operators.length > 0 ? (
-        <section className="operator-list" aria-label="Available operators">
+        <section className="operator-list" id={sectionId} aria-label="Available operators">
           {operators.map((operator) => {
             const isActive = operator.id === activeOperatorId
 

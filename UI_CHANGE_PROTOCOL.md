@@ -8,6 +8,7 @@ This app does **not** use a single stylesheet. The active ownership map is:
 
 - `app/styles/tokens.css`: variables and theme tokens
 - `app/styles/shell.css`: app shell, header, shared rail/container scaffolding
+- `app/styles/controls.css`: shared button/control primitives and edge-bleed utilities
 - `app/styles/dashboard.css`: queue rows, job detail/prep shared surfaces, left-rail content
 - `app/styles/settings.css`: settings-page layout contracts and elevated controls
 - `app/styles/forms.css`: shared fields, uploads, disclosures, form states
@@ -38,10 +39,12 @@ Before editing:
 Prefer:
 - shared row wrappers over one-off row tweaks
 - shared job-flow components over page-local patches
+- shared control ownership in `app/styles/controls.css` over per-surface button reset duplicates
 - owning stylesheet changes over scattered selector overrides
 
 Avoid:
 - duplicate spacing rules
+- duplicate base `.button` selectors or raw edge-hairline math in surface files
 - per-component layout hacks when a shared surface already owns the behavior
 - hidden fallbacks that make blank states behave like demo data
 

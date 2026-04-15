@@ -160,13 +160,10 @@
 .packet-page-actions .button,
 .job-flow-actions .button {
   width: 100%;
-  padding: 10px 16px;
+  min-height: 2.5rem;
+  padding: 0 16px;
   border: 1px solid var(--line);
-  border-radius: 0;
   background: transparent;
-  justify-content: center;
-  text-align: center;
-  font-family: var(--font-body), sans-serif;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -218,24 +215,19 @@
   content: '';
   position: absolute;
   bottom: 0;
-  left: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + var(--queue-column-pad));
+  left: var(--edge-bleed-start);
+  width: var(--edge-bleed-width);
   height: 1px;
   background: var(--line);
   pointer-events: none;
-}
-
-/* Overview block sits inside padded wrap + inner; extend hairline past both horizontal insets */
-.job-flow-prep-overview-wrap > .job-flow-section.detail-review-section::after {
-  width: calc(100% + (2 * var(--queue-column-pad)));
 }
 
 .job-flow-section::before {
   content: '';
   position: absolute;
   top: 0;
-  left: calc(-1 * var(--queue-column-pad));
-  width: calc(100% + var(--queue-column-pad));
+  left: var(--edge-bleed-start);
+  width: var(--edge-bleed-width);
   height: 1px;
   background: var(--line);
 }
