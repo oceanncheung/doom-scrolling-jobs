@@ -94,30 +94,25 @@
 }
 
 /*
- * Login rail brand — same building blocks as main-column `PageIntroHeader` (queue-meta + settings-page-header
- * + queue-meta-heading + h1). Rail-only: hairline + horizontal inset; vertical rhythm uses aside `gap` + padding.
+ * Login rail brand reuses the shared site-brand row from the signed-in header, but without the
+ * gear/menu affordances. Keep the same height contract and mono title styling; only swap in the
+ * rail insets and the bottom divider for this surface.
  */
-.dashboard-workspace .today-rail.today-rail--split-scroll > .queue-meta.today-rail-site-header.settings-page-header {
+.dashboard-workspace .today-rail.today-rail--split-scroll > .today-rail-site-header.site-brand.site-brand--rail {
   box-sizing: border-box;
   width: 100%;
   margin: 0;
-  padding: 24px var(--today-rail-pad-left) 24px;
+  padding-left: var(--today-rail-pad-left);
+  padding-right: var(--today-rail-pad-left);
+  border-right: 0;
   border-bottom: 1px solid var(--line);
   background: var(--bg);
+  flex-shrink: 0;
 }
 
-/* Same h1 as main-column queue-meta (queue-meta.css); rail inherits no extra weight from today-block rules. */
-.dashboard-workspace .today-rail.today-rail--split-scroll > .queue-meta.today-rail-site-header .queue-meta-heading h1 {
-  font-family: var(--font-display), sans-serif;
-  font-size: clamp(2rem, 4vw, 2.75rem);
-  font-weight: 300;
-  font-style: normal;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
-  margin: 0;
+.dashboard-workspace .today-rail.today-rail--split-scroll > .today-rail-site-header.site-brand.site-brand--rail::after {
+  display: none;
 }
-
-/* settings/page-shell.css also sets `.settings-page-header .queue-meta-heading` — no duplicate rules here. */
 
 /* Create-account block: horizontal inset only; vertical gap comes from `.today-rail-scroll` grid gap. */
 .dashboard-workspace .today-rail.today-rail--split-scroll > .today-rail-scroll > .today-block:first-child {

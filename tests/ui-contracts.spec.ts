@@ -1,34 +1,10 @@
 import { expect, test } from '@playwright/test'
 import type { Locator, Page } from '@playwright/test'
 
+import { ensureSignedIn, waitForUiSettled } from '@/tests/helpers/auth'
+
 function round(value: number | null | undefined) {
   return value == null ? null : Math.round(value)
-}
-
-async function signInFromEntry(page: Page) {
-  await page.goto('/', { waitUntil: 'networkidle' })
-
-  const revealButton = page.locator('.operator-entry-reveal-button')
-  if (await revealButton.count()) {
-    await expect(revealButton).toBeVisible()
-    await revealButton.click()
-  }
-
-  const operatorRow = page.locator('.operator-row-button').first()
-  if (await operatorRow.count()) {
-    await expect(operatorRow).toBeVisible()
-    await operatorRow.click()
-    await page.waitForURL(/\/dashboard(?:\?.*)?$/)
-  }
-}
-
-async function ensureSignedIn(page: Page) {
-  await page.goto('/dashboard', { waitUntil: 'networkidle' })
-  if (page.url().includes('/dashboard')) {
-    return
-  }
-
-  await signInFromEntry(page)
 }
 
 async function expectHorizontalHairlineFlush(locator: Locator, pseudo: '::before' | '::after') {
@@ -66,6 +42,23 @@ async function expectHorizontalHairlineFlush(locator: Locator, pseudo: '::before
   expect(Math.abs(metrics.end - metrics.containerEnd)).toBeLessThanOrEqual(1)
 }
 
+async function waitForScrollPosition(page: Page, target: 'top' | 'bottom') {
+  if (target === 'top') {
+    await page.waitForFunction(() => Math.abs(window.scrollY) <= 1, undefined, { timeout: 1500 })
+    return
+  }
+
+  await page.waitForFunction(
+    () => {
+      const scrollingElement = document.scrollingElement ?? document.documentElement
+      const maxScrollY = Math.max(0, scrollingElement.scrollHeight - window.innerHeight)
+      return Math.abs(window.scrollY - maxScrollY) <= 2
+    },
+    undefined,
+    { timeout: 1500 },
+  )
+}
+
 test.describe('UI contracts', () => {
   test('operator list stays hidden until sign in is requested', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' })
@@ -98,13 +91,13 @@ test.describe('UI contracts', () => {
       )
 
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-      await page.waitForTimeout(150)
+      await waitForScrollPosition(page, 'bottom')
       topPositions.push(
         await header.evaluate((node) => Math.round(node.getBoundingClientRect().top)),
       )
 
       await page.evaluate(() => window.scrollTo(0, 0))
-      await page.waitForTimeout(150)
+      await waitForScrollPosition(page, 'top')
       topPositions.push(
         await header.evaluate((node) => Math.round(node.getBoundingClientRect().top)),
       )
@@ -174,6 +167,8 @@ test.describe('UI contracts', () => {
     expect(before).not.toBeNull()
 
     await summary.click()
+    await expect(page.locator('.settings-action-disclosure').first()).toHaveAttribute('open', '')
+    await waitForUiSettled(page)
 
     const after = await summary.evaluate((node) => {
       const toggleNode = node.querySelector<HTMLElement>('.settings-action-toggle')
@@ -208,12 +203,13 @@ test.describe('UI contracts', () => {
     await page.goto('/profile', { waitUntil: 'networkidle' })
 
     const shell = page.locator('.disclosure-experience .settings-tab-shell').first()
+    const toolbarShell = shell.locator('.settings-tab-toolbar-shell').first()
     const toolbar = shell.locator('.settings-tab-toolbar').first()
     await expect(toolbar).toBeVisible()
     const closedButtonBox = await shell.locator('.settings-tab-button').first().boundingBox()
     expect(closedButtonBox).not.toBeNull()
 
-    const closedAfter = await toolbar.evaluate((node) => ({
+    const closedAfter = await toolbarShell.evaluate((node) => ({
       background: getComputedStyle(node, '::after').backgroundColor,
       content: getComputedStyle(node, '::after').content,
       display: getComputedStyle(node, '::after').display,
@@ -227,10 +223,13 @@ test.describe('UI contracts', () => {
       .evaluate((node) => getComputedStyle(node, '::before').display)
     expect(nextDisclosureLine).toBe('none')
 
-    await shell.locator('.settings-tab-button').first().click()
-    await page.waitForTimeout(150)
+    const firstTabButton = shell.locator('.settings-tab-button').first()
+    await firstTabButton.click()
+    await expect(firstTabButton).toHaveClass(/is-active/)
+    await expect(shell).toHaveClass(/has-selection/)
+    await waitForUiSettled(page)
 
-    const openAfter = await toolbar.evaluate((node) => ({
+    const openAfter = await toolbarShell.evaluate((node) => ({
       background: getComputedStyle(node, '::after').backgroundColor,
       content: getComputedStyle(node, '::after').content,
       display: getComputedStyle(node, '::after').display,

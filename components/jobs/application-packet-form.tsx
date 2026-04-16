@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 
+import { initialActionFormState } from '@/components/jobs/action-form-primitives'
 import { PacketHiddenFields } from '@/components/jobs/packet-hidden-fields'
 import { saveApplicationPacket, type ApplicationPacketActionState } from '@/app/jobs/actions'
 import { PacketFormFooterMessage } from '@/components/jobs/packet-form-footer-message'
@@ -14,10 +15,7 @@ import { getPacketLifecycle } from '@/lib/jobs/packet-lifecycle'
 import { buildPacketMaterialsViewModel } from '@/lib/jobs/packet-view-model'
 import type { ProfileReadinessPresentation } from '@/lib/profile/readiness-presentation'
 
-const initialState: ApplicationPacketActionState = {
-  message: '',
-  status: 'idle',
-}
+const initialState: ApplicationPacketActionState = initialActionFormState
 
 interface ApplicationPacketFormProps {
   canSave: boolean

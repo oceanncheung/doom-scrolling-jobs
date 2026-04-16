@@ -40,6 +40,11 @@ export interface ImportedSourceBatch {
   sourceName: string
 }
 
+interface GreenhouseFetchOptions {
+  jobLimit?: number
+  timeoutMs?: number
+}
+
 function asString(value: unknown) {
   if (typeof value === 'string') {
     return value.trim()
@@ -128,7 +133,10 @@ function normalizeGreenhouseRawJob(
   }
 }
 
-export async function fetchGreenhouseCompanyJobs(company: CompanyWatchlistEntry): Promise<ImportedSourceBatch> {
+export async function fetchGreenhouseCompanyJobs(
+  company: CompanyWatchlistEntry,
+  options: GreenhouseFetchOptions = {},
+): Promise<ImportedSourceBatch> {
   const boardToken = company.atsBoardToken
 
   if (!boardToken) {
@@ -144,12 +152,16 @@ export async function fetchGreenhouseCompanyJobs(company: CompanyWatchlistEntry)
   }
 
   try {
-    const response = await fetchWithTimeout(`https://boards-api.greenhouse.io/v1/boards/${boardToken}/jobs?content=true`, {
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json',
+    const response = await fetchWithTimeout(
+      `https://boards-api.greenhouse.io/v1/boards/${boardToken}/jobs?content=true`,
+      {
+        cache: 'no-store',
+        headers: {
+          Accept: 'application/json',
+        },
       },
-    })
+      options.timeoutMs,
+    )
 
     if (!response.ok) {
       return {
@@ -165,7 +177,11 @@ export async function fetchGreenhouseCompanyJobs(company: CompanyWatchlistEntry)
 
     const payload = asGreenhouseJobsPayload(await response.json())
     const capturedAt = new Date().toISOString()
-    const rawJobs = payload.jobs
+    const jobs =
+      typeof options.jobLimit === 'number' && options.jobLimit > 0
+        ? payload.jobs.slice(0, options.jobLimit)
+        : payload.jobs
+    const rawJobs = jobs
       .map((item) => normalizeGreenhouseRawJob(company, item, capturedAt))
       .filter((item): item is RawJobIntakeRecord => item !== null)
 

@@ -231,10 +231,6 @@
 }
 
 .settings-tab-toolbar-shell::after {
-  content: none;
-}
-
-.settings-tab-toolbar::after {
   content: '';
   position: absolute;
   left: 0;
@@ -246,15 +242,25 @@
   z-index: 1;
 }
 
-/* Horizontal scroll when tab labels exceed the column (all viewports; track stays in the shell). */
+.settings-tab-toolbar::after {
+  content: none;
+}
+
+/*
+ * Horizontal scroll when tab labels exceed the column (all viewports; track stays in the shell).
+ * With overflow-x: auto, overflow-y: visible computes to auto in browsers — the track becomes a
+ * nested vertical scroller and fights page scroll (trackpad “juggling”). Lock vertical overflow.
+ */
 .settings-tab-toolbar-track {
   min-width: 0;
   box-sizing: border-box;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
+  touch-action: pan-x;
   padding-right: 0;
 }
 
@@ -536,24 +542,35 @@
 .settings-section-header {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: var(--section-eyebrow-stack-gap);
   align-items: start;
 }
 
 .settings-section-title-stack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  row-gap: var(--section-eyebrow-stack-gap);
+  column-gap: 0;
   min-width: 0;
+  align-items: stretch;
 }
 
 .settings-section-title-stack > .panel-label,
+.settings-section-title-stack > h1,
 .settings-section-title-stack > h2,
+.settings-section-title-stack > h3,
 .settings-section-title-stack > .settings-section-note {
   margin: 0;
+  padding: 0;
+}
+
+/* Tight line box on uppercase label so flex `row-gap` matches the visible space to the title. */
+.settings-section-title-stack > .panel-label {
+  line-height: 1.25;
 }
 
 .settings-section-header h2,
+.settings-section-header h3,
 .settings-matching-controls-heading small {
   font-family: var(--font-display), sans-serif;
   font-size: 1.5rem;
@@ -641,11 +658,12 @@
   transition: background-color 200ms ease, color 200ms ease;
 }
 
-.settings-section .button:hover,
-.settings-profile .button:hover,
-.profile-card .button:hover {
+.settings-section .button.button-primary,
+.settings-profile .button.button-primary,
+.profile-card .button.button-primary {
   background: var(--text);
   color: var(--bg);
+  border-color: var(--text);
 }
 
 .upload-slot {

@@ -60,7 +60,7 @@
 
 .flow-snapshot > div {
   display: grid;
-  gap: 8px;
+  gap: var(--section-eyebrow-stack-gap);
   padding-top: 8px;
   border-top: 1px solid var(--line-soft);
 }
@@ -72,6 +72,7 @@
 }
 
 .panel-label {
+  margin: 0;
   color: var(--muted);
   font-family: var(--font-body), sans-serif;
   font-size: 0.6875rem;
@@ -166,7 +167,7 @@
   padding-right: 0;
 }
 
-.dashboard-workspace .today-rail:not(.settings-profile-rail).today-rail--split-scroll > .queue-meta.today-rail-site-header {
+.dashboard-workspace .today-rail:not(.settings-profile-rail).today-rail--split-scroll > .today-rail-site-header.site-brand--rail {
   flex-shrink: 0;
 }
 
@@ -229,7 +230,7 @@
 .dashboard-workspace .today-rail > .today-rail-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   display: grid;
@@ -363,7 +364,7 @@
 
 .today-block-heading {
   display: grid;
-  gap: 8px;
+  gap: var(--section-eyebrow-stack-gap);
 }
 
 .today-block-heading h2 {
@@ -382,7 +383,7 @@
 
 .today-apply-copy {
   display: grid;
-  gap: 8px;
+  gap: var(--section-eyebrow-stack-gap);
 }
 
 .today-job-link {
@@ -398,6 +399,12 @@
 .today-resume-status p,
 .today-empty p:last-child {
   color: var(--muted);
+}
+
+.column-reading-copy {
+  display: block;
+  min-width: 0;
+  width: 100%;
 }
 
 .today-actions {
@@ -420,6 +427,33 @@
   width: 100%;
 }
 
+.today-actions .button .button__label {
+  width: 100%;
+  text-align: center;
+}
+
+@media (min-width: 901px) {
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll {
+    width: calc(100% + var(--today-rail-pad-left) + var(--today-rail-pad-right));
+    max-width: none;
+    margin-left: calc(-1 * var(--today-rail-pad-left));
+    margin-right: calc(-1 * var(--today-rail-pad-right));
+    box-sizing: border-box;
+  }
+
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block:first-child,
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block + .today-block {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .dashboard-workspace .today-rail:not(.settings-profile-rail) .today-apply-next .today-actions {
+    width: 100%;
+    max-width: none;
+    margin-right: 0;
+  }
+}
+
 .today-resume-status .button,
 .today-block .button {
   width: 100%;
@@ -431,36 +465,31 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1;
-  background: transparent;
   transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 }
 
 .today-block .button.button-secondary {
-  border-color: var(--line-soft);
   color: var(--muted);
   font-weight: 500;
 }
 
-.today-block .button:hover,
-.today-resume-status .button:hover {
+.today-apply-next .today-actions .button.button-secondary {
+  border-color: var(--line);
+}
+
+.today-resume-status .button.button-primary,
+.today-block .button.button-primary {
   background: var(--text);
   color: var(--bg);
+  border-color: var(--text);
 }
 
 /* Apply next: primary = black fill; secondary Skip = dark grey (matches job card secondary hover) */
 .today-apply-next .today-actions .button.button-primary:hover:not(:disabled),
 .today-apply-next .today-actions .button.button-primary:focus-visible {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
-  opacity: 1;
-}
-
-.today-apply-next .today-actions .button.button-secondary:hover:not(:disabled),
-.today-apply-next .today-actions .button.button-secondary:focus-visible {
-  background: var(--muted);
-  color: var(--bg);
-  border-color: var(--muted);
+  background: var(--accent);
+  color: var(--text);
+  border-color: var(--accent);
   opacity: 1;
 }
 

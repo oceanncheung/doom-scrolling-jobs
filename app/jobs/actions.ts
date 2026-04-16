@@ -12,6 +12,10 @@ import {
 } from '@/lib/domain/types'
 import { hasSupabaseServerEnv } from '@/lib/env'
 import { generateAndPersistApplicationPacket } from '@/lib/jobs/application-packet-generation'
+import {
+  getPacketSaveGuardMessage,
+  inferPacketGenerationStatus,
+} from '@/lib/jobs/packet-save-guards'
 import { persistPreferenceSignal } from '@/lib/jobs/learning'
 import {
   asPacketSubmitIntent,
@@ -23,11 +27,11 @@ import {
   getJobWorkflowTargetStatusForQuickAction,
   getWorkflowEventType,
   getWorkflowSuccessMessage,
-  getWorkflowTransitionNote,
 } from '@/lib/jobs/workflow-actions'
 import {
   shouldEnsurePacketWorkspace,
 } from '@/lib/jobs/workflow-state'
+import { persistJobWorkflowTransition } from '@/lib/jobs/workflow-transition'
 import { createClient } from '@/lib/supabase/server'
 
 export interface JobWorkflowActionState {
@@ -43,6 +47,11 @@ export interface ApplicationPacketActionState {
 export interface PacketGenerationActionState {
   message: string
   status: 'error' | 'idle' | 'success'
+}
+
+const initialJobWorkflowActionState: JobWorkflowActionState = {
+  message: '',
+  status: 'idle',
 }
 
 const MISSING_COVER_LETTER_CHANGE_SUMMARY_COLUMN =
@@ -208,33 +217,6 @@ function resolveTargetStatus(formData: FormData) {
   return asWorkflowStatus(asTextValue(formData.get('workflowStatus')))
 }
 
-function inferPacketGenerationStatus(record: Record<string, unknown> | null) {
-  if (!record) {
-    return 'not_started'
-  }
-
-  const explicitStatus = asTextValue((record.generation_status as string | undefined) ?? '')
-
-  if (
-    explicitStatus === 'not_started' ||
-    explicitStatus === 'running' ||
-    explicitStatus === 'generated' ||
-    explicitStatus === 'failed'
-  ) {
-    return explicitStatus
-  }
-
-  if (
-    asTextValue((record.generated_at as string | undefined) ?? '') ||
-    asTextValue((record.cover_letter_draft as string | undefined) ?? '') ||
-    asTextValue((record.professional_summary as string | undefined) ?? '')
-  ) {
-    return 'generated'
-  }
-
-  return 'not_started'
-}
-
 export async function updateJobWorkflow(
   _previousState: JobWorkflowActionState,
   formData: FormData,
@@ -307,41 +289,29 @@ export async function updateJobWorkflow(
     }
   }
 
-  const now = new Date().toISOString()
-  const updateResult = await supabase
-    .from('job_scores')
-    .update({
-      last_status_changed_at: now,
-      workflow_status: targetStatus,
-    })
-    .eq('id', existingScore.id)
-    .eq('operator_id', operatorContext.operator.id)
-
-  if (updateResult.error) {
-    return {
-      message: updateResult.error.message,
-      status: 'error',
-    }
-  }
-
-  const eventResult = await supabase.from('application_events').insert({
-    operator_id: operatorContext.operator.id,
-    user_id: operatorContext.userId,
-    job_id: jobId,
-    event_type: getWorkflowEventType(targetStatus),
-    from_status: currentStatus,
-    to_status: targetStatus,
-    event_payload: {
+  const transitionResult = await persistJobWorkflowTransition({
+    actionKind,
+    currentStatus,
+    eventPayload: {
       actionKind,
       intent,
       sourceContext,
       targetStatus,
     },
-    notes: getWorkflowTransitionNote({
-      actionKind,
-      targetStatus,
-    }),
+    jobId,
+    operatorId: operatorContext.operator.id,
+    scoreId: existingScore.id,
+    supabase,
+    targetStatus,
+    userId: operatorContext.userId,
   })
+
+  if (transitionResult.updateError) {
+    return {
+      message: transitionResult.updateError,
+      status: 'error',
+    }
+  }
 
   await persistPreferenceSignal({
     jobId,
@@ -363,9 +333,9 @@ export async function updateJobWorkflow(
   revalidatePath(`/jobs/${jobId}`)
   refresh()
 
-  if (eventResult.error) {
+  if (transitionResult.eventError) {
     return {
-      message: `${getWorkflowSuccessMessage(targetStatus)} Activity history could not be written: ${eventResult.error.message}`,
+      message: `${getWorkflowSuccessMessage(targetStatus)} Activity history could not be written: ${transitionResult.eventError}`,
       status: 'success',
     }
   }
@@ -374,6 +344,21 @@ export async function updateJobWorkflow(
     message: getWorkflowSuccessMessage(targetStatus),
     status: 'success',
   }
+}
+
+export async function applyToJob({
+  jobId,
+  sourceContext = 'apply-action',
+}: {
+  jobId: string
+  sourceContext?: string
+}): Promise<JobWorkflowActionState> {
+  const formData = new FormData()
+  formData.set('jobId', jobId)
+  formData.set('actionKind', 'apply')
+  formData.set('sourceContext', sourceContext)
+
+  return updateJobWorkflow(initialJobWorkflowActionState, formData)
 }
 
 export async function generateApplicationPacket(
@@ -485,16 +470,14 @@ export async function saveApplicationPacket(
   const caseStudySelection = parseJsonArray(formData.get('caseStudySelectionJson'), [])
   const applicationAnswers = parseApplicationAnswers(formData)
 
-  if (!existingPacket) {
-    return {
-      message: 'Generate content first before marking this application ready.',
-      status: 'error',
-    }
-  }
+  const packetSaveGuardMessage = getPacketSaveGuardMessage({
+    existingPacket: (existingPacket as Record<string, unknown> | null) ?? null,
+    submitIntent,
+  })
 
-  if (submitIntent === 'mark-ready' && persistedGenerationStatus !== 'generated') {
+  if (packetSaveGuardMessage) {
     return {
-      message: 'Generate the resume, cover letter, and answers before marking this application ready.',
+      message: packetSaveGuardMessage,
       status: 'error',
     }
   }
@@ -629,7 +612,7 @@ export async function saveApplicationPacket(
         submitIntent === 'mark-ready'
           ? 'Packet marked ready from the prep workspace.'
           : submitIntent === 'apply'
-            ? 'Application marked applied from the prep workspace.'
+            ? 'Application submitted and moved into Applied from the prep workspace.'
             : 'Packet work started from the prep workspace.',
     })
   }
@@ -654,7 +637,7 @@ export async function saveApplicationPacket(
       submitIntent === 'mark-ready'
         ? 'Draft saved and marked ready.'
         : submitIntent === 'apply'
-          ? 'Application materials saved and marked applied.'
+          ? 'Application materials saved and moved to Applied.'
           : `Draft saved with ${applicationAnswers.length} structured answers.`,
     status: 'success',
   }

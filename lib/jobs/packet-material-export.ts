@@ -1,27 +1,81 @@
 import 'server-only'
 
-import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx'
+import { BorderStyle, Document, LineRuleType, PageOrientation, Packer, Paragraph, TextRun, convertInchesToTwip } from 'docx'
 
 import type { ApplicationPacketRecord, OperatorWorkspaceRecord } from '@/lib/domain/types'
 import { type QualifiedJobRecord } from '@/lib/jobs/contracts'
-import { buildCoverLetterExportContent, buildResumeExportContent } from '@/lib/jobs/packet-materials'
+import {
+  SHARED_DOCUMENT_THEME,
+  buildCoverLetterDocumentSchema,
+  buildResumeDocumentSchema,
+} from '@/lib/jobs/document-system'
 
-function textParagraph(text: string) {
+function toHalfPoints(sizePt: number) {
+  return sizePt * 2
+}
+
+function toTwip(points: number) {
+  return points * 20
+}
+
+function bodyParagraph(text: string) {
   return new Paragraph({
-    children: [new TextRun(text)],
+    children: [
+      new TextRun({
+        font: SHARED_DOCUMENT_THEME.fontFamily,
+        size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body),
+        text,
+      }),
+    ],
     spacing: {
-      after: 120,
+      after: toTwip(SHARED_DOCUMENT_THEME.spacingPt.afterBody),
+      line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+      lineRule: LineRuleType.AUTO,
     },
   })
 }
 
-function headingParagraph(text: string) {
+function compactParagraph(text: string, secondary = false) {
   return new Paragraph({
-    children: [new TextRun({ bold: true, text })],
-    heading: HeadingLevel.HEADING_2,
+    children: [
+      new TextRun({
+        color: secondary ? SHARED_DOCUMENT_THEME.color.secondary : SHARED_DOCUMENT_THEME.color.primary,
+        font: SHARED_DOCUMENT_THEME.fontFamily,
+        size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body),
+        text,
+      }),
+    ],
     spacing: {
-      before: 240,
-      after: 120,
+      after: toTwip(SHARED_DOCUMENT_THEME.spacingPt.afterCompact),
+      line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+      lineRule: LineRuleType.AUTO,
+    },
+  })
+}
+
+function sectionHeading(text: string) {
+  return new Paragraph({
+    border: {
+      top: {
+        color: SHARED_DOCUMENT_THEME.color.primary,
+        size: 2,
+        space: 1,
+        style: BorderStyle.SINGLE,
+      },
+    },
+    children: [
+      new TextRun({
+        bold: true,
+        font: SHARED_DOCUMENT_THEME.fontFamily,
+        size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.heading),
+        text,
+      }),
+    ],
+    spacing: {
+      after: toTwip(SHARED_DOCUMENT_THEME.spacingPt.afterSectionHeading),
+      before: toTwip(SHARED_DOCUMENT_THEME.spacingPt.beforeSectionHeading),
+      line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+      lineRule: LineRuleType.AUTO,
     },
   })
 }
@@ -31,9 +85,82 @@ function bulletParagraph(text: string) {
     bullet: {
       level: 0,
     },
-    children: [new TextRun(text)],
+    children: [
+      new TextRun({
+        font: SHARED_DOCUMENT_THEME.fontFamily,
+        size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body),
+        text,
+      }),
+    ],
     spacing: {
-      after: 80,
+      after: toTwip(SHARED_DOCUMENT_THEME.spacingPt.afterCompact),
+      line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+      lineRule: LineRuleType.AUTO,
+    },
+  })
+}
+
+function labeledParagraph(label: string, value: string) {
+  return new Paragraph({
+    children: [
+      new TextRun({
+        bold: true,
+        font: SHARED_DOCUMENT_THEME.fontFamily,
+        size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body),
+        text: `${label}: `,
+      }),
+      new TextRun({
+        font: SHARED_DOCUMENT_THEME.fontFamily,
+        size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body),
+        text: value,
+      }),
+    ],
+    spacing: {
+      after: toTwip(SHARED_DOCUMENT_THEME.spacingPt.afterCompact),
+      line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+      lineRule: LineRuleType.AUTO,
+    },
+  })
+}
+
+function createSharedDocument(children: Paragraph[]) {
+  return new Document({
+    sections: [
+      {
+        children,
+        properties: {
+          page: {
+            margin: {
+              bottom: convertInchesToTwip(SHARED_DOCUMENT_THEME.page.marginInches),
+              left: convertInchesToTwip(SHARED_DOCUMENT_THEME.page.marginInches),
+              right: convertInchesToTwip(SHARED_DOCUMENT_THEME.page.marginInches),
+              top: convertInchesToTwip(SHARED_DOCUMENT_THEME.page.marginInches),
+            },
+            size: {
+              height: 15840,
+              orientation: PageOrientation.PORTRAIT,
+              width: 12240,
+            },
+          },
+        },
+      },
+    ],
+    styles: {
+      default: {
+        document: {
+          paragraph: {
+            spacing: {
+              line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+              lineRule: LineRuleType.AUTO,
+            },
+          },
+          run: {
+            color: SHARED_DOCUMENT_THEME.color.primary,
+            font: SHARED_DOCUMENT_THEME.fontFamily,
+            size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body),
+          },
+        },
+      },
     },
   })
 }
@@ -45,65 +172,76 @@ export async function buildResumeDocxBuffer({
   packet: ApplicationPacketRecord
   workspace: OperatorWorkspaceRecord
 }) {
-  const content = buildResumeExportContent(packet, workspace)
+  const content = buildResumeDocumentSchema(packet, workspace)
   const children: Paragraph[] = []
 
-  if (content.name) {
+  if (content.header.name) {
     children.push(
       new Paragraph({
-        children: [new TextRun({ bold: true, size: 30, text: content.name })],
+        children: [
+          new TextRun({
+            bold: true,
+            font: SHARED_DOCUMENT_THEME.fontFamily,
+            size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.name),
+            text: content.header.name,
+          }),
+        ],
         spacing: {
-          after: 120,
+          after: toTwip(SHARED_DOCUMENT_THEME.spacingPt.afterBody),
+          line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+          lineRule: LineRuleType.AUTO,
         },
       }),
     )
   }
 
-  if (content.headline) {
-    children.push(
-      new Paragraph({
-        children: [new TextRun({ size: 22, text: content.headline })],
-        spacing: {
-          after: 120,
-        },
-      }),
-    )
+  if (content.header.primaryContactLine) {
+    children.push(compactParagraph(content.header.primaryContactLine, true))
   }
 
-  for (const line of content.contactLines) {
-    children.push(textParagraph(line))
+  if (content.header.secondaryContactLine) {
+    children.push(compactParagraph(content.header.secondaryContactLine, true))
   }
 
   if (content.summary) {
-    children.push(headingParagraph('Professional Summary'))
-    children.push(textParagraph(content.summary))
+    children.push(sectionHeading('Professional Summary'))
+    children.push(bodyParagraph(content.summary))
   }
 
-  if (content.skills.length > 0) {
-    children.push(headingParagraph('Core Skills'))
-    children.push(textParagraph(content.skills.join(' | ')))
+  if (content.skillsLine) {
+    children.push(sectionHeading('Core Skills'))
+    children.push(bodyParagraph(content.skillsLine))
   }
 
   if (content.experience.length > 0) {
-    children.push(headingParagraph('Experience'))
+    children.push(sectionHeading('Professional Experience'))
     for (const entry of content.experience) {
       if (entry.heading) {
         children.push(
           new Paragraph({
-            children: [new TextRun({ bold: true, text: entry.heading })],
+            children: [
+              new TextRun({
+                bold: true,
+                font: SHARED_DOCUMENT_THEME.fontFamily,
+                size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body),
+                text: entry.heading,
+              }),
+            ],
             spacing: {
-              after: 80,
+              after: toTwip(SHARED_DOCUMENT_THEME.spacingPt.afterCompact),
+              line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+              lineRule: LineRuleType.AUTO,
             },
           }),
         )
       }
 
       if (entry.meta) {
-        children.push(textParagraph(entry.meta))
+        children.push(compactParagraph(entry.meta, true))
       }
 
       if (entry.summary) {
-        children.push(textParagraph(entry.summary))
+        children.push(bodyParagraph(entry.summary))
       }
 
       for (const highlight of entry.highlights) {
@@ -113,43 +251,20 @@ export async function buildResumeDocxBuffer({
   }
 
   if (content.education.length > 0) {
-    children.push(headingParagraph('Education'))
+    children.push(sectionHeading('Education'))
     for (const entry of content.education) {
-      children.push(textParagraph(entry))
+      children.push(bodyParagraph(entry))
     }
   }
 
-  if (content.certifications.length > 0) {
-    children.push(headingParagraph('Certifications'))
-    for (const item of content.certifications) {
-      children.push(bulletParagraph(item))
+  if (content.additionalDetails.length > 0) {
+    children.push(sectionHeading('Additional Details'))
+    for (const item of content.additionalDetails) {
+      children.push(labeledParagraph(item.label, item.value))
     }
   }
 
-  if (content.toolsPlatforms.length > 0) {
-    children.push(headingParagraph('Tools & Platforms'))
-    children.push(textParagraph(content.toolsPlatforms.join(' | ')))
-  }
-
-  if (content.languages.length > 0) {
-    children.push(headingParagraph('Languages'))
-    children.push(textParagraph(content.languages.join(' | ')))
-  }
-
-  if (content.additionalInformation.length > 0) {
-    children.push(headingParagraph('Additional Information'))
-    for (const item of content.additionalInformation) {
-      children.push(bulletParagraph(item))
-    }
-  }
-
-  const document = new Document({
-    sections: [
-      {
-        children,
-      },
-    ],
-  })
+  const document = createSharedDocument(children)
 
   return Packer.toBuffer(document)
 }
@@ -163,47 +278,70 @@ export async function buildCoverLetterDocxBuffer({
   packet: ApplicationPacketRecord
   workspace: OperatorWorkspaceRecord
 }) {
-  const content = buildCoverLetterExportContent(packet, workspace)
-  const exportDate = new Intl.DateTimeFormat('en-CA', {
-    dateStyle: 'long',
-    timeZone: 'America/Toronto',
-  }).format(new Date())
+  const content = buildCoverLetterDocumentSchema({
+    job,
+    packet,
+    workspace,
+  })
   const children: Paragraph[] = []
 
-  if (content.name) {
+  if (content.header.name) {
     children.push(
       new Paragraph({
-        children: [new TextRun({ bold: true, size: 28, text: content.name })],
+        children: [
+          new TextRun({
+            bold: true,
+            font: SHARED_DOCUMENT_THEME.fontFamily,
+            size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.name),
+            text: content.header.name,
+          }),
+        ],
         spacing: {
-          after: 120,
+          after: toTwip(SHARED_DOCUMENT_THEME.spacingPt.afterBody),
+          line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+          lineRule: LineRuleType.AUTO,
         },
       }),
     )
   }
 
-  for (const line of content.contactLines) {
-    children.push(textParagraph(line))
+  if (content.header.primaryContactLine) {
+    children.push(compactParagraph(content.header.primaryContactLine, true))
   }
 
-  children.push(textParagraph(exportDate))
-  children.push(textParagraph(job.companyName))
-  children.push(textParagraph(job.title))
+  if (content.header.secondaryContactLine) {
+    children.push(compactParagraph(content.header.secondaryContactLine, true))
+  }
+
+  children.push(bodyParagraph(content.dateLine))
+  children.push(bodyParagraph(content.companyLine))
+  children.push(bodyParagraph(content.roleLine))
+  children.push(bodyParagraph(content.salutation))
 
   for (const paragraph of content.bodyParagraphs) {
-    children.push(textParagraph(paragraph))
+    children.push(bodyParagraph(paragraph))
   }
 
-  if (content.name) {
-    children.push(textParagraph(content.name))
+  if (content.signatureName) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            font: SHARED_DOCUMENT_THEME.fontFamily,
+            size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body),
+            text: content.signatureName,
+          }),
+        ],
+        spacing: {
+          before: toTwip(SHARED_DOCUMENT_THEME.spacingPt.beforeSignature),
+          line: Math.round(SHARED_DOCUMENT_THEME.lineHeight.body * 240),
+          lineRule: LineRuleType.AUTO,
+        },
+      }),
+    )
   }
 
-  const document = new Document({
-    sections: [
-      {
-        children,
-      },
-    ],
-  })
+  const document = createSharedDocument(children)
 
   return Packer.toBuffer(document)
 }

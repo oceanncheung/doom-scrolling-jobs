@@ -29,7 +29,7 @@ export function SavedRow({
   return (
     <StageRow
       actions={
-        <div className="stage-actions">
+        <div className="stage-actions stage-actions--saved">
           <div className="stage-action-slot stage-action-slot--remote-salary">
             <Link className="button button-primary button-small" href={getJobReviewHref(job.id)}>
               {reviewLabel}
@@ -40,16 +40,6 @@ export function SavedRow({
               actionKind="restore"
               canEdit={actionsEnabled}
               disabledReason={getWorkflowActionDisabledReason('restore')}
-              jobId={job.id}
-              sourceContext="saved-review"
-              variant="secondary"
-            />
-          </div>
-          <div className="stage-action-slot stage-action-slot--status">
-            <JobStageActionButton
-              actionKind="archive"
-              canEdit={actionsEnabled}
-              disabledReason={getWorkflowActionDisabledReason('archive')}
               jobId={job.id}
               sourceContext="saved-review"
               variant="secondary"

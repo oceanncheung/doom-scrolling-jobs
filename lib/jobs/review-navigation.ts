@@ -18,10 +18,10 @@ export function getInternalJobReviewLabel(workflowStatus: WorkflowStatus) {
   switch (getWorkflowQueueView(workflowStatus)) {
     case 'saved':
       if (workflowStatus === 'preparing') {
-        return 'Continue prep'
+        return 'Continue generation'
       }
 
-      return 'Prepare'
+      return 'Generate Materials'
     case 'prepared':
     case 'applied':
       return 'Review'

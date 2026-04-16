@@ -109,7 +109,7 @@ export function ProfileSettingsRail({ formId, workspace }: ProfileSettingsRailPr
         <section className="today-block">
           <div className="settings-profile-rail-heading-stack">
             <TodayBlockHeading label="About you" title="Identity" />
-            <p className="profile-note">
+            <p className="profile-note column-reading-copy">
               This is the information the workspace uses in applications, packet drafts, and saved materials.
             </p>
           </div>

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
 import { WorkspaceSurface } from '@/components/navigation/workspace-surface'
 import { OperatorAccessForm } from '@/components/operators/operator-access-form'
 import { OperatorCreateForm } from '@/components/operators/operator-create-form'
-import { LabeledHeading } from '@/components/ui/labeled-heading'
 import { site } from '@/lib/config/site'
 import type { OperatorRecord } from '@/lib/domain/types'
 
@@ -31,8 +31,10 @@ export function OperatorEntryClient({
         rail={
           <WorkspaceRailShell
             beforeScroll={
-              <section className="queue-meta today-rail-site-header settings-page-header">
-                <LabeledHeading className="queue-meta-heading" title={site.name} titleLevel="h1" />
+              <section className="today-rail-site-header site-brand site-brand--rail">
+                <Link href="/">
+                  <strong>{site.name}</strong>
+                </Link>
               </section>
             }
             className="today-rail today-rail--split-scroll"

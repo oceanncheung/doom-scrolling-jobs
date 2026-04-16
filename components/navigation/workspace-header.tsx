@@ -115,7 +115,7 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
     <>
     <header className="site-header">
       <div className="site-brand">
-        <Link href="/dashboard">
+        <Link className="site-brand-link" href="/dashboard">
           <strong>Doom Scrolling Jobs</strong>
         </Link>
         <button

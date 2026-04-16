@@ -9,7 +9,7 @@ export const jobWorkflowQuickActionKinds = [
   'skip',
   'archive',
   'restore',
-  'mark-applied',
+  'apply',
 ] as const
 
 export type JobWorkflowQuickActionKind = (typeof jobWorkflowQuickActionKinds)[number]
@@ -23,15 +23,15 @@ export interface JobWorkflowQuickAction {
 export const workflowEditingUnavailableReason = "Job updates aren't available right now."
 
 const quickActions: Record<JobWorkflowQuickActionKind, JobWorkflowQuickAction> = {
+  apply: {
+    defaultLabel: 'Apply',
+    kind: 'apply',
+    targetStatus: 'applied',
+  },
   archive: {
     defaultLabel: 'Archive',
     kind: 'archive',
     targetStatus: 'archived',
-  },
-  'mark-applied': {
-    defaultLabel: 'Mark Applied',
-    kind: 'mark-applied',
-    targetStatus: 'applied',
   },
   restore: {
     defaultLabel: 'Potential',
@@ -66,12 +66,12 @@ export function getWorkflowActionDisabledReason(kind: JobWorkflowQuickActionKind
       return 'Open the main queue to save this job.'
     case 'skip':
       return 'Open the main queue to skip this job.'
+    case 'apply':
+      return 'Open the main queue to move this job into Applied.'
     case 'archive':
       return 'Open the main queue to archive this job.'
     case 'restore':
       return 'Open the main queue to move this job back to Potential.'
-    case 'mark-applied':
-      return 'Open the main queue to mark this job as applied.'
   }
 }
 
@@ -100,11 +100,11 @@ export function getWorkflowSuccessMessage(targetStatus: WorkflowStatus) {
     case 'archived':
       return 'Job dismissed from the active queue.'
     case 'preparing':
-      return 'Job moved into packet preparation.'
+      return 'Content generation started.'
     case 'ready_to_apply':
-      return 'Job marked ready.'
+      return 'Job moved to the Ready queue.'
     case 'applied':
-      return 'Job marked as applied.'
+      return 'Job moved to the Applied queue.'
     case 'follow_up_due':
       return 'Follow-up is now due for this job.'
     case 'interview':
@@ -139,8 +139,8 @@ export function getWorkflowTransitionNote({
     return 'Returned to the Potential queue.'
   }
 
-  if (actionKind === 'mark-applied') {
-    return 'Marked applied from the review workspace.'
+  if (actionKind === 'apply') {
+    return 'Moved into Applied from the review workspace.'
   }
 
   return `Workflow status updated to ${targetStatus.replaceAll('_', ' ')}.`
@@ -156,6 +156,10 @@ export function isJobWorkflowQuickActionDisabled(
 
   if (kind === 'skip' || kind === 'archive') {
     return isArchivedWorkflowStatus(currentStatus)
+  }
+
+  if (kind === 'apply') {
+    return currentStatus === 'applied'
   }
 
   return false

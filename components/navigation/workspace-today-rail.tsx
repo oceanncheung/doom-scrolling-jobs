@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { ApplyJobButton } from '@/components/jobs/apply-job-button'
 import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
 import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
 import { TodayBlockHeading } from '@/components/ui/today-block-heading'
@@ -68,8 +69,13 @@ export function WorkspaceTodayRail({
 
         {screeningLocked ? (
           <div className="today-empty">
-            <p>{readinessPresentation?.todayRailLines[0] ?? 'Complete your profile draft to unlock the queue.'}</p>
-            <p>{readinessPresentation?.todayRailLines[1] ?? 'Upload your resume in Settings, generate the draft, review the extracted sections, then save.'}</p>
+            <p className="column-reading-copy">
+              {readinessPresentation?.todayRailLines[0] ?? 'Complete your profile draft to unlock the queue.'}
+            </p>
+            <p className="column-reading-copy">
+              {readinessPresentation?.todayRailLines[1] ??
+                'Upload your resume in Settings, generate the draft, review the extracted sections, then save.'}
+            </p>
           </div>
         ) : applyNextJob ? (
           <div className="today-apply-next">
@@ -83,14 +89,15 @@ export function WorkspaceTodayRail({
 
             <div className="today-actions">
               {applyNextAction?.external ? (
-                <a
-                  className="button button-primary"
+                <ApplyJobButton
+                  canEdit={actionsEnabled}
+                  disabledReason={getWorkflowActionDisabledReason('apply')}
                   href={applyNextAction.href}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {applyNextAction.label}
-                </a>
+                  jobId={applyNextJob.id}
+                  label={applyNextAction.label}
+                  sourceContext="today-rail"
+                  variant="primary"
+                />
               ) : (
                 <Link
                   className="button button-primary"
@@ -112,8 +119,10 @@ export function WorkspaceTodayRail({
           </div>
         ) : (
           <div className="today-empty">
-            <p>No job is ready for prep yet.</p>
-            <p>Save something from Potential and it will move into the next-action rail.</p>
+            <p className="column-reading-copy">No job is ready for review or application yet.</p>
+            <p className="column-reading-copy">
+              Save something from Potential and it will move into the next-action rail.
+            </p>
           </div>
         )}
       </section>

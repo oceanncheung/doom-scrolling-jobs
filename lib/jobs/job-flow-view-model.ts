@@ -16,8 +16,10 @@ export interface JobFlowHeaderSnapshotItem {
 export interface JobFlowHeaderViewModel {
   companyName: string
   introLines: string[]
+  locationLabel: string
+  locationValue: string
+  metaItems: JobFlowHeaderSnapshotItem[]
   pageLabel: string
-  snapshotItems: JobFlowHeaderSnapshotItem[]
   title: string
 }
 
@@ -35,15 +37,7 @@ function getDetailIntro(job: QualifiedJobRecord) {
   }
 
   if (job.workflowStatus === 'preparing') {
-    return 'The application packet is already in progress. Review the role, then continue when you want.'
-  }
-
-  return ''
-}
-
-function getPrepIntro(job: QualifiedJobRecord) {
-  if (isReadyWorkflowStatus(job.workflowStatus)) {
-    return 'Your packet is ready. Review the materials, then apply when you want to submit.'
+    return 'Content generation is already in progress. Review the role, then check back here when the materials are ready.'
   }
 
   return ''
@@ -65,12 +59,9 @@ export function buildJobFlowHeaderViewModel({
   return {
     companyName: job.companyName,
     introLines: [pageIntro, job.aiMatchSummary?.trim() ?? ''].filter(Boolean),
-    pageLabel,
-    snapshotItems: [
-      {
-        label: 'Remote / location',
-        value: getLocationDisplay(job),
-      },
+    locationLabel: 'Remote / location',
+    locationValue: getLocationDisplay(job),
+    metaItems: [
       {
         label: 'Salary',
         value: salaryDisplay.value,
@@ -88,6 +79,7 @@ export function buildJobFlowHeaderViewModel({
         value: job.freshness.label,
       },
     ],
+    pageLabel,
     title: job.title,
   }
 }
@@ -114,12 +106,13 @@ export function buildJobFlowPageViewModel({
     ? issue
     : screeningLocked
       ? readinessPresentation?.generationDisabledReason ??
-        'Complete your profile draft in Settings before preparing applications.'
+        'Complete your profile draft in Settings before generating application materials.'
       : !canGenerate
         ? "Content generation isn't available right now."
         : issue
   const pageLabel = prepOpen ? 'Application packet' : 'Job review'
-  const pageIntro = prepOpen ? getPrepIntro(job) : getDetailIntro(job)
+  /* No lead-in under the company line when packet prep is open — copy lives in the form sections. */
+  const pageIntro = prepOpen ? '' : getDetailIntro(job)
 
   return {
     canGenerate,

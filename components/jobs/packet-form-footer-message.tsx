@@ -1,26 +1,18 @@
+import { ActionFormMessage, type ActionFormStatus } from '@/components/jobs/action-form-primitives'
+
 interface PacketFormFooterMessageProps {
   message: string
-  status: 'error' | 'idle' | 'success'
+  status: ActionFormStatus
 }
 
 export function PacketFormFooterMessage({
   message,
   status,
 }: PacketFormFooterMessageProps) {
-  if (!message) {
-    return null
-  }
-
   return (
     <div className="profile-form-footer packet-form-footer">
       <div className="packet-form-footer-inner">
-        <p
-          className={`form-message ${
-            status === 'success' ? 'form-message-success' : status === 'error' ? 'form-message-error' : ''
-          }`}
-        >
-          {message}
-        </p>
+        <ActionFormMessage message={message} status={status} tone="form-message" />
       </div>
     </div>
   )

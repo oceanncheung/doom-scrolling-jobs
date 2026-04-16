@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react'
 
-import { LabeledHeading } from '@/components/ui/labeled-heading'
-
 interface SectionHeadingProps {
   children?: ReactNode
   className?: string
@@ -11,6 +9,10 @@ interface SectionHeadingProps {
   titleLevel?: 'h1' | 'h2' | 'h3'
 }
 
+/**
+ * Eyebrow, title, and optional note live in one `.settings-section-title-stack` so vertical gaps match
+ * (same flex `gap` as other panel-label stacks). Avoids grid-between-rows spacing that looked uneven vs label→title.
+ */
 export function SectionHeading({
   children,
   className,
@@ -19,16 +21,16 @@ export function SectionHeading({
   title,
   titleLevel = 'h2',
 }: SectionHeadingProps) {
+  const TitleTag = titleLevel
+
   return (
-    <LabeledHeading
-      className={['settings-section-header', className].filter(Boolean).join(' ')}
-      label={label}
-      stackClassName="settings-section-title-stack"
-      title={title}
-      titleLevel={titleLevel}
-    >
-      {note ? <p className="settings-section-note">{note}</p> : null}
+    <div className={['settings-section-header', className].filter(Boolean).join(' ')}>
+      <div className="settings-section-title-stack">
+        <p className="panel-label">{label}</p>
+        <TitleTag>{title}</TitleTag>
+        {note ? <p className="settings-section-note">{note}</p> : null}
+      </div>
       {children}
-    </LabeledHeading>
+    </div>
   )
 }

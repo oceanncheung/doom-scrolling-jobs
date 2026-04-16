@@ -23,13 +23,13 @@ export function AppliedRow({
   return (
     <StageRow
       actions={
-        <div className="stage-actions">
-          <div className="stage-action-slot stage-action-slot--remote">
+        <div className="stage-actions stage-actions--applied">
+          <div className="stage-action-slot stage-action-slot--remote-salary">
             <Link className="button button-primary button-small" href={getJobReviewHref(job.id)}>
               Review
             </Link>
           </div>
-          <div className="stage-action-slot stage-action-slot--salary">
+          <div className="stage-action-slot stage-action-slot--fit">
             <a
               className="button button-ghost button-small"
               href={job.applicationUrl ?? job.sourceUrl}

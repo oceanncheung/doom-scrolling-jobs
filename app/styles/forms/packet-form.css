@@ -32,13 +32,15 @@
   padding-bottom: 0;
 }
 
-.packet-section-heading h2 {
+/* Title lives in `.settings-section-title-stack`; keep one layout owner (`.settings-section-header`). */
+.packet-section-heading .settings-section-title-stack h2 {
   font-family: var(--font-display), sans-serif;
   font-size: 1.55rem;
   font-weight: 600;
-  line-height: 1.15;
+  line-height: 1.2;
   letter-spacing: -0.02em;
   margin: 0;
+  padding: 0;
 }
 
 .packet-inline-disclosure .disclosure-summary h2,
@@ -52,7 +54,8 @@
   margin: 0;
 }
 
-.packet-section-heading > p:last-child {
+/* Note moved inside `.settings-section-title-stack` (was direct child of `.packet-section-heading`). */
+.packet-section-heading .settings-section-note {
   color: var(--muted);
   font-size: 0.9375rem;
   line-height: 1.5;
@@ -76,7 +79,7 @@
 /* Typography aligned with .settings-section-note / .settings-section-title-stack */
 .packet-remediation-callout {
   display: grid;
-  gap: 8px;
+  gap: var(--section-eyebrow-stack-gap);
   padding: 16px 18px;
   border: 1px solid var(--line-soft);
   background: var(--surface-soft);
@@ -105,9 +108,8 @@
   margin-top: 8px;
 }
 
+/* Only width cap — `display`/`gap` come from `.settings-section-header` to avoid duplicate grid rules on one node. */
 .packet-section-heading {
-  display: grid;
-  gap: 8px;
   max-width: 42rem;
 }
 
@@ -119,7 +121,7 @@
 
 .packet-material-block {
   display: grid;
-  gap: 12px;
+  gap: var(--section-eyebrow-stack-gap);
   align-content: start;
 }
 
@@ -225,28 +227,64 @@ section.dashboard-workspace:has(#packet-form),
   min-width: 0;
 }
 
-/* Same vertical metrics as Mark Ready / .screening-actions-bar .button (padding + min-height: auto from queue-rows). */
+/* Match Mark Ready / `.screening-actions-bar .button` (queue-rows): 2.5rem, horizontal padding, centered label+icon. */
 .packet-material-review-block .packet-material-download-button {
-  min-height: auto;
-  background: var(--bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0 20px;
+  box-sizing: border-box;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  background: transparent;
   border-top: 1px solid var(--line);
   border-left: 1px solid var(--line);
   border-right: none;
   border-bottom: none;
 }
 
+.packet-material-review-block .packet-material-download-button.button-primary {
+  background: var(--text);
+  color: var(--bg);
+  border-top-color: var(--text);
+  border-left-color: var(--text);
+}
+
 .packet-material-review-block .packet-material-download-button:hover:not(:disabled),
 .packet-material-review-block .packet-material-download-button:focus-visible:not(:disabled) {
   background: var(--text);
-  border-top-color: var(--line);
-  border-left-color: var(--line);
+  color: var(--bg);
+  border-top-color: var(--text);
+  border-left-color: var(--text);
   border-bottom: none;
+  opacity: 1;
+}
+
+.packet-material-review-block .packet-material-download-button.button-primary:hover:not(:disabled),
+.packet-material-review-block .packet-material-download-button.button-primary:focus-visible:not(:disabled) {
+  background: var(--accent);
+  color: var(--text);
+  border-top-color: var(--accent);
+  border-left-color: var(--accent);
 }
 
 .packet-material-review-block .packet-material-download-button:disabled {
   background: var(--bg);
   border-right: none;
   border-bottom: none;
+}
+
+.packet-material-review-sticky-action.screening-actions-bar.job-overview-actions
+  .screening-actions-cluster
+  > .screening-action-slot:last-child
+  .packet-material-download-button {
+  width: 100%;
+  margin-right: 0;
 }
 
 .packet-material-download-button__content {
@@ -407,7 +445,7 @@ section.dashboard-workspace:has(#packet-form),
 
 .packet-preview-block {
   display: grid;
-  gap: 12px;
+  gap: var(--section-eyebrow-stack-gap);
   max-width: 44rem;
 }
 
@@ -476,7 +514,7 @@ section.dashboard-workspace:has(#packet-form),
 .packet-question-main,
 .packet-question-card .disclosure-summary > div:first-child {
   display: grid;
-  gap: 6px;
+  gap: var(--section-eyebrow-stack-gap);
 }
 
 .packet-question-status-slot {
@@ -508,7 +546,7 @@ section.dashboard-workspace:has(#packet-form),
 
 .packet-answer-question {
   display: grid;
-  gap: 6px;
+  gap: var(--section-eyebrow-stack-gap);
   max-width: 44rem;
 }
 
@@ -517,6 +555,11 @@ section.dashboard-workspace:has(#packet-form),
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: end;
+}
+
+/* Materials-only: last sticky download row ::after is the section terminator; footer ::before stacked as a second rule. */
+.packet-form:has(#packet-materials-section):not(:has(> .packet-section ~ .packet-section)) > .packet-form-footer::before {
+  display: none;
 }
 
 .packet-form .packet-form-footer .form-message {
@@ -534,3 +577,11 @@ section.dashboard-workspace:has(#packet-form),
   justify-content: center;
   text-align: center;
 }
+
+.packet-form .packet-form-footer .button.button-primary {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* ≤900px: packet download bar bleed lives in responsive.css (matches job-prep overview actions). */

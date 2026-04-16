@@ -45,12 +45,12 @@ export function getQueueMetaViewModel({
     prepared: {
       eyebrow: 'Ready',
       label: `${totalCount} ready jobs`,
-      note: 'Saved roles with application materials ready to submit.',
+      note: 'Generated application materials are ready to review and submit.',
     },
     saved: {
       eyebrow: 'Saved',
       label: `${totalCount} saved jobs`,
-      note: 'Saved roles waiting for review or packet work.',
+      note: 'Saved roles waiting for content generation or final review.',
     },
   }
 
@@ -85,7 +85,7 @@ export function getQueueEmptyState(
       }
     case 'prepared':
       return {
-        message: 'Mark a packet ready and it will show up here.',
+        message: 'Generated application materials move here as soon as they are ready to submit.',
         title: 'Ready',
       }
     case 'saved':

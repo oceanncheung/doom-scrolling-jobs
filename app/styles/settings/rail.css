@@ -102,24 +102,15 @@
 /* Match today-rail PREPARE (primary): solid hover, full opacity (not .button:hover fade) */
 .settings-profile-rail-footer .today-block .button.button-primary:hover:not(:disabled),
 .settings-profile-rail-footer .today-block .button.button-primary:focus-visible {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
+  background: var(--accent);
+  color: var(--text);
+  border-color: var(--accent);
   opacity: 1;
 }
 
 .settings-profile-rail-footer .today-block .button.settings-save-button.is-attention-flash-a,
 .settings-profile-rail-footer .today-block .button.settings-save-button.is-attention-flash-b {
   animation: settings-save-button-flash 2.2s ease-in-out 1;
-}
-
-/* Log out: same muted hover as Skip in Apply next */
-.settings-profile-rail-footer .today-block .button.button-secondary:hover:not(:disabled),
-.settings-profile-rail-footer .today-block .button.button-secondary:focus-visible {
-  background: var(--muted);
-  color: var(--bg);
-  border-color: var(--muted);
-  opacity: 1;
 }
 
 .profile-card {
@@ -158,4 +149,3 @@
   line-height: 1.5;
   margin: 0;
 }
-

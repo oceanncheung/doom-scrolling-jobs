@@ -357,6 +357,12 @@ interface FilteredSourceBatch {
   jobs: NormalizedImportedCandidate[]
 }
 
+export interface PreparedImportedJobsResult {
+  currentSourceJobIdsBySourceName: Map<string, string[]>
+  diagnosticsBySourceKey: Map<string, SourceDiagnostics>
+  normalizedJobs: NormalizedJobRecord[]
+}
+
 interface PersistedImportedJobRow {
   id: string
   normalizedJob: NormalizedJobRecord
@@ -1156,6 +1162,55 @@ function dedupeImportedCandidates(
   return {
     candidates: keptCandidates,
     duplicateKeysBySource,
+  }
+}
+
+export function prepareImportedJobsForPersistence(
+  batches: ImportedSourceBatch[],
+): PreparedImportedJobsResult {
+  const filteredBatches = batches.map((batch) => filterNormalizedSourceBatch(batch))
+  const diagnosticsBySourceKey = new Map(
+    filteredBatches.map((batch) => [batch.diagnostics.sourceKey, batch.diagnostics] as const),
+  )
+  const { candidates, duplicateKeysBySource } = dedupeImportedCandidates(filteredBatches)
+
+  for (const [sourceKey, duplicateCount] of duplicateKeysBySource.entries()) {
+    const diagnostics = diagnosticsBySourceKey.get(sourceKey)
+
+    if (!diagnostics) {
+      continue
+    }
+
+    diagnosticsBySourceKey.set(sourceKey, {
+      ...diagnostics,
+      rowsDeduped: duplicateCount,
+    })
+  }
+
+  const normalizedJobs = candidates.map((candidate) => candidate.normalizedJob)
+  const currentSourceJobIdsBySourceName = new Map<string, string[]>()
+
+  for (const job of normalizedJobs) {
+    const sourceJobId = job.sourceJobId ?? ''
+
+    if (!sourceJobId) {
+      continue
+    }
+
+    currentSourceJobIdsBySourceName.set(job.sourceName, [
+      ...(currentSourceJobIdsBySourceName.get(job.sourceName) ?? []),
+      sourceJobId,
+    ])
+  }
+
+  for (const diagnostics of diagnosticsBySourceKey.values()) {
+    diagnostics.rowsImported = normalizedJobs.filter((job) => job.sourceName === diagnostics.sourceName).length
+  }
+
+  return {
+    currentSourceJobIdsBySourceName,
+    diagnosticsBySourceKey,
+    normalizedJobs,
   }
 }
 
@@ -2167,40 +2222,11 @@ export async function ensurePrimaryImportedJobs(
     )
     const { workspace } = await getOperatorProfile()
     const rawImportIssue = await persistRawImports(batches)
-    const filteredBatches = batches.map((batch) => filterNormalizedSourceBatch(batch))
-    const diagnosticsBySourceKey = new Map(
-      filteredBatches.map((batch) => [batch.diagnostics.sourceKey, batch.diagnostics] as const),
-    )
-    const { candidates, duplicateKeysBySource } = dedupeImportedCandidates(filteredBatches)
-
-    for (const [sourceKey, duplicateCount] of duplicateKeysBySource.entries()) {
-      const diagnostics = diagnosticsBySourceKey.get(sourceKey)
-
-      if (!diagnostics) {
-        continue
-      }
-
-      diagnosticsBySourceKey.set(sourceKey, {
-        ...diagnostics,
-        rowsDeduped: duplicateCount,
-      })
-    }
-
-    const normalizedJobs = candidates.map((candidate) => candidate.normalizedJob)
-    const currentSourceJobIdsBySourceName = new Map<string, string[]>()
-
-    for (const job of normalizedJobs) {
-      const sourceJobId = job.sourceJobId ?? ''
-
-      if (!sourceJobId) {
-        continue
-      }
-
-      currentSourceJobIdsBySourceName.set(job.sourceName, [
-        ...(currentSourceJobIdsBySourceName.get(job.sourceName) ?? []),
-        sourceJobId,
-      ])
-    }
+    const {
+      currentSourceJobIdsBySourceName,
+      diagnosticsBySourceKey,
+      normalizedJobs,
+    } = prepareImportedJobsForPersistence(batches)
 
     const supabase = createClient()
     const ingestedAt = new Date().toISOString()
@@ -2352,10 +2378,6 @@ export async function ensurePrimaryImportedJobs(
         issue: scoreSyncResult.issue,
         sourceDiagnostics: [...diagnosticsBySourceKey.values()],
       }
-    }
-
-    for (const diagnostics of diagnosticsBySourceKey.values()) {
-      diagnostics.rowsImported = normalizedJobs.filter((job) => job.sourceName === diagnostics.sourceName).length
     }
 
     let staleCount = 0

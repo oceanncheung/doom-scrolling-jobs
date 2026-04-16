@@ -1,6 +1,6 @@
 .queue-meta {
   display: grid;
-  gap: 12px;
+  gap: var(--section-eyebrow-stack-gap);
   padding-bottom: 24px;
   border-bottom: none;
   position: relative;
@@ -19,7 +19,7 @@
 
 .queue-meta-heading > div {
   display: grid;
-  gap: 8px;
+  gap: var(--section-eyebrow-stack-gap);
 }
 
 .queue-meta-title-row {
@@ -72,6 +72,29 @@
 .queue-refresh-mark:disabled {
   cursor: not-allowed;
   opacity: 0.35;
+}
+
+.queue-refresh-mark.queue-refresh-mark--pending:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+
+@keyframes queue-refresh-icon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.queue-refresh-mark.queue-refresh-mark--pending .queue-refresh-icon {
+  display: block;
+  transform-origin: 50% 50%;
+  animation: queue-refresh-icon-spin 0.75s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .queue-refresh-mark.queue-refresh-mark--pending .queue-refresh-icon {
+    animation: none;
+  }
 }
 
 .queue-refresh-icon {

@@ -7,7 +7,7 @@ import { type WorkflowStatus } from '@/lib/domain/types'
 import { getOpenAIEnv, hasOpenAIEnv, hasSupabaseServerEnv } from '@/lib/env'
 import { getPacketGenerationUserMessage } from '@/lib/jobs/packet-generation-copy'
 import { persistPreferenceSignal } from '@/lib/jobs/learning'
-import { shouldBeginPacketPrep } from '@/lib/jobs/workflow-state'
+import { isReadyWorkflowStatus, shouldBeginPacketPrep } from '@/lib/jobs/workflow-state'
 import { createClient } from '@/lib/supabase/server'
 
 const MISSING_COVER_LETTER_CHANGE_SUMMARY_COLUMN =
@@ -238,7 +238,7 @@ export async function generateAndPersistApplicationPacket(
         last_reviewed_at: review.packet.lastReviewedAt ?? null,
         manual_notes: review.packet.manualNotes,
         operator_id: operatorContext.operator.id,
-        packet_status: 'draft',
+        packet_status: 'ready',
         portfolio_recommendation: review.packet.portfolioRecommendation,
         professional_summary: generated.resumeVariant.summary,
         question_snapshot_error: review.packet.questionSnapshotError ?? null,
@@ -295,8 +295,8 @@ export async function generateAndPersistApplicationPacket(
 
     let workflowStatus: WorkflowStatus = review.job.workflowStatus
 
-    if (shouldBeginPacketPrep(review.job.workflowStatus)) {
-      workflowStatus = 'preparing'
+    if (shouldBeginPacketPrep(review.job.workflowStatus) || review.job.workflowStatus === 'preparing') {
+      workflowStatus = 'ready_to_apply'
 
       await supabase
         .from('job_scores')
@@ -319,7 +319,7 @@ export async function generateAndPersistApplicationPacket(
           sourceContext: 'packet-generate',
           targetStatus: workflowStatus,
         },
-        notes: 'Application materials generated from the prep workspace.',
+        notes: 'Application materials generated and moved into the Ready queue.',
       })
 
       await persistPreferenceSignal({
@@ -331,10 +331,14 @@ export async function generateAndPersistApplicationPacket(
       })
     }
 
+    if (isReadyWorkflowStatus(review.job.workflowStatus)) {
+      workflowStatus = review.job.workflowStatus
+    }
+
     return {
       answerCount: review.packet.answers.length,
       jobId,
-      message: 'Application materials generated. Review the resume, cover letter, and answers below.',
+      message: 'Application materials generated. Review the resume, cover letter, and answers below, then apply when you are ready.',
       packetId,
       resumeVersionId,
       status: 'success',

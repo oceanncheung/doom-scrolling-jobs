@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { ApplyJobButton } from '@/components/jobs/apply-job-button'
 import {
   StageDetailGrid,
   StageDetailItem,
@@ -28,29 +29,29 @@ export function PreparedRow({
       actions={
         <div className="stage-actions">
           <div className="stage-action-slot stage-action-slot--remote-salary">
-            <a
-              className="button button-primary button-small"
+            <ApplyJobButton
+              canEdit={actionsEnabled}
+              disabledReason={getWorkflowActionDisabledReason('apply')}
               href={job.applicationUrl ?? job.sourceUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              Apply
-            </a>
+              jobId={job.id}
+              sourceContext="prepared-apply"
+              variant="primary"
+            />
           </div>
           <div className="stage-action-slot stage-action-slot--fit">
+            <Link className="button button-ghost button-small" href={getJobReviewHref(job.id)}>
+              Review
+            </Link>
+          </div>
+          <div className="stage-action-slot stage-action-slot--status">
             <JobStageActionButton
-              actionKind="mark-applied"
+              actionKind="archive"
               canEdit={actionsEnabled}
-              disabledReason={getWorkflowActionDisabledReason('mark-applied')}
+              disabledReason={getWorkflowActionDisabledReason('archive')}
               jobId={job.id}
               sourceContext="prepared-apply"
               variant="secondary"
             />
-          </div>
-          <div className="stage-action-slot stage-action-slot--status">
-            <Link className="button button-ghost button-small" href={getJobReviewHref(job.id)}>
-              Review
-            </Link>
           </div>
         </div>
       }

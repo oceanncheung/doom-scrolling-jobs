@@ -246,7 +246,7 @@
 
 .settings-matching-controls-heading {
   display: grid;
-  gap: 6px;
+  gap: var(--section-eyebrow-stack-gap);
 }
 
 .settings-matching-controls-heading small {
@@ -277,7 +277,7 @@
 .settings-job-targets-stack-sm {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--section-eyebrow-stack-gap);
   min-width: 0;
 }
 
@@ -332,12 +332,12 @@
   gap: 16px;
   align-items: center;
   min-height: 0;
-  /* Match `.tag-input-container` top padding so controls sit on the same band after the 6px stack gap */
+  /* Match `.tag-input-container` top padding so controls sit on the same band after the eyebrow stack gap */
   padding: 8px 0 0;
   box-sizing: border-box;
 }
 
-/* Prioritize | Remote: keep the global 6px eyebrow→content gap; do not center in the stretched flex slot */
+/* Prioritize | Remote: keep the global eyebrow→content gap; do not center in the stretched flex slot */
 .settings-job-targets-pair:has(.settings-job-targets-flex-toggles) .settings-job-targets-stack-sm-content {
   justify-content: flex-start;
 }
@@ -392,7 +392,7 @@
 .strengths-tag-stack .tag-input-field,
 .settings-tag-row .tag-input-field,
 .settings-job-targets-grid .tag-input-field {
-  gap: 6px;
+  gap: var(--section-eyebrow-stack-gap);
   align-content: start;
 }
 

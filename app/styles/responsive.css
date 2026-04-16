@@ -148,7 +148,7 @@
 
   .detail-page-header-stack,
   .job-flow-header-stack,
-  .job-flow-snapshot.detail-page-snapshot {
+  .job-flow-meta-band {
     column-gap: 12px;
   }
 
@@ -171,6 +171,40 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+}
+
+/*
+ * Mid-width desktop: the rail column is only max(17rem, 25vw); the title is nowrap + fluid type and can
+ * intrude on the fixed profile slot — clip with ellipsis instead of overlapping the gear.
+ */
+@media (min-width: 1181px) and (max-width: 1439px) {
+  .site-header > .site-brand {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--site-header-row-height);
+    align-items: stretch;
+    gap: 0;
+    min-width: 0;
+  }
+
+  .site-brand-link {
+    min-width: 0;
+    overflow: hidden;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+  }
+
+  .site-profile-avatar-link {
+    grid-column: 2;
+    justify-self: stretch;
+    min-width: var(--site-header-row-height);
+  }
+
+  .site-brand strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /*
@@ -198,6 +232,37 @@
       minmax(0, 1fr);
   }
 
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--saved {
+    grid-template-columns:
+      minmax(0, 2.6fr)
+      minmax(9rem, 1.15fr)
+      minmax(9rem, 1.05fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--applied {
+    grid-template-columns:
+      minmax(0, 2.6fr)
+      minmax(9rem, 1.15fr)
+      minmax(9rem, 1.05fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+    column-gap: var(--jobs-queue-col-gap);
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--applied > .stage-action-slot--remote-salary {
+    grid-column: 2 / span 2;
+    width: calc(100% + var(--jobs-queue-col-gap));
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--applied > .stage-action-slot--fit {
+    grid-column: 4 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+
   /* One-row meta band: expanded tracks match summary; Risks / gaps starts at Salary (column 3). */
   main.jobs-index .queue-list .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) {
     grid-template-columns:
@@ -215,6 +280,31 @@
 
   main.jobs-index .queue-list .screening-expanded .detail-pair-grid:not(.detail-pair-grid-stack) > .screening-match-column + div {
     grid-column: 3 / -1;
+  }
+}
+
+@media (min-width: 1441px) {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--applied {
+    grid-template-columns:
+      minmax(0, 2.8fr)
+      minmax(10rem, 1.25fr)
+      minmax(10rem, 1.15fr)
+      minmax(8rem, 0.9fr)
+      minmax(8rem, 0.9fr);
+    column-gap: var(--jobs-queue-col-gap);
+    row-gap: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--applied > .stage-action-slot--remote-salary {
+    grid-column: 2 / span 2;
+    width: calc(100% + var(--jobs-queue-col-gap));
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--applied > .stage-action-slot--fit {
+    grid-column: 4 / -1;
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -437,8 +527,10 @@
     padding-top: 0;
   }
 
-  .dashboard-workspace.operator-entry-workspace .today-rail.today-rail--split-scroll > .queue-meta.today-rail-site-header {
-    padding-top: 16px;
+  .dashboard-workspace.operator-entry-workspace .today-rail.today-rail--split-scroll > .today-rail-site-header.site-brand--rail {
+    min-height: var(--site-header-height);
+    padding-top: 0;
+    padding-bottom: 0;
   }
 
   .dashboard-workspace .today-rail > .today-rail-scroll {
@@ -905,6 +997,10 @@
     display: none;
   }
 
+  .dashboard-workspace {
+    overflow-x: visible;
+  }
+
   .dashboard-workspace .queue-column {
     position: relative;
     z-index: 0;
@@ -914,6 +1010,12 @@
     padding-right: var(--site-gutter);
     border-top: 1px solid var(--line-soft);
     padding-top: 24px;
+    /* Negative-margin bleed rows must paint into the column padding; clip was trimming full-bleed hairlines and controls. */
+    overflow-x: visible;
+  }
+
+  .workspace-main > main.workspace-surface {
+    overflow-x: visible;
   }
 
   .dashboard-workspace .queue-column,
@@ -948,6 +1050,72 @@
   .dashboard-workspace .queue-column > .queue-meta::after {
     left: var(--edge-bleed-start);
     width: var(--edge-bleed-width-nested);
+  }
+
+  /*
+   * Nested .job-flow-section-inner padding: hairlines reach both column edges (same as settings panels).
+   * Inset edges match breakout rows (e.g. overview actions): width-only calc(100% + 2×pad) can fall short when
+   * percentage bases differ from the widened control band; left + right + width:auto tracks the section box.
+   */
+  .dashboard-workspace .queue-column .job-flow-section.detail-review-section::before,
+  .dashboard-workspace .queue-column .job-flow-section.detail-review-section::after {
+    left: calc(-1 * var(--queue-column-pad));
+    right: calc(-1 * var(--queue-column-pad));
+    width: auto;
+  }
+
+  /*
+   * .packet-section-inner only pads the right edge; nested width math must bleed past inner + wrap padding
+   * (same as .packet-material-review-sticky-action::after in packet-form.css).
+   */
+  .dashboard-workspace .queue-column .packet-section-inner .packet-material-review-stack::before,
+  .dashboard-workspace .queue-column .packet-section-inner .packet-material-review-block.job-flow-section::before {
+    left: var(--edge-bleed-start);
+    right: calc(-2 * var(--queue-column-pad));
+    width: auto;
+  }
+
+  /*
+   * Packet materials download row — bleed through queue-column horizontal padding (same as prep overview actions).
+   */
+  .dashboard-workspace .queue-column .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    column-gap: 0;
+    row-gap: 0;
+    /* job-flow-section-inner + packet-section-inner each inset the bar with padding-right only: need +4×pad vs inner content width, −2×pad right margin (see overview actions block below). */
+    width: calc(100% + (4 * var(--queue-column-pad)));
+    max-width: none;
+    margin-left: calc(-1 * var(--queue-column-pad));
+    margin-right: calc(-2 * var(--queue-column-pad));
+    box-sizing: border-box;
+  }
+
+  .dashboard-workspace .queue-column .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions .screening-actions-cluster {
+    grid-column: 1 / -1;
+    display: grid;
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    min-width: 0;
+  }
+
+  .dashboard-workspace .queue-column .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions::after {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+
+  .dashboard-workspace .queue-column .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions .screening-action-slot {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-workspace .queue-column .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions .packet-material-download-button {
+    width: 100%;
+    border-left: 0;
   }
 
   .dashboard-workspace .queue-column > .queue-meta,
@@ -1060,11 +1228,6 @@
 
   .site-brand::after {
     display: none;
-  }
-
-  .site-brand strong {
-    font-size: 1rem;
-    line-height: 1.2;
   }
 
   .site-profile-avatar-link {
@@ -1353,10 +1516,11 @@
   }
 
   .detail-page-header-stack,
-  .job-flow-header-stack,
-  .job-flow-snapshot.detail-page-snapshot {
-    grid-template-columns: 1fr;
+  .job-flow-header-stack {
+    grid-template-columns: minmax(0, 1fr);
     column-gap: 0;
+    /* Tighter than 24px: location → snapshot should feel like one band vs the title block above. */
+    row-gap: 14px;
   }
 
   .job-overview-section-inner {
@@ -1369,7 +1533,25 @@
 
   .detail-page-header-stack .job-flow-heading,
   .job-flow-header-stack .job-flow-heading {
-    grid-column: 1 / -1;
+    grid-column: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    /* More air between intro copy and Remote/location than between location and salary band below. */
+    gap: 20px;
+  }
+
+  /*
+   * Mobile: queue-column gaps 24px under the header + this padding = space to first eyebrow.
+   * Match that total (24 + 8 = 32px) to `.job-review-grid` row-gap (32px) between stacked columns
+   * so “meta → Job overview” and “overview block → Skills” use the same 32px rhythm.
+   */
+  .job-flow-prep-overview-wrap > .detail-review-section--first .job-flow-section-inner {
+    padding-top: 8px;
+  }
+
+  .job-flow-prep-overview-wrap .job-review-grid {
+    row-gap: 32px;
+    column-gap: 32px;
   }
 
   .detail-pair-grid,
@@ -1391,13 +1573,43 @@
   .packet-form .packet-advanced-grid,
   .packet-form .packet-form-footer,
   .screening-actions-bar:not(.job-overview-actions),
-  .stage-actions-bar {
+    .stage-actions-bar {
     grid-template-columns: 1fr;
   }
 
-  .job-flow-header-stack .job-flow-snapshot.detail-page-snapshot {
-    padding-inline-end: var(--queue-column-pad);
+  .detail-page-header-stack .job-flow-meta-band,
+  .job-flow-header-stack .job-flow-meta-band {
+    grid-column: 1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto auto;
+    gap: 12px 16px;
+    padding-inline-end: 0;
     box-sizing: border-box;
+  }
+
+  .job-flow-meta-item--location {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .job-flow-meta-item--salary {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .job-flow-meta-item--stage {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .job-flow-meta-item--posted {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .job-flow-meta-item--freshness {
+    grid-column: 2;
+    grid-row: 3;
   }
 
   /*
@@ -1498,7 +1710,8 @@
 
   main.jobs-index .queue-list .screening-actions-bar .screening-action-slot + .screening-action-slot .button {
     border-top-width: 1px;
-    border-left-width: 0;
+    border-left-width: 1px;
+    border-left-color: var(--line);
   }
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions {
@@ -1548,6 +1761,10 @@
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot + .stage-action-slot .button {
     border-top-width: 1px;
     border-left-width: 1px;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--saved > .stage-action-slot + .stage-action-slot .button {
+    border-left-color: var(--line);
   }
 
   /*
@@ -1601,6 +1818,11 @@
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status .button {
     border-top-width: 0;
     border-left-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(.stage-actions--saved):has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status .button {
+    border-left-width: 1px;
+    border-left-color: var(--line-soft);
   }
 
   .packet-page-actions > * + *,
@@ -1709,23 +1931,79 @@
     row-gap: 0;
   }
 
+  main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster {
+    grid-column: 3 / -1;
+  }
+
   main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child {
-    grid-column: 3;
-    grid-row: 1;
-    width: calc(100% + var(--jobs-queue-col-gap));
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
   }
 
   main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child {
-    grid-column: 4;
-    grid-row: 1;
+    grid-column: auto;
+    grid-row: auto;
   }
 
-  /* Three-slot layout: queue-rows.css */
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child .button {
+    width: 100%;
+  }
+
+  /*
+   * Prepared row (Apply | Review | Archive): use the same five tracks as the wide queue so controls
+   * align with Remote / Fit / Status — not the compact 2fr+1fr+1fr strip (which hugged the left edge).
+   */
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
+    grid-template-columns:
+      minmax(0, 2.8fr)
+      minmax(10rem, 1.25fr)
+      minmax(10rem, 1.15fr)
+      minmax(8rem, 0.9fr)
+      minmax(8rem, 0.9fr);
+    column-gap: var(--jobs-queue-col-gap);
+    row-gap: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--remote-salary {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--fit {
+    grid-column: 4;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status {
+    grid-column: 5;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
 
   /* Rows that only use Remote + Salary (two slots) keep the four-column band */
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-auto-rows: auto;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot--remote-salary {
+    grid-column: 3;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot--fit {
+    grid-column: 4;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
   }
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--remote {
@@ -1738,25 +2016,25 @@
     grid-row: 1;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--remote-salary {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(2):last-child)):not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--remote-salary {
     grid-column: 3 / span 2;
     grid-row: 1;
     width: 100%;
     min-width: 0;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit) {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(2):last-child)):not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--remote-salary:has(+ .stage-action-slot--fit) {
     width: 100%;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--fit {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(2):last-child)):not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--fit {
     grid-column: 3;
     grid-row: 2;
     width: calc(100% + var(--jobs-queue-col-gap));
     min-width: 0;
   }
 
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--status {
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(:has(.stage-action-slot:nth-child(2):last-child)):not(:has(.stage-action-slot:nth-child(3):last-child)) > .stage-action-slot--status {
     grid-column: 4;
     grid-row: 2;
     min-width: 0;
@@ -1798,11 +2076,6 @@
 
   .site-brand {
     padding-left: 16px;
-  }
-
-  .site-brand strong {
-    font-size: 0.9375rem;
-    line-height: 1.2;
   }
 
   .dashboard-workspace .today-rail {
@@ -1897,6 +2170,27 @@
     justify-content: flex-start;
   }
 
+  /* Full-width rail CTAs (Save / Log out): keep labels centered like queue controls. */
+  .settings-profile-rail-footer .today-block .button {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .operator-create-rail-block .operator-setup-form--rail .button,
+  .operator-create-rail-block .operator-entry-secondary-action .button {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .operator-create-rail-block .operator-entry-secondary-action {
+    margin-top: -8px;
+  }
+
+  .operator-create-rail-block .operator-entry-secondary-action .button__label {
+    width: 100%;
+    text-align: center;
+  }
+
   .repeat-card-header {
     align-items: center;
     flex-direction: row;
@@ -1926,6 +2220,31 @@
   .packet-question-controls {
     grid-column: auto;
     grid-row: auto;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--saved:has(.stage-action-slot:nth-child(2):last-child) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: none;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--saved:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot {
+    flex: 1 1 auto;
+    width: 100%;
+    grid-column: auto;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--saved:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot + .stage-action-slot {
+    margin-left: 0;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--saved:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot + .stage-action-slot .button {
+    border-left-width: 0;
+    border-top-width: 1px;
+    border-top-color: var(--line);
   }
 }
 
@@ -1980,12 +2299,6 @@
   .site-brand {
     min-height: 64px;
     padding-left: 12px;
-  }
-
-  .site-brand strong {
-    font-size: 0.875rem;
-    line-height: 1.15;
-    letter-spacing: 0.02em;
   }
 
   .site-mobile-menu-link {
@@ -2044,14 +2357,14 @@
 }
 
 /*
- * Job detail — overview actions only (.job-flow-prep-overview-wrap). Second max-width:900 block so it wins over
- * job-flow.css pair/triple grids. ≤900px: stack, equal full width, bar bleeds past section inset (flush column edges).
- * Excludes packet materials (.packet-material-review-sticky-action).
- * Note: main.page-stack wraps .dashboard-workspace; .job-flow-prep-overview-wrap is inside .queue-column, not under .page-stack.
- * Bleed: bar lives in .job-flow-section-inner (padding-right) inside .job-flow-prep-overview-wrap (horizontal padding from the
- * mobile queue-column rules). Cancel wrap pad left (−1×) and inner + wrap on the right (−2×) so controls flush the column edges.
+ * Job detail — overview actions only (.job-flow-prep-overview-wrap). ≤900px: pair/triple layouts + full-bleed
+ * control band (bleed through queue-column horizontal padding to the viewport edges — same math as queue breakout rows).
  */
 @media (max-width: 900px) {
+  /*
+   * .job-flow-section-inner has padding-right only, so 100% here is (section width − pad). Full bleed to the
+   * breakout wrap’s border box needs width +(3×pad) and margin-right −(2×pad) (not symmetric −pad / +2×pad width).
+   */
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions {
     grid-template-columns: 1fr;
     column-gap: 0;
@@ -2064,16 +2377,26 @@
 
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-actions-cluster {
     grid-column: 1;
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0;
     width: 100%;
     max-width: none;
     margin-left: 0;
     margin-right: 0;
     justify-self: stretch;
     justify-items: stretch;
-    align-items: stretch;
     box-sizing: border-box;
+  }
+
+  /*
+   * Match jobs queue (main.jobs-index … .screening-actions-bar .screening-actions-cluster): pair rows stay
+   * two-up at all ≤900px widths (including ≤640px), with horizontal overlap — not a single stacked column.
+   */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-actions-cluster {
+    flex-wrap: nowrap;
   }
 
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot,
@@ -2081,8 +2404,48 @@
     justify-content: flex-start;
   }
 
-  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot {
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--single-right .screening-action-slot {
+    flex: 1 1 100%;
     width: 100%;
+    min-width: 0;
+  }
+
+  /* Three actions — same pattern as jobs queue: first full width; second row ½ + ½ with seams. */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-actions-cluster {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    column-gap: 0;
+    row-gap: 0;
+    flex-wrap: unset;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:first-child {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+    margin-left: 0;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: calc(-1 * var(--adjacent-control-overlap));
+    margin-left: calc(-1 * var(--adjacent-control-overlap));
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot {
     max-width: none;
     min-width: 0;
   }
@@ -2104,33 +2467,92 @@
     -webkit-appearance: none;
   }
 
-  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot + .screening-action-slot {
-    margin-left: 0;
-    margin-top: calc(-1 * var(--adjacent-control-overlap));
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot + .screening-action-slot {
+    margin-top: 0;
+    margin-left: calc(-1 * var(--adjacent-control-overlap));
   }
 
-  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .screening-action-slot + .screening-action-slot .button {
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot + .screening-action-slot .button {
+    border-top-width: 1px;
+    border-left-width: 1px;
+    border-left-color: var(--line);
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(2) .button {
     border-top-width: 1px;
     border-top-color: var(--line);
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(3) .button {
+    border-top-width: 1px;
+    border-top-color: var(--line);
+    border-left-width: 1px;
+    border-left-color: var(--line-soft);
   }
 
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button {
     border-left-width: 0;
     border-right-width: 0;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /*
+   * Secondary/ghost use --line-soft on all edges; with L/R stripped for bleed, the bottom was still soft grey
+   * on the right vs the black section hairline. Bottom edge of the control band stays black full width.
+   */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button.button-primary,
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button.button-secondary,
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button.button-ghost {
+    border-bottom-color: var(--line);
   }
 }
 
 /*
- * Job detail overview (Generate / Archive, etc.): same 5 tracks as .job-flow-header-stack / .job-flow-snapshot.
- * Actions sit in cols 3–5 (Posted → Salary band). Hook class is set in JobOverviewSection when actions exist.
+ * Job detail overview (Generate / Archive, etc.) and the header meta band both key off the same lower-surface anchors.
+ * Five-column fr tracks (3+3+2+2+2): Location | Salary | Stage | Posted | Freshness.
+ * Packet triple (Apply | Regenerate | Archive) uses display:contents so slots occupy cols 3–5 on .job-overview-section-inner.
  * Placed last so it wins over job-flow.css + earlier responsive rules.
  */
 @media (min-width: 901px) {
+  .detail-page-header-stack,
+  .job-flow-header-stack,
+  .job-overview-section-inner {
+    --job-overview-anchor-gap: 24px;
+  }
+
+  .detail-page-header-stack,
+  .job-flow-header-stack {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+    row-gap: 24px;
+  }
+
+  .detail-page-header-stack .job-flow-heading,
+  .job-flow-header-stack .job-flow-heading {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .detail-page-header-stack .job-flow-meta-band,
+  .job-flow-header-stack .job-flow-meta-band {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: start;
+    padding-right: var(--queue-column-pad);
+    box-sizing: border-box;
+  }
+
   .job-overview-section-inner {
     display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2fr) minmax(0, 2fr);
-    column-gap: 16px;
+    grid-template-columns:
+      minmax(0, 3fr)
+      minmax(0, 3fr)
+      var(--job-overview-anchor-gap)
+      minmax(0, 2fr)
+      minmax(0, 2fr)
+      minmax(0, 2fr);
+    column-gap: 0;
     row-gap: 24px;
     align-items: start;
   }
@@ -2141,7 +2563,7 @@
   }
 
   .job-overview-section-inner > .screening-actions-bar.job-overview-actions {
-    grid-column: 3 / -1;
+    grid-column: 4 / -1;
     grid-template-columns: minmax(0, 1fr);
     column-gap: 0;
     width: 100%;
@@ -2159,10 +2581,284 @@
     justify-self: stretch;
     box-sizing: border-box;
   }
+
+  .job-overview-section-inner > .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right {
+    grid-column: 4 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .job-overview-section-inner .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-actions-cluster {
+    grid-column: 1 / -1;
+    width: calc(100% + var(--queue-column-pad));
+    margin-right: calc(-1 * var(--queue-column-pad));
+  }
+
+  .job-overview-section-inner > .screening-actions-bar.job-overview-actions.job-overview-actions--packet.job-overview-actions--pair-right {
+    grid-column: 4 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--packet.job-overview-actions--pair-right
+    .screening-actions-cluster {
+    grid-column: 1 / -1;
+    width: calc(100% + var(--queue-column-pad) - var(--job-overview-anchor-gap));
+    margin-left: var(--job-overview-anchor-gap);
+    margin-right: calc(-1 * var(--queue-column-pad));
+  }
+
+  /*
+   * Triple packet: bar + cluster are display:contents so each slot is a direct grid child of
+   * .job-overview-section-inner — left edges match Stage / Posted / Freshness; Archive bleeds to the queue right edge.
+   */
+  .dashboard-workspace .queue-column .job-overview-section-inner > .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right {
+    display: contents;
+  }
+
+  .dashboard-workspace
+    .queue-column
+    .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right
+    .screening-actions-cluster {
+    display: contents;
+    width: auto;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    min-width: 0;
+  }
+
+  .dashboard-workspace
+    .queue-column
+    .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right
+    .screening-action-slot:nth-child(1) {
+    grid-column: 4;
+    grid-row: 2;
+    min-width: 0;
+  }
+
+  .dashboard-workspace
+    .queue-column
+    .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right
+    .screening-action-slot:nth-child(2) {
+    grid-column: 5;
+    grid-row: 2;
+    min-width: 0;
+  }
+
+  .dashboard-workspace
+    .queue-column
+    .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right
+    .screening-action-slot:nth-child(3) {
+    grid-column: 6;
+    grid-row: 2;
+    min-width: 0;
+    width: calc(100% + var(--queue-column-pad) + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * (var(--queue-column-pad) + var(--adjacent-control-overlap)));
+    justify-self: stretch;
+    box-sizing: border-box;
+  }
 }
 
-@media (min-width: 901px) and (max-width: 1440px) {
-  .job-overview-section-inner {
-    column-gap: 12px;
+@media (min-width: 901px) and (max-width: 1180px) {
+  .detail-page-header-stack .job-flow-meta-band,
+  .job-flow-header-stack .job-flow-meta-band {
+    width: calc(100% + var(--queue-column-pad));
+    margin-right: calc(-1 * var(--queue-column-pad));
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr)
+      var(--job-overview-anchor-gap)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+    column-gap: 0;
+    row-gap: 12px;
+  }
+
+  .job-flow-meta-item--location {
+    grid-column: 1 / span 2;
+    grid-row: 1 / span 2;
+  }
+
+  .job-flow-meta-item--salary {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  .job-flow-meta-item--stage {
+    grid-column: 5;
+    grid-row: 1;
+  }
+
+  .job-flow-meta-item--posted {
+    grid-column: 4;
+    grid-row: 2;
+  }
+
+  .job-flow-meta-item--freshness {
+    grid-column: 5;
+    grid-row: 2;
+  }
+
+  /* Overview body keeps the same five fr tracks as min-width:901px — triple packet uses display:contents (see block above). */
+
+  .job-overview-section-inner > .job-review-grid {
+    grid-column: 1 / -1;
+  }
+
+  /* Screening Save | Skip — Posted + Freshness (cols 4–5 on the five-col overview grid) */
+  .job-overview-section-inner > .screening-actions-bar.job-overview-actions.job-overview-actions--screening.job-overview-actions--pair-right {
+    grid-column: 4 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--screening.job-overview-actions--pair-right
+    .screening-actions-cluster {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    gap: 0;
+    column-gap: 0;
+  }
+
+  /* Packet pair (e.g. Generate + Archive): Stage through Freshness */
+  .job-overview-section-inner > .screening-actions-bar.job-overview-actions.job-overview-actions--packet.job-overview-actions--pair-right {
+    grid-column: 4 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--packet.job-overview-actions--pair-right
+    .screening-actions-cluster {
+    grid-column: 1 / -1;
+    width: calc(100% + var(--queue-column-pad));
+    margin-left: 0;
+    margin-right: calc(-1 * var(--queue-column-pad));
+  }
+
+  .site-brand strong {
+    font-size: 0.71rem;
+    letter-spacing: 0.01em;
+    line-height: 1.15;
+  }
+}
+
+@media (min-width: 1181px) {
+  .detail-page-header-stack .job-flow-meta-band,
+  .job-flow-header-stack .job-flow-meta-band {
+    grid-template-columns:
+      minmax(0, 3fr)
+      minmax(0, 3fr)
+      var(--job-overview-anchor-gap)
+      minmax(0, 2fr)
+      minmax(0, 2fr)
+      minmax(0, 2fr);
+    column-gap: 0;
+    row-gap: 0;
+  }
+
+  .job-flow-meta-item--location {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .job-flow-meta-item--salary {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .job-flow-meta-item--stage {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  .job-flow-meta-item--posted {
+    grid-column: 5;
+    grid-row: 1;
+  }
+
+  .job-flow-meta-item--freshness {
+    grid-column: 6;
+    grid-row: 1;
+  }
+}
+
+/* Packet materials download: left border aligns with Salary (and the Posted column start in the same row as the snapshot). */
+@media (min-width: 1180px) {
+  .dashboard-workspace
+    .queue-column
+    .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions
+    .screening-actions-cluster {
+    padding-left: 25%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 1440px) {
+  .column-reading-copy {
+    max-inline-size: 80%;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-workspace .today-rail .today-block .button,
+  .dashboard-workspace .today-rail .today-resume-status .button,
+  .dashboard-workspace .today-rail .today-actions .button,
+  .dashboard-workspace .today-rail.settings-profile-rail .settings-profile-rail-footer .button {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .dashboard-workspace .today-rail .today-block .button .button__label,
+  .dashboard-workspace .today-rail .today-resume-status .button .button__label,
+  .dashboard-workspace .today-rail .today-actions .button .button__label,
+  .dashboard-workspace .today-rail.settings-profile-rail .settings-profile-rail-footer .button .button__label {
+    width: 100%;
+    text-align: center;
+  }
+
+  .dashboard-workspace .queue-column .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions {
+    width: calc(100% + (4 * var(--queue-column-pad)));
+    max-width: none;
+    margin-left: calc(-1 * var(--queue-column-pad));
+    margin-right: calc(-2 * var(--queue-column-pad));
+    box-sizing: border-box;
+  }
+
+  .dashboard-workspace .queue-column .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions .screening-actions-cluster {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    min-width: 0;
+  }
+
+  .dashboard-workspace .queue-column .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions .screening-action-slot {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-workspace .queue-column .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions .packet-material-download-button,
+  .dashboard-workspace
+    .queue-column
+    .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions
+    .screening-actions-cluster
+    > .screening-action-slot:last-child
+    .packet-material-download-button {
+    width: 100%;
+    min-width: 0;
+    margin-right: 0;
+    border-left: 0;
   }
 }

@@ -8,8 +8,9 @@ export function QueueRefreshButton() {
 
   return (
     <button
+      aria-busy={pending}
       aria-label={pending ? 'Refreshing jobs' : 'Refresh jobs'}
-      className="queue-refresh-mark"
+      className={`queue-refresh-mark${pending ? ' queue-refresh-mark--pending' : ''}`}
       disabled={pending}
       title={pending ? 'Refreshing jobs' : 'Refresh jobs'}
       type="submit"

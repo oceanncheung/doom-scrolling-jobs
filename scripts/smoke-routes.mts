@@ -1,6 +1,7 @@
-const defaultJobId = 'ec47ed58-6782-46e4-8ce7-4b3241ef345c'
-const baseUrl = (process.env.SMOKE_BASE_URL || 'http://127.0.0.1:3001').replace(/\/$/, '')
-const jobId = process.argv[2] || process.env.SMOKE_JOB_ID || defaultJobId
+import { fetchSmoke, getSmokeBaseUrl, getSmokeJobId } from './smoke-helpers.mts'
+
+const baseUrl = getSmokeBaseUrl()
+const jobId = getSmokeJobId(process.argv[2])
 
 interface RouteCheck {
   expectedStatuses: number[]
@@ -11,7 +12,7 @@ interface RouteCheck {
 const routeChecks: RouteCheck[] = [
   {
     expectedStatuses: [200],
-    pathname: '/operators',
+    pathname: '/',
   },
   {
     expectedStatuses: [200],
@@ -26,15 +27,19 @@ const routeChecks: RouteCheck[] = [
     pathname: `/jobs/${jobId}`,
   },
   {
-    expectedStatuses: [200, 307],
+    expectedStatuses: [307, 308],
     pathname: `/jobs/${jobId}/packet`,
     redirect: 'manual',
+  },
+  {
+    expectedStatuses: [200],
+    pathname: '/system-inventory',
   },
 ]
 
 const results = await Promise.all(
   routeChecks.map(async (check) => {
-    const response = await fetch(`${baseUrl}${check.pathname}`, {
+    const response = await fetchSmoke(check.pathname, {
       redirect: check.redirect ?? 'follow',
     })
 

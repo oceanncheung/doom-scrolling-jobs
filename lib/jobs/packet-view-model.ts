@@ -110,7 +110,7 @@ export function buildPacketPreGenerationViewModel({
       lines: readinessPresentation?.packetLines ?? ['Complete your profile in Profile before generating application materials.'],
       mode: 'locked',
       note: readinessPresentation?.packetNote ?? 'Use Profile to upload your resume, generate the profile draft, review the extracted sections, and save once the required fields are ready. The application packet unlocks once your profile is ready.',
-      title: readinessPresentation?.packetTitle ?? 'Complete your profile before preparing this packet.',
+      title: readinessPresentation?.packetTitle ?? 'Complete your profile before generating application materials.',
     }
   }
 

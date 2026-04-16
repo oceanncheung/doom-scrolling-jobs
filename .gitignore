@@ -58,3 +58,6 @@ Thumbs.db
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Local eval artifacts
+/.codex-artifacts/

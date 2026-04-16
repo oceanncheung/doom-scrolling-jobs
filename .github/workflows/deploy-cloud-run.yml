@@ -30,11 +30,16 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
-      - name: Validate UI and app contracts
-        run: npm run check
+      - name: Run repo quality harness
+        run: npm run eval
 
-      - name: Run UI contract tests
-        run: npm run test:ui-contracts
+      - name: Upload harness artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-quality-harness
+          path: .codex-artifacts/eval/latest/
+          if-no-files-found: warn
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2

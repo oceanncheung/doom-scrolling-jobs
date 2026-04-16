@@ -31,6 +31,147 @@ Use this when editing UI code in this repo, especially:
 3. Keep zero visual diff during cleanup unless the user explicitly asks for a visible change.
 4. Verify every affected route after CSS or TSX changes.
 
+## Default Harness Workflow
+
+- Treat the harness as the default repo operating mode.
+- Read the latest harness artifacts first:
+  - `.codex-artifacts/eval/latest/report.json`
+  - `.codex-artifacts/eval/latest/report.md`
+  - relevant logs and UI artifacts when needed
+- Always use `repo-harness-triage` for diagnosis and prioritization unless explicitly instructed otherwise.
+- If no failure exists, select the highest-value weak spot or coverage caveat instead of inventing new work.
+- Always operate on a single issue at a time. Do not bundle multiple fixes.
+- Default implementation path for one approved issue: use `repo-controlled-fix-loop`.
+- Rerun the smallest relevant verification first.
+- Rerun `npm run eval` when the issue affects a scored layer, shared contract, workflow behavior, UI contracts, or UI artifacts.
+- Keep external live diagnostics separate from the deterministic core harness. `npm run diagnostic:external-sourcing` is non-gating and must not be treated as part of `npm run eval`.
+
+Natural-language triggers that should follow this workflow:
+
+- "Check the latest harness run and tell me what to fix next."
+- "Use the latest eval results and fix the top issue."
+- "What is the highest-value weak spot after the last eval?"
+- "Inspect the harness output and make one safe fix."
+- "Review the latest screenshots and fix one real inconsistency."
+
+## Custom UI Protection Rules
+
+- Preserve the existing custom design language across the product.
+- Do **not** normalize bespoke UI into generic design-system output.
+- Do **not** replace custom components with generic abstractions unless the user explicitly instructs that refactor.
+- Do **not** make broad global visual refactors unless the user explicitly asks for them.
+- Prefer surgical fixes over broad cleanup.
+- Treat current visuals as intentional unless they are clearly broken, inconsistent within the same pattern family, inaccessible, or unresponsive.
+- Consistency means preserving the logic of related pattern families, not flattening the whole product into one uniform layout.
+- When adjusting UI, preserve the editorial grid, ruled seams, monochrome hierarchy, and custom split-shell composition unless the request explicitly changes them.
+- When a surface looks custom rather than accidental, assume that character is part of the product and should be protected.
+
+## UI Consistency Refinement Scope
+
+Allowed without extra approval:
+
+- spacing and gap consistency
+- alignment fixes
+- text hierarchy refinement for elements serving the same role
+- padding consistency
+- same-family button/control sizing consistency
+- responsive spacing and alignment fixes
+- removal of obvious visual drift across related pages or pattern families
+
+Not allowed without explicit instruction:
+
+- layout structure changes
+- composition changes
+- replacing component types
+- redesigning buttons or controls
+- global typography redesign
+- global spacing-system redesign
+- visual simplification that removes intended character
+- flattening intentionally different pages into one pattern
+
+This refinement zone exists to improve implementation consistency, not to redesign the UI. Keep layout, composition, component choices, and the custom design language intact while fixing local drift.
+
+## Frontend Logic Refinement Scope
+
+Allowed without extra approval:
+
+- extracting duplicated frontend logic into shared helpers or hooks
+- simplifying component state handling
+- improving loading, empty, and error-state consistency
+- reducing fragile conditional rendering branches
+- tightening boundaries between UI components and server/data logic
+- improving type safety and shared transformation logic
+- removing dead or obviously stale frontend paths when confidence is high
+
+Not allowed without explicit instruction:
+
+- broad architectural rewrites
+- changing product behavior
+- replacing core state-management patterns globally
+- moving large areas of logic across the app at once
+- refactoring unrelated files as cleanup
+- changing route structure or API contracts unless required by the issue
+
+This refinement zone exists to improve implementation quality and maintainability, not to redesign the product architecture.
+
+## Sameness Rule
+
+- Consistency should follow semantic role and pattern family.
+- Elements that serve the same role should feel related.
+- Elements with different roles or emphasis do **not** need to be forced to match.
+- Same-family buttons should have consistent height, padding, and text/icon spacing unless a difference is clearly intentional.
+
+## UI Red Lines
+
+- Do **not** change brand-defining components without explicit instruction.
+- Do **not** change flagship page composition without explicit instruction.
+- Do **not** change motion behavior or distinctive layout rhythms without explicit instruction.
+- Do **not** turn the current ruled editorial UI into card-heavy, rounded, shadowed, gradient, or generic SaaS styling.
+- Do **not** merge distinct pattern families just to make the product feel more uniform.
+
+### Protected Surfaces
+
+- Global workflow header and queue navigation:
+  - `app/layout.tsx`
+  - `components/navigation/workspace-header.tsx`
+  - `app/styles/tokens.css`
+  - `app/styles/responsive.css`
+- Split workspace shell and rail seam:
+  - `components/navigation/workspace-surface.tsx`
+  - `components/navigation/workspace-rail-shell.tsx`
+  - `app/styles/shell.css`
+- Editorial page-header language:
+  - `components/dashboard/queue-meta.tsx`
+  - `components/ui/page-intro-header.tsx`
+  - `components/jobs/job-flow-header.tsx`
+  - `app/styles/dashboard/queue-meta.css`
+  - `app/styles/settings/page-shell.css`
+- Queue row family and action bands:
+  - `components/dashboard/potential-row.tsx`
+  - `components/dashboard/saved-row.tsx`
+  - `components/dashboard/stage-row.tsx`
+  - `app/styles/dashboard/queue-rows.css`
+  - `app/styles/controls.css`
+- Profile elevated controls and seam logic:
+  - `components/profile/profile-form-controls.tsx`
+  - `components/profile/sections/job-targets-section.tsx`
+  - `components/profile/sections/experience-strengths-section.tsx`
+  - `components/profile/sections/cover-letter-strategy-section.tsx`
+  - `app/styles/settings/elevated-controls.css`
+- Source upload row:
+  - `components/profile/sections/application-materials-section.tsx`
+  - `app/styles/forms/uploads.css`
+  - `app/styles/forms/settings-fields.css`
+- Flagship route structures:
+  - `/`
+  - `/dashboard`
+  - `/profile`
+  - `/jobs/[jobId]`
+- Internal reference surface:
+  - `/system-inventory`
+  - `app/system-inventory/page.tsx`
+  - `components/system/system-inventory-page.tsx`
+
 ## Shared control + hairline contract
 
 - The base `.button` contract lives in `app/styles/controls.css`. Do not define root `.button`, `.button-primary`, `.button-ghost`, `.button-small`, `.button__label`, or `.action-note*` selectors anywhere else.

@@ -14,7 +14,7 @@
   border: 0;
   border-bottom: 1px solid var(--line);
   border-radius: 0;
-  background: transparent;
+  background-color: transparent;
   color: var(--text);
   font-family: var(--font-body), sans-serif;
   font-size: 0.875rem;
@@ -46,11 +46,36 @@
 
 .button-primary {
   font-weight: 600;
+  background-color: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.button.button-primary:hover:not(:disabled),
+.button.button-primary:focus-visible {
+  background-color: var(--accent);
+  color: var(--text);
+  border-color: var(--accent);
+  border-bottom-color: var(--text);
+  opacity: 1;
+}
+
+.button.button-secondary,
+.button.button-ghost {
+  border-color: var(--line);
+}
+
+.button.button-secondary:hover:not(:disabled),
+.button.button-secondary:focus-visible,
+.button.button-ghost:hover:not(:disabled),
+.button.button-ghost:focus-visible {
+  background-color: var(--surface-soft-hover);
+  color: var(--text);
+  opacity: 1;
 }
 
 .button-ghost {
   color: var(--muted);
-  border-bottom-color: var(--line-soft);
 }
 
 .button-small {

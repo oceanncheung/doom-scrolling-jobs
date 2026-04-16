@@ -108,7 +108,22 @@ Useful scripts:
 - `npm run check:ui-system`
 - `npm run build`
 - `npm run check`
+- `npm run eval`
 - `npm run deploy:cloud-run`
+
+## 8.5 Quality Harness
+
+The repo now has one standard quality gate:
+
+- `npm run eval`
+
+It runs the full repo harness across correctness, workflows, UI assertions, and UI review evidence, then writes:
+
+- `.codex-artifacts/eval/latest/report.json`
+- `.codex-artifacts/eval/latest/report.md`
+- `.codex-artifacts/eval/latest/ui/`
+
+See `docs/repo-harness.md` for the layer breakdown and scoring model.
 
 ## 8. Deployment
 

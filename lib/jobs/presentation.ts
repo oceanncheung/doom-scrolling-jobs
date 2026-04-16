@@ -59,7 +59,7 @@ export function formatWorkflowLabel(value: RankedJobRecord['workflowStatus']) {
     case 'shortlisted':
       return 'Saved'
     case 'preparing':
-      return 'Preparing packet'
+      return 'Generating content'
     case 'ready_to_apply':
       return 'Ready'
     case 'follow_up_due':

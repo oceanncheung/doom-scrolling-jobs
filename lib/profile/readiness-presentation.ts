@@ -46,10 +46,10 @@ export function buildProfileReadinessPresentation(
   if (status.sourceState === 'blank') {
     return buildLockedPresentation({
       generationDisabledReason:
-        'Upload your resume in Profile, generate the draft, review the extracted sections, and save before preparing applications.',
+        'Upload your resume in Profile, generate the draft, review the extracted sections, and save before generating application materials.',
       jobsIssue: 'Upload your resume in Profile to unlock the Potential queue.',
       packetLines: ['Upload your resume in Profile before generating application materials.'],
-      packetTitle: 'Upload your resume before preparing this packet.',
+      packetTitle: 'Upload your resume before generating application materials.',
       queueEmptyMessage: 'Upload your resume in Profile to unlock Potential.',
       todayRailLines: [
         'Upload your resume to unlock the queue.',
@@ -61,10 +61,10 @@ export function buildProfileReadinessPresentation(
   if (status.sourceState === 'sources_uploaded') {
     return buildLockedPresentation({
       generationDisabledReason:
-        'Generate your profile in Profile, review the extracted sections, and save before preparing applications.',
+        'Generate your profile in Profile, review the extracted sections, and save before generating application materials.',
       jobsIssue: 'Generate your profile in Profile to unlock the Potential queue.',
       packetLines: ['Generate the profile draft in Profile before creating application materials.'],
-      packetTitle: 'Generate your profile before preparing this packet.',
+      packetTitle: 'Generate your profile before generating application materials.',
       queueEmptyMessage: 'Generate your profile in Profile to unlock Potential.',
       todayRailLines: [
         'Generate your profile to unlock the queue.',
@@ -75,10 +75,10 @@ export function buildProfileReadinessPresentation(
 
   return buildLockedPresentation({
     generationDisabledReason:
-      'Review the extracted sections in Profile, then save once the required fields are ready before preparing applications.',
+      'Review the extracted sections in Profile, then save once the required fields are ready before generating application materials.',
     jobsIssue: 'Review and save your profile in Profile to unlock the Potential queue.',
     packetLines: ['Review the extracted sections in Profile, then save to unlock application materials.'],
-    packetTitle: 'Review and save your profile before preparing this packet.',
+    packetTitle: 'Review and save your profile before generating application materials.',
     queueEmptyMessage: 'Review and save your profile in Profile to unlock Potential.',
     todayRailLines: [
       'Review and save your profile to unlock the queue.',

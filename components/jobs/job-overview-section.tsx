@@ -47,7 +47,7 @@ export function JobOverviewSection({
           <div className="job-review-grid">
             <div className="job-review-column">
               <p className="panel-label">Job overview</p>
-              <p>{overviewText}</p>
+              <p className="column-reading-copy">{overviewText}</p>
               <div className="inline-link-row">
                 <a href={job.sourceUrl} rel="noreferrer" target="_blank">
                   {formatSourceLinkLabel(job)}

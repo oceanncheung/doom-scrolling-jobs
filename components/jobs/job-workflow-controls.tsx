@@ -3,6 +3,11 @@
 import { useActionState } from 'react'
 
 import { updateJobWorkflow, type JobWorkflowActionState } from '@/app/jobs/actions'
+import {
+  ActionFormMessage,
+  getPendingActionLabel,
+  initialActionFormState,
+} from '@/components/jobs/action-form-primitives'
 import { workflowStatuses, type WorkflowStatus } from '@/lib/domain/types'
 import { formatWorkflowLabel } from '@/lib/jobs/presentation'
 import {
@@ -11,10 +16,7 @@ import {
   workflowEditingUnavailableReason,
 } from '@/lib/jobs/workflow-actions'
 
-const initialState: JobWorkflowActionState = {
-  message: '',
-  status: 'idle',
-}
+const initialState: JobWorkflowActionState = initialActionFormState
 
 interface JobWorkflowControlsProps {
   canEdit: boolean
@@ -62,7 +64,10 @@ export function JobWorkflowControls({
           type="submit"
           value={saveAction.kind}
         >
-          {isPending ? 'Saving...' : saveAction.defaultLabel}
+          {getPendingActionLabel({
+            defaultLabel: saveAction.defaultLabel,
+            isPending,
+          })}
         </button>
         <button
           className="button button-ghost button-small"
@@ -71,7 +76,10 @@ export function JobWorkflowControls({
           type="submit"
           value={archiveAction.kind}
         >
-          {isPending ? 'Saving...' : 'Dismiss'}
+          {getPendingActionLabel({
+            defaultLabel: 'Dismiss',
+            isPending,
+          })}
         </button>
       </div>
 
@@ -98,7 +106,10 @@ export function JobWorkflowControls({
           type="submit"
           value="save"
         >
-          {isPending ? 'Saving...' : compact ? 'Save' : 'Save status'}
+          {getPendingActionLabel({
+            defaultLabel: compact ? 'Save' : 'Save status',
+            isPending,
+          })}
         </button>
       </div>
 
@@ -110,13 +121,12 @@ export function JobWorkflowControls({
       }
 
       {state.status !== 'idle' ? (
-        <p
-          className={`form-message workflow-message ${
-            state.status === 'success' ? 'form-message-success' : 'form-message-error'
-          }`}
-        >
-          {state.message}
-        </p>
+        <ActionFormMessage
+          className="workflow-message"
+          message={state.message}
+          status={state.status}
+          tone="form-message"
+        />
       ) : null}
     </form>
   )

@@ -8,7 +8,7 @@ export function StageEmpty({
   return (
     <article className="empty-state">
       <p className="panel-label">{title}</p>
-      <p>{message}</p>
+      <p className="column-reading-copy">{message}</p>
     </article>
   )
 }
