@@ -190,11 +190,19 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
           </span>
         </button>
       </div>
+      {/*
+       * Backdrop lives inside <header> so it inherits the header's z-index: 5 stacking context.
+       * That way it paints above the today-rail (z-index: 4) when the Apply next / profile panel
+       * is open — dimming the panel too — while the mobile menu (also inside the header) still
+       * paints above the backdrop. Outside the header it can only reach z: 3 and today-rail
+       * would sit uncovered.
+       */}
+      <div
+        aria-hidden
+        className={`site-mobile-menu-backdrop${menuExpanded ? ' is-lit' : ''}`}
+        onClick={beginCloseMenu}
+      />
     </header>
-    <div
-      aria-hidden
-      className={`site-mobile-menu-backdrop${menuExpanded ? ' is-lit' : ''}`}
-    />
     </>
   )
 }

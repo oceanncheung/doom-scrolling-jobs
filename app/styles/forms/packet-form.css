@@ -184,7 +184,19 @@ section.dashboard-workspace:has(#packet-form),
 
 /* Draft text first, download row last so the control sits on the section hairline (::after), not above the draft. */
 .packet-material-review-block.detail-review-section--with-sticky-action > .job-flow-section-inner {
+  padding-top: 0;
   padding-bottom: 0;
+}
+
+/*
+ * Preserve the 24px space above the title while dropping section-inner's padding-top. With that
+ * padding present, the sticky download button's upper clamp threshold sat 24px below the block's
+ * visible hairline — meaning the button didn't appear until 24px of scroll after the hairline
+ * entered the viewport. Shifting the space onto the title keeps the visual rhythm identical and
+ * lets the sticky's containing-block content-top align with the hairline.
+ */
+.packet-material-review-block.detail-review-section--with-sticky-action > .job-flow-section-inner > :first-child {
+  padding-top: 24px;
 }
 
 /* Last row in section: `bottom: 0` pins to the viewport bottom while scrolling the draft above (needs visible overflow on ancestors — see block above). */
@@ -269,8 +281,8 @@ section.dashboard-workspace:has(#packet-form),
 .packet-material-review-block .packet-material-download-button.button-primary:focus-visible:not(:disabled) {
   background: var(--accent);
   color: var(--text);
-  border-top-color: var(--accent);
-  border-left-color: var(--accent);
+  border-top-color: var(--line);
+  border-left-color: var(--line);
 }
 
 .packet-material-review-block .packet-material-download-button:disabled {

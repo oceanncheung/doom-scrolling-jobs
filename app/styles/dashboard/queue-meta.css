@@ -135,6 +135,10 @@
   align-items: start;
   border-top: none;
   grid-auto-rows: max-content;
+  /* Bottom breathing room matches `.packet-section-inner { padding-bottom: 32px }` so the last
+   * job row doesn't butt against the viewport edge — same rhythm as the packet page footer gap
+   * under Download Cover Letter. */
+  padding-bottom: 32px;
 }
 
 main.jobs-index .queue-list > .empty-state {

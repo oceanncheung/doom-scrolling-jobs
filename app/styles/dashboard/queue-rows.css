@@ -182,7 +182,10 @@ main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--saved > .stage-action-slot--fit {
     grid-column: 4 / -1;
-    width: 100%;
+    /* Last slot bridges 1px past the viewport edge; clipped by `queue-column { overflow-x: clip }`.
+     * Prevents subpixel gap in top/bottom borders at the viewport boundary. */
+    width: calc(100% + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * var(--adjacent-control-overlap));
     min-width: 0;
   }
 
@@ -204,7 +207,9 @@ main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--applied > .stage-action-slot--fit {
     grid-column: 4 / -1;
-    width: 100%;
+    /* Last slot: overlap 1px past the viewport so the border paints past the boundary (clipped). */
+    width: calc(100% + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * var(--adjacent-control-overlap));
     min-width: 0;
   }
 
@@ -238,7 +243,9 @@ main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status {
     grid-column: 5;
-    width: 100%;
+    /* Last slot: overlap 1px past the viewport so the border paints past the boundary (clipped). */
+    width: calc(100% + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * var(--adjacent-control-overlap));
     min-width: 0;
   }
 
@@ -293,6 +300,31 @@ main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   min-width: 0;
+}
+
+/*
+ * Desktop+: Save + Skip mirror the Ready row's --saved pattern — Save spans Remote + Salary
+ * (cols 2-3, like Apply), Skip spans Fit + Posted (cols 4-5, flush viewport right). Cluster uses
+ * display: contents so both slots land directly on the 5-col `.screening-actions-bar` grid.
+ */
+@media (min-width: 1181px) {
+  main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster {
+    display: contents;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster > .screening-action-slot:first-child {
+    grid-column: 2 / span 2;
+    width: calc(100% + var(--jobs-queue-col-gap));
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster > .screening-action-slot:last-child {
+    grid-column: 4 / -1;
+    /* Last slot bridges 1px past the viewport edge; clipped by `queue-column { overflow-x: clip }`. */
+    width: calc(100% + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * var(--adjacent-control-overlap));
+    min-width: 0;
+  }
 }
 
 .screening-disclosure {
@@ -655,6 +687,19 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-actio
   width: 100%;
 }
 
+/*
+ * Right-flushed buttons: the last slot of these clusters bleeds to the queue-column's right edge,
+ * which is the viewport right edge at all desktop widths (queue-column has padding-right: 0 above
+ * 900px). A 1px right border there reads as a line glued to the viewport. Zero it for the
+ * flush-edge family across narrow desktop + desktop+wide; left/top/bottom borders are unaffected.
+ */
+@media (min-width: 901px) {
+  .screening-actions-cluster > .screening-action-slot:last-child .button,
+  .stage-actions-bar .stage-actions .stage-action-slot:last-child .button {
+    border-right-width: 0;
+  }
+}
+
 .screening-actions-bar .button-primary {
   font-weight: 600;
   /* Above adjacent secondary so the 1px overlap doesn’t hide the black rule between Save and Skip. */
@@ -687,9 +732,21 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-actio
   }
 }
 
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button:hover:not(:disabled),
-main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot .button:focus-visible:not(:disabled) {
-  z-index: auto;
+/*
+ * Seam protection in 3-slot chains (Apply | Review/Regenerate | Archive): the middle slot's
+ * border-right forms the seam with the last slot. By default both middle and last buttons have
+ * z-index: 0 and the later one (Archive) paints on top, which hides the seam when Archive is
+ * hovered (opaque fill covers the preceding button's right border).
+ *
+ * Stack all non-last slots above the last so each shared 1px border remains visible on top of a
+ * hovered following slot's fill. This MUST persist through hover — a prior rule reset
+ * z-index to auto on :hover, which defeated the protection (the seam owner lost its stacking
+ * the moment it was hovered, so the following slot's paint covered the border). Keep z-index: 2
+ * in all states.
+ */
+.screening-actions-bar .screening-actions-cluster:has(.screening-action-slot:nth-child(3):last-child) .screening-action-slot:not(:last-child) .button,
+.stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) .stage-action-slot:not(:last-child) .button {
+  z-index: 2;
 }
 
 .screening-actions-bar .button:disabled {
@@ -899,11 +956,20 @@ details[open].disclosure .disclosure-caret {
 
 .inline-link-row a {
   padding-bottom: 3px;
-  border-bottom: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line);
   color: var(--muted);
   font-size: 0.92rem;
   font-weight: 600;
   letter-spacing: 0;
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+/* Same hover contract as .button-ghost / .section-header Add buttons: text fades from muted grey
+ * to black, no fill, underline stays black. Unifies the inline text-action family. */
+.inline-link-row a:hover,
+.inline-link-row a:focus-visible {
+  color: var(--text);
 }
 
 .panel {

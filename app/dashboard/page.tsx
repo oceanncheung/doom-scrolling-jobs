@@ -47,6 +47,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       appliedJobs.length > 0 ? (
         appliedJobs.map((job) => (
           <AppliedRow
+            actionsEnabled={actionsEnabled}
             job={job}
             key={job.id}
             profile={workspace.profile}

@@ -55,8 +55,8 @@
 .button.button-primary:focus-visible {
   background-color: var(--accent);
   color: var(--text);
-  border-color: var(--accent);
-  border-bottom-color: var(--text);
+  /* Keep borders black on hover; viewport-flush sides have width 0, so only internal edges render. */
+  border-color: var(--line);
   opacity: 1;
 }
 
@@ -66,10 +66,20 @@
 }
 
 .button.button-secondary:hover:not(:disabled),
-.button.button-secondary:focus-visible,
+.button.button-secondary:focus-visible {
+  background-color: var(--surface-soft-hover);
+  color: var(--text);
+  opacity: 1;
+}
+
+/*
+ * Ghost buttons are the underline / text-button style in this system (bottom-only border per the
+ * base .button contract). Their hover is text-color-only: text goes from muted to black, no grey
+ * background fill. This keeps them reading as inline action labels, not boxed buttons, and
+ * unifies the hover behavior across the "Remove" rows, inline links, and similar text actions.
+ */
 .button.button-ghost:hover:not(:disabled),
 .button.button-ghost:focus-visible {
-  background-color: var(--surface-soft-hover);
   color: var(--text);
   opacity: 1;
 }

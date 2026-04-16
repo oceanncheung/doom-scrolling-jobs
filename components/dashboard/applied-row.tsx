@@ -5,17 +5,21 @@ import {
   StageDetailItem,
 } from '@/components/dashboard/stage-primitives'
 import { StageRow } from '@/components/dashboard/stage-row'
-import { formatSourceLinkLabel, getMatchReason, getRiskReason } from '@/lib/jobs/display'
+import { JobStageActionButton } from '@/components/jobs/job-stage-action-button'
+import { getMatchReason, getRiskReason } from '@/lib/jobs/display'
 import type { OperatorProfileRecord } from '@/lib/domain/types'
 import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
 import { getJobReviewHref } from '@/lib/jobs/review-navigation'
 import { formatWorkflowLabel } from '@/lib/jobs/presentation'
+import { getWorkflowActionDisabledReason } from '@/lib/jobs/workflow-actions'
 
 export function AppliedRow({
+  actionsEnabled,
   job,
   profile,
   showActions = true,
 }: {
+  actionsEnabled: boolean
   job: QualifiedJobRecord
   profile: OperatorProfileRecord
   showActions?: boolean
@@ -30,14 +34,14 @@ export function AppliedRow({
             </Link>
           </div>
           <div className="stage-action-slot stage-action-slot--fit">
-            <a
-              className="button button-ghost button-small"
-              href={job.applicationUrl ?? job.sourceUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              {formatSourceLinkLabel(job)}
-            </a>
+            <JobStageActionButton
+              actionKind="archive"
+              canEdit={actionsEnabled}
+              disabledReason={getWorkflowActionDisabledReason('archive')}
+              jobId={job.id}
+              sourceContext="applied-archive"
+              variant="ghost"
+            />
           </div>
         </div>
       }

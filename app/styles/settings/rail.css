@@ -104,7 +104,7 @@
 .settings-profile-rail-footer .today-block .button.button-primary:focus-visible {
   background: var(--accent);
   color: var(--text);
-  border-color: var(--accent);
+  border-color: var(--line);
   opacity: 1;
 }
 

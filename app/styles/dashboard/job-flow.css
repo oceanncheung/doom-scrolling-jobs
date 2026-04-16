@@ -267,6 +267,13 @@
   margin: 0;
 }
 
+/* Match the dashboard accordion's 16px gap above the Source / More details link row
+ * (.screening-expanded { gap: 16px }). The column's base 8px stack gap is correct for
+ * label → copy, but the inline link row needs an extra 8px to breathe away from the text. */
+.job-review-column > .inline-link-row {
+  margin-top: 8px;
+}
+
 .job-material-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

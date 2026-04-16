@@ -39,7 +39,7 @@ export function PreparedRow({
             />
           </div>
           <div className="stage-action-slot stage-action-slot--fit">
-            <Link className="button button-ghost button-small" href={getJobReviewHref(job.id)}>
+            <Link className="button button-secondary button-small" href={getJobReviewHref(job.id)}>
               Review
             </Link>
           </div>

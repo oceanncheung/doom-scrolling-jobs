@@ -962,6 +962,23 @@
   font-weight: 600;
 }
 
+/*
+ * Add-row buttons (Add role / Add school / Add project / Add proof point) are text-style actions,
+ * not boxed. Override the base .button-secondary (which defaults to black text + grey hover fill)
+ * to read as inline text actions: muted grey idle, black on hover, no fill. Unifies with the
+ * .button-ghost "Remove" hover pattern in the repeat cards.
+ */
+.section-header .button.button-secondary {
+  color: var(--muted);
+}
+
+.section-header .button.button-secondary:hover:not(:disabled),
+.section-header .button.button-secondary:focus-visible {
+  background-color: transparent;
+  color: var(--text);
+  opacity: 1;
+}
+
 /* Cover-letter proof bank: Label + Context stack left; Supporting bullets right (same row height). */
 .repeat-card-proof-grid {
   display: grid;

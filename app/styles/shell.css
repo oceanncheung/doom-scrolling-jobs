@@ -132,6 +132,13 @@
   padding-top: 24px;
   padding-left: var(--today-rail-pad-left);
   padding-right: var(--today-rail-pad-right);
+  /*
+   * `border-left` is a 1px transparent spacer that balances the visible 1px `border-right`
+   * divider. Without it the content sits 1px closer to the right edge than the left, which reads
+   * as a subtle asymmetry in the "About you" / Actions blocks — especially noticeable on the
+   * full-height Log out button row.
+   */
+  border-left: 1px solid transparent;
   border-right: 1px solid var(--line);
   box-sizing: border-box;
 }
@@ -272,7 +279,15 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  /*
+   * Bleed the scroll container into the rail's right padding so the scrollbar paints at the
+   * rail's inner right edge (flush with the divider) instead of 24px inset in the content.
+   * Internal padding-right preserves the existing content spacing.
+   */
+  width: calc(100% + var(--today-rail-pad-right));
+  margin-right: calc(-1 * var(--today-rail-pad-right));
   padding-top: 0;
+  padding-right: var(--today-rail-pad-right);
   padding-bottom: var(--today-rail-scroll-tail);
   box-sizing: border-box;
 }
@@ -433,7 +448,13 @@
 }
 
 @media (min-width: 901px) {
-  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll {
+  /*
+   * Edge-bleed applies to dashboard rails where the aside owns the 24px horizontal padding
+   * (shell.css:133-134). The login/operator-entry rail uses `--split-scroll`, which zeroes the
+   * aside padding so inner blocks can own their own inset (operators.css:120); bleeding the
+   * scroll there would push content outside the rail. Exclude that variant here.
+   */
+  .dashboard-workspace .today-rail:not(.settings-profile-rail):not(.today-rail--split-scroll) > .today-rail-scroll {
     width: calc(100% + var(--today-rail-pad-left) + var(--today-rail-pad-right));
     max-width: none;
     margin-left: calc(-1 * var(--today-rail-pad-left));
@@ -441,8 +462,8 @@
     box-sizing: border-box;
   }
 
-  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block:first-child,
-  .dashboard-workspace .today-rail:not(.settings-profile-rail) > .today-rail-scroll > .today-block + .today-block {
+  .dashboard-workspace .today-rail:not(.settings-profile-rail):not(.today-rail--split-scroll) > .today-rail-scroll > .today-block:first-child,
+  .dashboard-workspace .today-rail:not(.settings-profile-rail):not(.today-rail--split-scroll) > .today-rail-scroll > .today-block + .today-block {
     width: 100%;
     margin-left: 0;
   }
@@ -489,7 +510,7 @@
 .today-apply-next .today-actions .button.button-primary:focus-visible {
   background: var(--accent);
   color: var(--text);
-  border-color: var(--accent);
+  border-color: var(--line);
   opacity: 1;
 }
 

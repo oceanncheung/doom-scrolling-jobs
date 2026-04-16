@@ -3,6 +3,47 @@
   gap: 24px;
 }
 
+/*
+ * Dedicated /login page layout: a single full-page column that scrolls naturally with the
+ * viewport (no fixed rail). Replaces the previous inline Sign In reveal inside the
+ * operator-entry workspace, which on mobile sat below the fold with no scroll affordance.
+ * The layout's WorkspaceChrome already provides the site header, so the login page just owns
+ * its content column.
+ */
+.login-page {
+  padding: 32px var(--site-gutter);
+  gap: 32px;
+  box-sizing: border-box;
+}
+
+.login-page-content {
+  display: grid;
+  gap: 24px;
+  max-width: 40rem;
+  width: 100%;
+}
+
+.login-page-heading {
+  display: grid;
+  gap: 8px;
+}
+
+.login-page-heading h1 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.login-page-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
 .operator-page-header {
   padding-bottom: 24px;
 }
@@ -140,7 +181,7 @@
 .operator-create-rail-block .operator-setup-form--rail .button.button-primary:focus-visible {
   background: var(--accent);
   color: var(--text);
-  border-color: var(--accent);
+  border-color: var(--line);
   opacity: 1;
 }
 

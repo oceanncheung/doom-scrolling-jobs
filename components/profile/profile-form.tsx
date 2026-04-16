@@ -60,7 +60,7 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
   const lastSubmitIntentRef = useRef<string | null>(null)
   const dirtyCheckFrameRef = useRef<number | null>(null)
   const lastHandledSuccessKeyRef = useRef<string | null>(null)
-  const baselineFormSnapshotRef = useRef<string | null>(null)
+  const baselineFormSnapshotRef = useRef<Map<string, string> | null>(null)
   const { applicationTitleTags, setApplicationTitleTags } = useProfileApplicationTitles()
   const { requestSaveButtonFlash, setHasUnsavedChanges } = useProfileSaveButtonAttention()
   const { setReviewIndicatorsVisible } = useProfileReviewIndicators()
@@ -141,38 +141,65 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
       const form = formRef.current
 
       if (!form) {
-        return ''
+        return null
       }
 
       const snapshot = new FormData(form)
-      const entries: string[] = []
+      const fields = new Map<string, string>()
 
       for (const [key, value] of snapshot.entries()) {
         if (value instanceof File) {
           continue
         }
 
-        entries.push(`${key}=${String(value)}`)
+        // Multiple inputs can share a name (e.g. tag hidden inputs). Join values so the
+        // combined string captures every instance while still being diffable per-name.
+        const stringValue = String(value)
+        const existing = fields.get(key)
+        fields.set(key, existing === undefined ? stringValue : `${existing}\n${stringValue}`)
       }
 
-      return entries.join('\n')
+      return fields
     },
     [],
   )
 
   const syncDirtyState = useMemo(
     () => () => {
-      const nextSnapshot = serializeCurrentForm()
+      const current = serializeCurrentForm()
 
-      if (!nextSnapshot) {
+      if (!current) {
         return
       }
 
       if (baselineFormSnapshotRef.current === null) {
-        baselineFormSnapshotRef.current = nextSnapshot
+        baselineFormSnapshotRef.current = current
+        return
       }
 
-      setHasUnsavedChanges(nextSnapshot !== baselineFormSnapshotRef.current)
+      const baseline = baselineFormSnapshotRef.current
+
+      /*
+       * Auto-extend the baseline with any field that appears in the current form but not in the
+       * baseline. Tab/disclosure toggles reveal additional inputs (with their initial values) —
+       * those are UI state changes, not data changes. Adopting them as the new baseline means
+       * opening/closing a tab doesn't flip the save button on/off; only an actual value edit does.
+       */
+      for (const [key, value] of current) {
+        if (!baseline.has(key)) {
+          baseline.set(key, value)
+        }
+      }
+
+      let hasDifference = false
+      for (const [key, value] of current) {
+        if (baseline.get(key) !== value) {
+          hasDifference = true
+          break
+        }
+      }
+
+      setHasUnsavedChanges(hasDifference)
     },
     [serializeCurrentForm, setHasUnsavedChanges],
   )

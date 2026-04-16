@@ -259,7 +259,9 @@
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--applied > .stage-action-slot--fit {
     grid-column: 4 / -1;
-    width: 100%;
+    /* Last slot: overlap 1px past the viewport so the border paints past the boundary (clipped). */
+    width: calc(100% + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * var(--adjacent-control-overlap));
     min-width: 0;
   }
 
@@ -303,7 +305,9 @@
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions.stage-actions--applied > .stage-action-slot--fit {
     grid-column: 4 / -1;
-    width: 100%;
+    /* Last slot: overlap 1px past the viewport so the border paints past the boundary (clipped). */
+    width: calc(100% + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * var(--adjacent-control-overlap));
     min-width: 0;
   }
 }
@@ -990,7 +994,10 @@
 
   .settings-profile-rail-footer {
     margin-top: 0;
-    padding-bottom: 24px;
+    /* Inner `.today-block` provides its own 24px padding-bottom; stacking another 24px here put
+     * the Log out button 48px above the viewport edge on mobile. Keep only the safe-area inset
+     * (matches the base rule in settings/rail.css) so total breathing room is 24px (+ notch). */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .settings-profile-rail-footer .settings-save-button {
@@ -1339,7 +1346,9 @@
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    z-index: 1;
+    /* Above the backdrop (z: 3) within the header's stacking context, so the menu itself is not
+     * dimmed by its own scrim. The backdrop still covers everything else (today-rail / content). */
+    z-index: 4;
     box-sizing: border-box;
     border-top: 0;
   }
@@ -1668,9 +1677,30 @@
     box-sizing: border-box;
   }
 
-  main.jobs-index .queue-list .screening-actions-bar .button,
-  main.jobs-index .queue-list .stage-actions-bar .button {
+  /*
+   * At mobile the actions bar bleeds to the viewport edges (margin-left/right: -queue-column-pad
+   * above). Only zero the lateral borders that LAND at the viewport: the first slot's left edge
+   * and the last slot's right edge. Interior seams come from the standard shared-seam rules —
+   * zeroing them here hides the seam and removes the Save button's visible right border.
+   */
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child .button,
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot:first-child .button {
     border-left-width: 0;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child .button,
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot:last-child .button {
+    border-right-width: 0;
+  }
+
+  /*
+   * Full-width primary (Ready row's Apply spans `grid-column: 1 / -1` in row 1 — flush to BOTH
+   * viewport edges). First-child already has border-left-width: 0 above; this zeros border-right
+   * too. Without this, the hover state's `border-color: var(--line)` paints a visible right line
+   * at the exact viewport edge. Edge-flush trumps seam-sharing: no border on viewport-flushed
+   * sides, in any state.
+   */
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--remote-salary .button {
     border-right-width: 0;
   }
 
@@ -1798,7 +1828,11 @@
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--fit {
     grid-column: 1;
     grid-row: 2;
-    margin-top: calc(-1 * var(--adjacent-control-overlap));
+    /* Review has border-top-width: 0, so the seam between Apply and Review is Apply's
+     * border-bottom. No overlap needed here — overlapping -1px into Apply would let Review's
+     * hover background briefly cover Apply's bottom border during the 200ms bg transition,
+     * which reads as a jiggle on the horizontal seam. */
+    margin-top: 0;
     margin-left: 0;
   }
 
@@ -1822,7 +1856,7 @@
 
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:not(.stage-actions--saved):has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status .button {
     border-left-width: 1px;
-    border-left-color: var(--line-soft);
+    border-left-color: var(--line);
   }
 
   .packet-page-actions > * + *,
@@ -2002,7 +2036,10 @@
   main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(2):last-child) > .stage-action-slot--fit {
     grid-column: 4;
     grid-row: 1;
-    width: 100%;
+    /* Last slot: 1px overlap past the grid-track edge guarantees the border paints past the viewport
+     * (clipped by `overflow-x: clip`) — prevents subpixel rendering gap at the viewport boundary. */
+    width: calc(100% + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * var(--adjacent-control-overlap));
     min-width: 0;
   }
 
@@ -2150,12 +2187,22 @@
   }
 
   .stage-actions,
-  .section-header,
   .profile-form-footer,
   .workflow-control-meta,
   .workflow-quick-actions,
   .workflow-select-row {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  /*
+   * Section header contains an "Add role" / "Add school" / "Add proof point" button that sits on
+   * the right at ≥901px (flex-row, space-between). At mobile the row stacks (column) — but keep
+   * the button at its natural width aligned to the start of the column, not stretched full-width,
+   * so it reads the same as on larger screens.
+   */
+  .section-header {
+    align-items: flex-start;
     flex-direction: column;
   }
 
@@ -2487,7 +2534,7 @@
     border-top-width: 1px;
     border-top-color: var(--line);
     border-left-width: 1px;
-    border-left-color: var(--line-soft);
+    border-left-color: var(--line);
   }
 
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button {
@@ -2505,6 +2552,28 @@
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button.button-secondary,
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button.button-ghost {
     border-bottom-color: var(--line);
+  }
+
+  /*
+   * Disabled buttons fade to opacity 0.35 (.button:disabled) which also fades their 1px top border.
+   * With no left/right borders at mobile and no adjacent element above, the primary's top edge
+   * becomes visually invisible when pending. Anchor a full-opacity hairline at the BAR level so
+   * the top edge stays solid black regardless of the button's state (normal / hover / disabled).
+   */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions {
+    position: relative;
+  }
+
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--line);
+    pointer-events: none;
+    z-index: 2;
   }
 }
 
@@ -2610,11 +2679,24 @@
   }
 
   /*
-   * Triple packet: bar + cluster are display:contents so each slot is a direct grid child of
-   * .job-overview-section-inner — left edges match Stage / Posted / Freshness; Archive bleeds to the queue right edge.
+   * Triple packet actions (Apply | Regenerate | Archive) mirror the Ready row: standalone 4-col
+   * grid matching the queue's summary math — primary Apply spans cols 1-2 (left half), Regenerate
+   * col 3, Archive col 4 (equal widths). All seamed; Archive overflows 1px past the viewport
+   * (clipped) for a clean flush edge.
    */
   .dashboard-workspace .queue-column .job-overview-section-inner > .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right {
-    display: contents;
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--jobs-queue-col-gap);
+    row-gap: 0;
+    /* Bleed past the inner section's right padding so Archive reaches the queue-column right edge
+     * (= viewport right at min-width: 901px where queue-column has padding-right: 0). */
+    width: calc(100% + var(--queue-column-pad));
+    max-width: none;
+    min-width: 0;
+    margin-right: calc(-1 * var(--queue-column-pad));
+    box-sizing: border-box;
   }
 
   .dashboard-workspace
@@ -2635,8 +2717,9 @@
     .job-overview-section-inner
     .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right
     .screening-action-slot:nth-child(1) {
-    grid-column: 4;
-    grid-row: 2;
+    grid-column: 1 / 3;
+    grid-row: 1;
+    width: calc(100% + var(--jobs-queue-col-gap));
     min-width: 0;
   }
 
@@ -2645,8 +2728,9 @@
     .job-overview-section-inner
     .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right
     .screening-action-slot:nth-child(2) {
-    grid-column: 5;
-    grid-row: 2;
+    grid-column: 3;
+    grid-row: 1;
+    width: calc(100% + var(--jobs-queue-col-gap));
     min-width: 0;
   }
 
@@ -2655,11 +2739,11 @@
     .job-overview-section-inner
     .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right
     .screening-action-slot:nth-child(3) {
-    grid-column: 6;
-    grid-row: 2;
+    grid-column: 4;
+    grid-row: 1;
+    width: calc(100% + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * var(--adjacent-control-overlap));
     min-width: 0;
-    width: calc(100% + var(--queue-column-pad) + var(--adjacent-control-overlap));
-    margin-right: calc(-1 * (var(--queue-column-pad) + var(--adjacent-control-overlap)));
     justify-self: stretch;
     box-sizing: border-box;
   }
@@ -2670,12 +2754,20 @@
   .job-flow-header-stack .job-flow-meta-band {
     width: calc(100% + var(--queue-column-pad));
     margin-right: calc(-1 * var(--queue-column-pad));
+    padding-right: 0;
+    /*
+     * Weighted tracks so Location (cols 1-2) matches the left half of the review-grid (Job Overview)
+     * and the right half (Salary / Stage) splits evenly between Skills' left edge and the viewport
+     * right edge. Ratio 212:212:24:224:224 lets left tracks stay aligned with Job Overview (424
+     * combined) while right tracks fill the 24px bleed area beyond Skills' content width so Stage
+     * reaches the viewport.
+     */
     grid-template-columns:
-      minmax(0, 1fr)
-      minmax(0, 1fr)
+      minmax(0, 212fr)
+      minmax(0, 212fr)
       var(--job-overview-anchor-gap)
-      minmax(0, 1fr)
-      minmax(0, 1fr);
+      minmax(0, 224fr)
+      minmax(0, 224fr);
     column-gap: 0;
     row-gap: 12px;
   }
@@ -2711,23 +2803,64 @@
     grid-column: 1 / -1;
   }
 
-  /* Screening Save | Skip — Posted + Freshness (cols 4–5 on the five-col overview grid) */
+  /*
+   * Screening Save | Skip — bar spans the FULL inner width with its own 5-track grid that mirrors
+   * the meta band (1fr 1fr anchor-gap 1fr 1fr). This guarantees Save lands exactly under Salary /
+   * Posted and Skip lands exactly under Stage / Freshness (inner's own 6-track grid has different
+   * col widths that won't line up with meta). Bar bleeds 24px right past the inner section's
+   * right padding so Skip reaches the viewport edge.
+   */
   .job-overview-section-inner > .screening-actions-bar.job-overview-actions.job-overview-actions--screening.job-overview-actions--pair-right {
-    grid-column: 4 / -1;
-    grid-template-columns: minmax(0, 1fr);
+    grid-column: 1 / -1;
+    display: grid;
+    /* Mirror meta-band weighted tracks exactly so Save/Skip left edges land on Salary/Stage. */
+    grid-template-columns:
+      minmax(0, 212fr)
+      minmax(0, 212fr)
+      var(--job-overview-anchor-gap)
+      minmax(0, 224fr)
+      minmax(0, 224fr);
     column-gap: 0;
+    row-gap: 0;
+    width: calc(100% + var(--queue-column-pad));
+    margin-right: calc(-1 * var(--queue-column-pad));
+    box-sizing: border-box;
   }
 
   .job-overview-section-inner
     .screening-actions-bar.job-overview-actions.job-overview-actions--screening.job-overview-actions--pair-right
     .screening-actions-cluster {
-    grid-column: 1 / -1;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: contents;
+  }
+
+  .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--screening.job-overview-actions--pair-right
+    .screening-action-slot:nth-child(1) {
+    grid-column: 4;
     width: 100%;
     margin-left: 0;
     margin-right: 0;
-    gap: 0;
-    column-gap: 0;
+    min-width: 0;
+  }
+
+  .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--screening.job-overview-actions--pair-right
+    .screening-action-slot:nth-child(2) {
+    grid-column: 5;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    min-width: 0;
+  }
+
+  /* Packet pair (Generate | Archive) — same treatment as screening pair for meta alignment. */
+  .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--packet.job-overview-actions--pair-right
+    .screening-actions-cluster
+    > .screening-action-slot:last-child {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   /* Packet pair (e.g. Generate + Archive): Stage through Freshness */
@@ -2751,6 +2884,86 @@
     letter-spacing: 0.01em;
     line-height: 1.15;
   }
+
+  /*
+   * Queue 3-slot actions (Apply | Review | Archive) align with the summary grid's 4-col 2×2 layout
+   * at narrow desktop. Cluster spans the full bar (bypasses the 5-col outer bar grid); the inner
+   * actions use 4 equal cols matching the summary. Apply anchors the title half (cols 1-2, primary
+   * CTA emphasis); Review + Archive sit under the 2×2 meta columns (cols 3 + 4).
+   */
+  main.jobs-index .queue-list .stage-actions-bar:has(.stage-actions:has(.stage-action-slot:nth-child(3):last-child)) .stage-actions-cluster {
+    grid-column: 1 / -1;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--jobs-queue-col-gap);
+    row-gap: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--remote-salary {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    width: calc(100% + var(--jobs-queue-col-gap));
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--fit {
+    grid-column: 3;
+    grid-row: 1;
+    width: calc(100% + var(--jobs-queue-col-gap));
+    min-width: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--status {
+    grid-column: 4;
+    grid-row: 1;
+    /* Overlap 1px past the grid track right edge so the border paints past the viewport and is
+     * clipped by `overflow-x: clip` — prevents subpixel gap at the exact viewport boundary. */
+    width: calc(100% + var(--adjacent-control-overlap));
+    margin-right: calc(-1 * var(--adjacent-control-overlap));
+    min-width: 0;
+  }
+
+  /*
+   * Queue actions at narrow desktop: each button's LEFT edge aligns with the summary meta column
+   * above it, and adjacent buttons bridge the 12px column-gap to form a continuous bar. Adjacent
+   * buttons share a single 1px seam (next button's left border hides; previous button's right
+   * border is the seam).
+   */
+
+  /* Grid column-gap matches summary so each grid track begins at the meta cell's x position. */
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions,
+  main.jobs-index .queue-list .screening-actions-bar .screening-actions-cluster {
+    column-gap: var(--jobs-queue-col-gap);
+  }
+
+  /* No horizontal overlap — next slot's left edge sits exactly at its grid track start (= summary
+     col start). Share the seam via border-left-width: 0 on the next button. */
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-action-slot,
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot + .screening-action-slot {
+    margin-left: 0;
+  }
+
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-action-slot .button,
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot + .screening-action-slot .button {
+    border-left-width: 0;
+  }
+
+  /* Any slot that has a next adjacent slot bridges the column-gap so the two buttons touch. */
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot:has(+ .stage-action-slot),
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:has(+ .screening-action-slot) {
+    width: calc(100% + var(--jobs-queue-col-gap));
+    min-width: 0;
+  }
+
+  /*
+   * Last slot: do NOT override the base overlap (width: calc(100% + 1px); margin-right: -1px).
+   * The 1px overflow past the viewport edge is clipped by `.queue-column { overflow-x: clip }` and
+   * guarantees the top/bottom borders paint all the way to the viewport — subpixel rounding can
+   * otherwise leave a 1px gap at the exact viewport boundary. Alignment is preserved because the
+   * visible width stays equal to the col width after clipping.
+   */
 }
 
 @media (min-width: 1181px) {
@@ -2791,22 +3004,201 @@
     grid-column: 6;
     grid-row: 1;
   }
+
+  /*
+   * Job overview / Skills grid mirrors the meta band's 6-track grid (3fr 3fr anchor 2fr 2fr 2fr)
+   * so the Skills column's left edge lines up exactly with Stage above, and the Job overview
+   * column's right edge lines up with Salary. Using the grid's default `gap: 32px` (from
+   * job-flow.css) would leave a ~4px offset at wider viewports where column widths and the
+   * anchor gap (24px) don't combine the same way.
+   */
+  .job-overview-section-inner > .job-review-grid {
+    grid-template-columns:
+      minmax(0, 3fr)
+      minmax(0, 3fr)
+      var(--job-overview-anchor-gap)
+      minmax(0, 2fr)
+      minmax(0, 2fr)
+      minmax(0, 2fr);
+    column-gap: 0;
+    gap: 0;
+  }
+
+  .job-overview-section-inner > .job-review-grid > .job-review-column:first-child {
+    grid-column: 1 / span 2;
+  }
+
+  .job-overview-section-inner > .job-review-grid > .job-review-column:last-child {
+    grid-column: 4 / -1;
+  }
+
+  /*
+   * Packet materials summary grid (Resume summary / Cover letter summary) and job materials grid:
+   * same split as Job overview / Skills so both cells align with the meta band halves.
+   */
+  .packet-section-inner > .packet-material-grid,
+  .job-flow-section-inner > .job-material-grid {
+    grid-template-columns:
+      minmax(0, 3fr)
+      minmax(0, 3fr)
+      var(--job-overview-anchor-gap)
+      minmax(0, 2fr)
+      minmax(0, 2fr)
+      minmax(0, 2fr);
+    column-gap: 0;
+    gap: 24px 0;
+  }
+
+  .packet-section-inner > .packet-material-grid > :nth-child(odd),
+  .job-flow-section-inner > .job-material-grid > :nth-child(odd) {
+    grid-column: 1 / span 2;
+  }
+
+  .packet-section-inner > .packet-material-grid > :nth-child(even),
+  .job-flow-section-inner > .job-material-grid > :nth-child(even) {
+    grid-column: 4 / -1;
+  }
+
+  /*
+   * Packet pair (Generate Materials + Potential, or Regenerate + Archive): bar starts at the Stage
+   * column (col 4) so the left button's left edge aligns with Stage metadata above. Two equal
+   * halves, seamed (no gap — base adjacent-overlap rule), bleeds past the inner section's right
+   * padding so the right button reaches the viewport edge. Override default's anchor-gap offset
+   * so the cluster sits flush at the Stage-column left edge rather than 24px inside it.
+   */
+  .job-overview-section-inner > .screening-actions-bar.job-overview-actions.job-overview-actions--packet.job-overview-actions--pair-right {
+    grid-column: 4 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--packet.job-overview-actions--pair-right
+    .screening-actions-cluster {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: calc(100% + var(--queue-column-pad));
+    margin-left: 0;
+    margin-right: calc(-1 * var(--queue-column-pad));
+  }
+
+  /*
+   * Screening pair (Save + Skip): mirrors the packet pair — bar starts at the Stage column
+   * (col 4) so Save's left edge aligns with Stage above. Two equal halves, seamed (no gap) and
+   * bleeds to the viewport right edge.
+   */
+  .job-overview-section-inner > .screening-actions-bar.job-overview-actions.job-overview-actions--screening.job-overview-actions--pair-right {
+    grid-column: 4 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .job-overview-section-inner
+    .screening-actions-bar.job-overview-actions.job-overview-actions--screening.job-overview-actions--pair-right
+    .screening-actions-cluster {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: calc(100% + var(--queue-column-pad));
+    margin-left: 0;
+    margin-right: calc(-1 * var(--queue-column-pad));
+  }
 }
 
-/* Packet materials download: left border aligns with Salary (and the Posted column start in the same row as the snapshot). */
-@media (min-width: 1180px) {
+/*
+ * Narrow desktop + desktop + wide: the sticky Download Resume / Download Cover Letter buttons
+ * align with the Apply primary button above (same left edge + width = cols 1-2 of a 4-col grid
+ * that spans the full bled bar width). Sticky behavior is preserved via `position: sticky;
+ * bottom: 0` on the bar. Since the button is no longer flush to the viewport's right edge, its
+ * right border is restored.
+ */
+@media (min-width: 901px) {
+  .dashboard-workspace
+    .queue-column
+    .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--jobs-queue-col-gap, 0px);
+    width: calc(100% + (2 * var(--queue-column-pad)));
+    max-width: none;
+    margin-right: calc(-2 * var(--queue-column-pad));
+    box-sizing: border-box;
+  }
+
   .dashboard-workspace
     .queue-column
     .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions
     .screening-actions-cluster {
-    padding-left: 25%;
+    grid-column: 1 / 3;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    margin: 0;
+    padding-left: 0;
+    justify-self: stretch;
     box-sizing: border-box;
+  }
+
+  .dashboard-workspace
+    .queue-column
+    .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions
+    .screening-action-slot {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-workspace
+    .queue-column
+    .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions
+    .packet-material-download-button,
+  .dashboard-workspace
+    .queue-column
+    .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions
+    .screening-actions-cluster
+    > .screening-action-slot:last-child
+    .packet-material-download-button {
+    width: 100%;
+    margin-right: 0;
+    border-right: 1px solid var(--line);
+  }
+
+  .dashboard-workspace
+    .queue-column
+    .packet-material-review-sticky-action.screening-actions-bar.job-overview-actions
+    .packet-material-download-button.button-primary {
+    border-right-color: var(--text);
   }
 }
 
-@media (max-width: 1440px) {
+@media (max-width: 1180px) {
+  /*
+   * Mobile + tablet: unify intro copy (detail-page-header-stack .job-flow-intro) and in-section
+   * reading copy (Job overview body) at the same 90% cap so the intro gains a right gutter and
+   * the in-section copy widens toward it. `.job-flow-intro.column-reading-copy` also gets an
+   * explicit 90% override because `.detail-page-header-stack .job-flow-heading .job-flow-intro
+   * { max-width: none }` in job-flow.css has higher specificity than the class-only rule and
+   * would otherwise let the intro run edge-to-edge.
+   */
   .column-reading-copy {
-    max-inline-size: 80%;
+    max-inline-size: 90%;
+  }
+
+  .detail-page-header-stack .job-flow-heading .job-flow-intro.column-reading-copy,
+  .job-flow-header-stack .job-flow-heading .job-flow-intro.column-reading-copy {
+    max-width: 90%;
+  }
+}
+
+@media (min-width: 1181px) {
+  /* At desktop+wide, give reading copy a 10% right gutter to prevent it from crowding
+   * neighboring meta columns or panel edges. Mobile/tablet keeps 80% (tighter text). */
+  .column-reading-copy {
+    max-inline-size: 90%;
+  }
+
+  /* Job list title cell: apply the same 90% gutter to the whole block (title, company,
+   * match reason, description excerpt) so the description doesn't collide with the meta
+   * column to its right. */
+  main.jobs-index .queue-list .screening-title-cell {
+    max-inline-size: 90%;
   }
 }
 
