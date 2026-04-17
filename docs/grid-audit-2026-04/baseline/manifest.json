@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-04-17T20:51:15.977Z",
+  "items": [
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/routes/home.png",
+      "label": "Home entry",
+      "outputPath": "routes/home.png",
+      "route": "/"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/routes/dashboard.png",
+      "label": "Dashboard",
+      "outputPath": "routes/dashboard.png",
+      "route": "/dashboard"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/routes/profile.png",
+      "label": "Profile",
+      "outputPath": "routes/profile.png",
+      "route": "/profile"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/routes/job-review.png",
+      "label": "Job review",
+      "outputPath": "routes/job-review.png",
+      "route": "/jobs/ec47ed58-6782-46e4-8ce7-4b3241ef345c"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/routes/packet-review.png",
+      "label": "Packet review redirect",
+      "outputPath": "routes/packet-review.png",
+      "route": "/jobs/ec47ed58-6782-46e4-8ce7-4b3241ef345c/packet"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/routes/system-inventory.png",
+      "label": "System inventory",
+      "outputPath": "routes/system-inventory.png",
+      "route": "/system-inventory"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/contracts/profile-source-upload-row.png",
+      "label": "Profile source upload row",
+      "outputPath": "contracts/profile-source-upload-row.png",
+      "route": "/profile"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/contracts/profile-additional-filters-open.png",
+      "label": "Additional filters open",
+      "outputPath": "contracts/profile-additional-filters-open.png",
+      "route": "/profile"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/contracts/profile-experience-tabs-closed.png",
+      "label": "Experience tabs closed",
+      "outputPath": "contracts/profile-experience-tabs-closed.png",
+      "route": "/profile"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/contracts/profile-experience-tabs-open.png",
+      "label": "Experience tabs open",
+      "outputPath": "contracts/profile-experience-tabs-open.png",
+      "route": "/profile"
+    },
+    {
+      "filePath": "/Users/oceancheung/Documents/Startup/MM.S/z_misc./Doom Scrolling Jobs/docs/grid-audit-2026-04/baseline/contracts/system-inventory-active-tab-shell.png",
+      "label": "System inventory active tab shell",
+      "outputPath": "contracts/system-inventory-active-tab-shell.png",
+      "route": "/system-inventory"
+    }
+  ]
+}

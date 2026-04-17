@@ -103,6 +103,50 @@
   --site-workflow-tab-width: calc((100vw - var(--dashboard-rail-width)) / 5);
   /* panel-label → title → note in one stack; job review columns; meta band items; field eyebrows */
   --section-eyebrow-stack-gap: 8px;
+
+  /*
+   * Grid-system tokens — Commit 1 of the grid audit refactor (docs/grid-audit-2026-04/).
+   *
+   * These are INFORMATIONAL / SEMANTIC names introduced so the new grid contract can
+   * reference them in later commits. Nothing in this file (or any stylesheet in the
+   * current commit) consumes them yet; they are dead code by design. Adding them first
+   * gives subsequent commits a stable target without forcing a big-bang rename of the
+   * existing `--queue-column-pad` / `--jobs-queue-col-gap` / `--settings-section-pad-right`
+   * tokens that surfaces currently depend on.
+   *
+   * Breakpoint seams (five canonical widths, matches the code in responsive.css):
+   *   ≤390   small mobile
+   *   ≤640   mobile
+   *   ≤900   tablet
+   *   ≤1180  small desktop
+   *   ≤1440  standard desktop
+   *   1441+  wide desktop
+   */
+  --bp-xs: 390px;
+  --bp-sm: 640px;
+  --bp-md: 900px;
+  --bp-lg: 1180px;
+  --bp-xl: 1440px;
+
+  /*
+   * Column-gap tier tokens. Surfaces should pick the tier that matches their density
+   * instead of re-declaring raw pixel values. Current usage across the site spans four
+   * distinct gap amounts (12 / 16 / 24 / 32), which these names map to exactly.
+   */
+  --grid-gap-tight: 12px;
+  --grid-gap-standard: 16px;
+  --grid-gap-spacious: 24px;
+  --grid-gap-section: 32px;
+
+  /*
+   * Page-gutter tokens by breakpoint. Mirrors the existing `--queue-column-pad` values
+   * on .dashboard-workspace .queue-column (shell.css:343 and responsive.css overrides).
+   * Kept as separate names so the new grid contract can evolve without rewriting every
+   * shell-scoped declaration in one pass.
+   */
+  --grid-page-pad-mobile: 16px;
+  --grid-page-pad-tablet: 24px;
+  --grid-page-pad-desktop: 32px;
 }
 
 * {
