@@ -32,6 +32,7 @@
     "diagnostic:external-sourcing": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/diagnostic-external-sourcing.mts",
     "backfill:job-review-copy": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/backfill-job-review-copy.mts",
     "backfill:job-descriptions": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/backfill-job-descriptions.mts",
+    "enrich:operator-evidence": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/enrich-operator-evidence.mts",
     "cleanup:packet-generation": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/clear-packet-generation.mts"
   },
   "dependencies": {
