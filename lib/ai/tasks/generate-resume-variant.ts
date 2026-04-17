@@ -25,6 +25,131 @@ const MAX_EXPERIENCE_ENTRIES = 6
 // SUBSTANTIVE_ROLE_MIN_HIGHLIGHTS so the schema and renderer agree on the floor.
 const MIN_HIGHLIGHTS_PER_ENTRY = 3
 
+// Tenure-aware bullet targets. The longest-held role is the anchor of a candidate's narrative
+// — it should read as densest, not sparsest. These targets are the FLOOR for a role given its
+// tenure; if the LLM returns more, we keep what it returned (capped at MAX). If fewer, we pad
+// from the source up to the target.
+const MONTHS_FOR_MAX_BULLETS = 24 // >= 2 years of tenure → aim for the full 5 bullets
+const MONTHS_FOR_FOUR_BULLETS = 12 // 1–2 years → aim for 4 bullets
+// Shorter tenures fall through to MIN_HIGHLIGHTS_PER_ENTRY (3).
+
+const MONTH_NAME_TO_INDEX = new Map<string, number>([
+  ['jan', 0], ['january', 0],
+  ['feb', 1], ['february', 1],
+  ['mar', 2], ['march', 2],
+  ['apr', 3], ['april', 3],
+  ['may', 4],
+  ['jun', 5], ['june', 5],
+  ['jul', 6], ['july', 6],
+  ['aug', 7], ['august', 7],
+  ['sep', 8], ['sept', 8], ['september', 8],
+  ['oct', 9], ['october', 9],
+  ['nov', 10], ['november', 10],
+  ['dec', 11], ['december', 11],
+])
+
+/**
+ * Parse a resume date string into a sortable "months since year 0" integer. Handles:
+ *   "Jan 2020" / "January 2020"    → (2020 * 12) + 0
+ *   "2020"                         → (2020 * 12)
+ *   "01/2020" / "2020-01"          → (2020 * 12) + 0
+ *   "Present" / "Current" / ""     → returns null (caller decides how to sort current roles)
+ * Unparseable input returns null.
+ */
+export function parseResumeDateToMonths(value: string | null | undefined): number | null {
+  if (!value) return null
+  const normalized = value.trim().toLowerCase()
+  if (!normalized) return null
+  if (/^(present|current|now|ongoing|today)$/.test(normalized)) return null
+
+  // ISO-ish: 2020-01, 2020/01
+  const isoMatch = normalized.match(/^(\d{4})[-/](\d{1,2})\b/)
+  if (isoMatch) {
+    const year = Number(isoMatch[1])
+    const month = Math.max(0, Math.min(11, Number(isoMatch[2]) - 1))
+    return year * 12 + month
+  }
+
+  // US-ish: 01/2020, 1-2020
+  const usMatch = normalized.match(/^(\d{1,2})[-/](\d{4})\b/)
+  if (usMatch) {
+    const month = Math.max(0, Math.min(11, Number(usMatch[1]) - 1))
+    const year = Number(usMatch[2])
+    return year * 12 + month
+  }
+
+  // "Jan 2020" / "January 2020"
+  const monthYearMatch = normalized.match(/^([a-z]+)\.?\s+(\d{4})\b/)
+  if (monthYearMatch) {
+    const month = MONTH_NAME_TO_INDEX.get(monthYearMatch[1])
+    const year = Number(monthYearMatch[2])
+    if (month !== undefined) return year * 12 + month
+  }
+
+  // Bare year: "2020"
+  const yearOnlyMatch = normalized.match(/^(\d{4})\b/)
+  if (yearOnlyMatch) {
+    return Number(yearOnlyMatch[1]) * 12
+  }
+
+  return null
+}
+
+// Current-date sort key for roles with endDate === "Present". We use a plain Date.now-derived
+// month index so "Present" sorts ahead of any past date but ties break naturally on startDate.
+function currentMonthsKey() {
+  const now = new Date()
+  return now.getFullYear() * 12 + now.getMonth()
+}
+
+function endDateSortKey(endDate: string | null | undefined): number {
+  const parsed = parseResumeDateToMonths(endDate)
+  if (parsed !== null) return parsed
+  // Empty / "Present" / unparseable → treat as "current" (most recent).
+  return currentMonthsKey()
+}
+
+function startDateSortKey(startDate: string | null | undefined): number {
+  const parsed = parseResumeDateToMonths(startDate)
+  // Unparseable start defaults to very old so parseable starts win tiebreaks.
+  return parsed ?? -Infinity
+}
+
+/**
+ * Compare two entries for reverse-chronological ordering. endDate descending is the primary key;
+ * startDate descending breaks ties (two "Present" roles → the more-recently-started is first).
+ */
+export function compareEntriesByRecency(
+  a: Pick<ResumeExperienceRecord, 'endDate' | 'startDate'>,
+  b: Pick<ResumeExperienceRecord, 'endDate' | 'startDate'>,
+): number {
+  const endDiff = endDateSortKey(b.endDate) - endDateSortKey(a.endDate)
+  if (endDiff !== 0) return endDiff
+  return startDateSortKey(b.startDate) - startDateSortKey(a.startDate)
+}
+
+/**
+ * Tenure in months between start and end. "Present" end → now. Unparseable start → 0. Floor at 0.
+ */
+export function computeTenureMonths(
+  entry: Pick<ResumeExperienceRecord, 'startDate' | 'endDate'>,
+): number {
+  const start = parseResumeDateToMonths(entry.startDate)
+  if (start === null) return 0
+  const end = parseResumeDateToMonths(entry.endDate) ?? currentMonthsKey()
+  return Math.max(0, end - start)
+}
+
+/**
+ * Floor bullet count for a role based on tenure. Longer tenure → more bullets. This is the
+ * TARGET we pad up to from source material; the LLM may return more (up to MAX).
+ */
+function targetBulletsForTenure(tenureMonths: number): number {
+  if (tenureMonths >= MONTHS_FOR_MAX_BULLETS) return MAX_HIGHLIGHTS_PER_ENTRY
+  if (tenureMonths >= MONTHS_FOR_FOUR_BULLETS) return 4
+  return MIN_HIGHLIGHTS_PER_ENTRY
+}
+
 // Soft-skill phrases banned from skillsSection. The prompt already instructs the model not to
 // emit these, but we strip them in code too so a single prompt regression can't leak them in.
 // Matched case-insensitively against the full normalized skill string.
@@ -236,22 +361,28 @@ function normalizeExperienceEntry(
         .map((item) => cleanLine(item))
         .filter(Boolean)
     : source.highlights
-  // Pad up to the floor with master-source bullets the LLM didn't already cover. This protects
-  // against the LLM returning 1–2 bullets for a substantive role; we never fabricate, we just
-  // surface the user's own source content. If the master itself has fewer than 3 bullets, the
-  // role gets what the master has — we never make up text.
+  // Pad up to a tenure-aware target with master-source bullets the LLM didn't already cover.
+  // Longer-tenure roles (2+ years) aim for 5 bullets; 1–2 years aim for 4; shorter roles aim
+  // for 3. We never fabricate — if the master itself has fewer bullets than the target, the
+  // role gets what the master has.
   //
   // v4: filter out weak source bullets (too short, "Responsible for", soft-skill assertions)
   // BEFORE padding, so padding can't reintroduce the exact phrasing the prompt tried to ban.
   // If every candidate bullet is weak, we accept the LLM's count as-is — better to ship 2
   // sharp bullets than 3 including a weak one.
+  //
+  // v4.1: tenure-aware floor. The user's anchor role (longest-held) was getting stuck at the
+  // 3-bullet floor even when the source had 5+ bullets — that made the most important role
+  // read as the sparsest. Now the floor scales with tenure.
+  const tenureMonths = computeTenureMonths(source)
+  const tenureFloor = targetBulletsForTenure(tenureMonths)
   const sourceFallback = source.highlights
     .map((item) => cleanLine(item))
     .filter((item) => Boolean(item) && !isWeakSourceBullet(item))
   const padded = dedupeHighlights([...draftHighlights, ...sourceFallback])
   const targetCount = Math.min(
     MAX_HIGHLIGHTS_PER_ENTRY,
-    Math.max(draftHighlights.length, Math.min(MIN_HIGHLIGHTS_PER_ENTRY, padded.length)),
+    Math.max(draftHighlights.length, Math.min(tenureFloor, padded.length)),
   )
   const highlights = padded.slice(0, targetCount)
 
@@ -361,7 +492,7 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
   // Fallback when the LLM returned no usable entries: surface the candidate's most recent roles
   // verbatim so the rendered resume still reflects real source material. The renderer's page
   // fitter then trims as needed.
-  const fallbackEntries =
+  const preSort =
     normalizedEntries.length > 0
       ? normalizedEntries
       : sourceExperience.length > 0
@@ -369,6 +500,12 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
             .slice(0, MAX_EXPERIENCE_ENTRIES)
             .map((entry) => normalizeExperienceEntry(entry, entry))
         : []
+
+  // v4.1: enforce reverse-chronological order in code. The prompt tells the LLM to return
+  // entries in reverse-chron, but the LLM sometimes ignores that or sorts by "relevance" it
+  // invented. Resume order is ALWAYS reverse-chronological by endDate (Present first) with
+  // startDate as tiebreaker — it's not a judgment call.
+  const fallbackEntries = [...preSort].sort(compareEntriesByRecency)
 
   // v4: filter skills against candidate's actual source before shipping. Soft skills (banned
   // by the prompt) and out-of-source tools get stripped. The prompt tells the model not to do

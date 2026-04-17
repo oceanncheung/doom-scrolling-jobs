@@ -49,10 +49,15 @@ If strict tiering leaves fewer than 2 roles on the resume, promote the strongest
 Worked example: A candidate applying to "Senior Graphic Designer" has four source roles — "Senior Brand Designer at Acme" (Tier A, 4 bullets), "Marketing Ops Lead at Beta" where source bullets mention brand-system maintenance (Tier B, 2–3 bullets), "Senior Healthcare Administrator at Mercy" which has a recognized employer but no design-relevant bullets (Tier C, 1 bullet), and "Restaurant Shift Lead at Pete's" with no transferable or credibility signal (Tier D — omit).
 
 BULLET COUNTS PER TIER
-- Tier A: 3–5 bullets. A role is substantive if the source entry has 3+ bullets OR tenure is at least 6 months. Default 3–4; go to 5 only when the source material clearly supports it.
+- Tier A: 3–5 bullets. A role is substantive if the source entry has 3+ bullets OR tenure is at least 6 months.
+- The ANCHOR role — the Tier A role with the longest tenure — should receive 5 bullets when the source supports it. This is the candidate's most important career chapter and must read as the densest, not the sparsest.
+- Other Tier A roles: 3–4 bullets (4 when the source is rich).
 - Tier B: 2–3 bullets.
 - Tier C: exactly 1 bullet.
 - Never produce a 1-bullet role unless it is Tier C, or unless the source literally contains nothing but title and dates.
+
+ORDER — ALWAYS REVERSE-CHRONOLOGICAL
+Return experienceEntries in strict reverse-chronological order by endDate (most recent first; "Present" / current roles come before any past endDate). Tie-break by startDate (more-recently-started first). This is not a judgment call — resume convention is absolute on this point, and the task layer will re-sort your output to enforce it regardless.
 
 BULLET QUALITY (each bullet must do real work)
 - Open with a specific action verb (Led, Built, Designed, Owned, Launched, Shipped, Scaled, Reduced, Increased, Streamlined, Established, Defined, Drove, Partnered, Translated, Negotiated, Managed, Architected, Deployed, etc.). Never open with "Responsible for", "Worked on", "Helped", "Assisted with", "Involved in", "Participated in".
