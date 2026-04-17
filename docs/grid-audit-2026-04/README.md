@@ -67,8 +67,17 @@ For the flaky set, ALWAYS verify via computed-style diff across stash/unstash of
 ### Commit 2d — misc edge-flush cleanup (planned)
 TBD.
 
-### Commit 3 — grid-cell contract pilot on dashboard (planned)
-TBD.
+### Commit 3 — grid-cell contract utilities (dead code)
+- **Scope:** Created `app/styles/utilities/grid.css` with `.u-grid-cell`, `.u-grid-cell--first`, `.u-grid-cell--first-inset`, `.u-grid-cell--last`, and gap-tier modifiers (`--gap-tight`, `--gap-spacious`, `--gap-section`). Imported into `globals.css` between surface styles and `responsive.css`.
+- **Zero-risk by construction:** zero elements in the DOM have any of the new class names (verified via `document.querySelectorAll` across the site). No rule can fire; no rendered element can differ.
+- **The contract encoded:**
+  - FIRST cell: `padding-left: 0` — the container's page padding provides the left inset.
+  - NON-FIRST cells: `padding-left: 0` (text aligns to the column grid line so buttons below share the same line) + `padding-right: var(--grid-gap-standard)` (breathing room).
+  - LAST cell: `padding-right: 0` (container's page padding owns the right edge; if the cluster bleeds to the viewport edge, the edge-flush contracts in queue-rows.css / settings-fields.css zero the button-level right border).
+- **Verification:** dashboard's `.screening-summary-grid` already implements this exact contract today — `.queue-column` has `padding-left: 32px`, title cell has `padding-left: 0 / padding-right: 0`, meta cells have `padding-left: 0 / padding-right: 32px`. Applying the utility classes in Commit 4 will be pure annotation with identical computed output.
+
+### Commit 4 — apply grid-cell contract to concrete surfaces (planned)
+TBD — one surface per sub-commit (4a dashboard pilot, 4b packet, 4c profile, 4d job flow, 4e operators), each verified against the baseline with stash/pop computed-style diffs before landing.
 
 ### Commit 4 — roll contract to remaining surfaces (planned)
 TBD.

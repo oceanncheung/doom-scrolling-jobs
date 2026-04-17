@@ -1,4 +1,4 @@
-/* Design system import order: tokens -> shell -> shared controls -> surface-specific styles -> responsive overrides */
+/* Design system import order: tokens -> shell -> shared controls -> surface-specific styles -> utilities -> responsive overrides */
 @import './styles/tokens.css';
 @import './styles/marquee.css';
 @import './styles/shell.css';
@@ -7,4 +7,5 @@
 @import './styles/settings.css';
 @import './styles/forms.css';
 @import './styles/operators.css';
+@import './styles/utilities/grid.css';
 @import './styles/responsive.css';

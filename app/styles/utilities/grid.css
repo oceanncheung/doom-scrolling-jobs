@@ -1,0 +1,89 @@
+/*
+ * GRID-CELL CONTRACT
+ * =============================================================================
+ * Commit 3 of the grid audit refactor (docs/grid-audit-2026-04/). These are
+ * DEAD CODE on arrival — no stylesheet or JSX references `.u-grid-cell` /
+ * `.u-grid-cell--first` / `.u-grid-cell--last` yet. Subsequent commits apply
+ * them to concrete surfaces one at a time, each verified against the pre-
+ * commit baseline so nothing shifts.
+ *
+ * The contract encodes the rule the user articulated in the /design-system
+ * audit conversation:
+ *
+ *   - FIRST cell gets a left inset (via the container's own page padding, NOT
+ *     via the cell's padding-left). Text never touches the container's left
+ *     vertical edge.
+ *   - NON-FIRST cells have `padding-left: 0`. Text aligns to the invisible
+ *     column grid line. When a button sits below text in the same cell, the
+ *     button's left border and the text share the same line — no half-pixel
+ *     drift between headings and controls.
+ *   - EVERY cell (except the last when flush to viewport) carries
+ *     `padding-right` for breathing room so text doesn't crowd the next cell.
+ *   - The LAST cell's right padding is owned by the container (page gutter)
+ *     or is zero when the cluster bleeds to the viewport edge — never a raw
+ *     cell-level right-pad that repeats page-gutter math.
+ *
+ * Usage (later commits):
+ *   <div class="u-grid"> <div class="u-grid-cell u-grid-cell--first">…
+ * or apply cell classes directly to grid-template-columns children.
+ * --------------------------------------------------------------------------- */
+
+/*
+ * Base cell — right breathing room, no left inset. Safe to apply to any cell
+ * in a grid where the container provides the page gutter; non-first cells
+ * inherit this unchanged.
+ */
+.u-grid-cell {
+  padding-left: 0;
+  padding-right: var(--grid-gap-standard);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/*
+ * First-cell modifier — removes the right-breathing pad only when the cell is
+ * the leftmost in the row AND the grid container is already providing the
+ * left inset via its own page padding. Text inside this cell sits at the
+ * container's inset, which is canonically `--grid-page-pad-*` in tokens.css.
+ * Callers that want an explicit cell-level left-inset (for example, nested
+ * grids that don't inherit from a padded container) can apply
+ * `.u-grid-cell--first-inset` instead.
+ */
+.u-grid-cell--first {
+  padding-left: 0;
+}
+
+/*
+ * First-cell modifier with explicit left inset — for grids nested inside
+ * unpadded containers. Use when the cell needs its own left breathing room
+ * because the parent doesn't provide it.
+ */
+.u-grid-cell--first-inset {
+  padding-left: var(--grid-page-pad-desktop);
+}
+
+/*
+ * Last-cell modifier — zeroes the right pad when the cell sits flush to the
+ * viewport edge. Pair with the edge-flush contracts (see the EDGE-FLUSH blocks
+ * in queue-rows.css, responsive.css, settings-fields.css) for the button-level
+ * border treatment; this class is just the cell-level padding companion.
+ */
+.u-grid-cell--last {
+  padding-right: 0;
+}
+
+/*
+ * Spacing-tier modifiers. Default `.u-grid-cell` uses --grid-gap-standard
+ * (16px). Use these when a surface needs a tighter or looser rhythm.
+ */
+.u-grid-cell--gap-tight {
+  padding-right: var(--grid-gap-tight);
+}
+
+.u-grid-cell--gap-spacious {
+  padding-right: var(--grid-gap-spacious);
+}
+
+.u-grid-cell--gap-section {
+  padding-right: var(--grid-gap-section);
+}
