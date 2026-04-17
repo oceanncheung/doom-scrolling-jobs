@@ -55,8 +55,10 @@ For the flaky set, ALWAYS verify via computed-style diff across stash/unstash of
 - **Verification:** computed-style diff on `.job-overview-actions--triple-right .screening-action-slot:nth-child(1|2|3) .button` at mobile (375px) produced identical border widths and colors in clean vs pilot states.
 - **Rule count:** 3 restoration rules → 3 rules (shared-selector for border-top, slot-2 border-right, slot-3 border-left). Net: same rule count, shared-selector for the truly-shared property makes future drift less likely.
 
-### Commit 2b — packet pair-right consolidation (planned)
-TBD.
+### Commit 2b — packet pair-right consolidation
+- **Scope:** `responsive.css` @media (max-width: 900px) packet overview block. Merged pair-right's second-slot restoration into the same selector-list rules as triple-right's slot 2/3 restorations. Result: "top border restoration" is now ONE rule across pair-right slot 2 + triple-right slot 2 + triple-right slot 3. "Interior-seam left border restoration" is now ONE rule across pair-right slot 2 + triple-right slot 3 (both are right-hand slots in their respective layouts). Triple-right slot 2's right-border (the z:2 seam owner) stays in its own rule — unique to that slot.
+- **Verification:** triple-right computed styles at 375px identical before/after the consolidation (stash/pop diff). Pair-right wasn't visible on the test job (requires pre-packet-generation state), but the cascade math is deterministic: pair-right slot 2 now matches triple-right slot 3's computed values for the shared properties (border-top + border-left), because they share the same selector-list rule.
+- **Rule count:** 3 restoration rules (2 from 2a + 1 pair-right) → 3 rules (but now each is a shared-selector rule where applicable). Declaration count dropped from 7 to 5 — border-top is declared once for three slots, border-left once for two slots.
 
 ### Commit 2c — profile settings edge-flush consolidation (planned)
 TBD.

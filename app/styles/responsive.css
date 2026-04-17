@@ -2510,12 +2510,6 @@
     margin-left: calc(-1 * var(--adjacent-control-overlap));
   }
 
-  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot + .screening-action-slot .button {
-    border-top-width: 1px;
-    border-left-width: 1px;
-    border-left-color: var(--line);
-  }
-
   /* =========================================================================
    * PACKET OVERVIEW EDGE-FLUSH CONTRACT (≤900px)
    * =========================================================================
@@ -2524,7 +2518,7 @@
    * means every action button's left and right borders, if painted, would
    * sit directly at the viewport — violating "edge of viewport = no border."
    * The bleed rule below strips L/R on every button; the pair-right and
-   * triple-right slot restorations re-paint ONLY the interior seams.
+   * triple-right restorations re-paint ONLY the interior seams.
    *
    * Visual grammar:
    *   pair-right    : [  Generate  |  Review  ]
@@ -2534,36 +2528,41 @@
    *                     L=0 bleed    L=1 seam   R=0 bleed
    *                     R=1 seam (see Regenerate comment below)
    *
-   * Why slot 2 (Regenerate) carries its own right border instead of relying
-   * on slot 3 (Archive)'s left border: Regenerate is at z-index: 2 via the
-   * `:has(.screening-action-slot:nth-child(3):last-child)` protection rule
-   * in queue-rows.css, so its right edge paints on top of Archive. If only
-   * Archive owned the seam, Regenerate's hover fill (z:2) would mask it in
-   * the 1px margin-left overlap zone. With both slots carrying their side,
-   * whichever is hovered, the seam stays visible and the overlap collapses
-   * into a single painted 1px line.
+   * Why slot 2 (Regenerate) in triple-right carries its OWN right border
+   * instead of relying on slot 3 (Archive)'s left border: Regenerate is at
+   * z-index: 2 via the `:has(.screening-action-slot:nth-child(3):last-child)`
+   * protection rule in queue-rows.css, so its right edge paints on top of
+   * Archive. If only Archive owned the seam, Regenerate's hover fill (z:2)
+   * would mask it in the 1px margin-left overlap zone. With both slots
+   * carrying their side, whichever is hovered, the seam stays visible.
    * ------------------------------------------------------------------------- */
 
-  /* Shared: slot 2 and slot 3 both carry a top border to paint the row-2 top
-     rule across the whole width (row 1's bottom and row 2's top would
-     otherwise leave a 1px gap because of the margin-top: -1px overlap). */
+  /* Top border — restores the row-2 top rule after the row-1 / row-2
+     margin-top: -1px overlap would otherwise leave a 1px gap. Applies to
+     pair-right's second slot AND triple-right's second + third slots (all
+     restoration slots). */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot + .screening-action-slot .button,
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(2) .button,
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(3) .button {
     border-top-width: 1px;
     border-top-color: var(--line);
   }
 
-  /* Slot 2 (Regenerate): right side owns the Regenerate|Archive seam. */
-  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(2) .button {
-    border-right-width: 1px;
-    border-right-color: var(--line);
-  }
-
-  /* Slot 3 (Archive): left side also paints the Regenerate|Archive seam so
-     Archive's own hover fill can't hide Regenerate's right edge behind it. */
+  /* Interior-seam LEFT border — the right-hand slot in each layout owns its
+     left border so the seam between L and R is painted by it. Applies to
+     pair-right's second slot AND triple-right's third slot (Archive). */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot + .screening-action-slot .button,
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(3) .button {
     border-left-width: 1px;
     border-left-color: var(--line);
+  }
+
+  /* Triple-right slot 2 (Regenerate) — right side also paints the
+     Regenerate|Archive seam so z-index stacking can't hide it under Archive's
+     hover fill. See the Regenerate comment in the contract block above. */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(2) .button {
+    border-right-width: 1px;
+    border-right-color: var(--line);
   }
 
   /* Bleed rule: strip L/R on every button so the wrap's ±queue-column-pad
