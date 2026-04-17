@@ -40,10 +40,13 @@ Natural-language prompts that should route into this workflow:
 - `npm run eval:ui-artifacts`
 - `npm run capture:ui`
 - `npm run smoke:import-contract`
+- `npm run smoke:routes`
+- `npm run smoke:packet`
 - `npm run smoke:packet-persistence`
 - `npm run smoke:server-action-workflow`
 - `npm run smoke:workflow-state`
 - `npm run smoke:workflow-transition`
+- `npm run smoke:resume-v4`
 - `npm run diagnostic:external-sourcing`
 
 ## Outputs
