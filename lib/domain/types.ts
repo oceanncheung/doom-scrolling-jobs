@@ -99,47 +99,6 @@ export interface OperatorRecord {
   userId: string
 }
 
-export interface UserProfileSnapshot {
-  id: string
-  headline: string
-  remoteRequired: boolean
-  seniorityLevel: string
-  targetSeniorityLevels: string[]
-  targetRoles: string[]
-  allowedAdjacentRoles: string[]
-  salaryFloorAmount?: number
-  salaryTargetMin?: number
-  salaryTargetMax?: number
-  portfolioPrimaryUrl?: string
-  matchingPreferences: MatchingPreferencesRecord
-}
-
-export interface PortfolioItemSummary {
-  id: string
-  title: string
-  url: string
-  projectType: string
-  roleLabel: string
-  skillsTags: string[]
-  industryTags: string[]
-  isPrimary: boolean
-}
-
-export interface JobListing {
-  id: string
-  sourceName: string
-  companyName: string
-  title: string
-  department?: string
-  remoteType: RemoteType
-  remoteRegions: string[]
-  salaryMin?: number
-  salaryMax?: number
-  salaryCurrency?: string
-  seniorityLabel?: string
-  portfolioRequired: 'yes' | 'no' | 'unknown'
-}
-
 export interface JobScore {
   aiDescriptionExcerpt?: string
   aiMatchSummary?: string
@@ -162,16 +121,6 @@ export interface JobScore {
   workflowStatus: WorkflowStatus
   fitSummary: string
   redFlags: string[]
-}
-
-export interface ApplicationPacketSummary {
-  id: string
-  jobId: string
-  packetStatus: PacketStatus
-  professionalSummary?: string
-  coverLetterDraft?: string
-  portfolioRecommendation?: string
-  checklistItems: string[]
 }
 
 export interface ResumeVersionPacketRecord {
