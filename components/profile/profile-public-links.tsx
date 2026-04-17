@@ -1,9 +1,10 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useRef, useState } from 'react'
 
 import {
   refreshProfileSourceAction,
+  saveAndRefreshProfileSourceAction,
   type ProfileActionState,
 } from '@/app/profile/actions'
 import {
@@ -13,36 +14,128 @@ import {
 
 interface ProfilePublicLinksProps {
   formId: string
-  /** Value persisted to user_profiles.portfolio_primary_url */
   initialPortfolioUrl: string
-  /** Value persisted to user_profiles.personal_site_url */
   initialPersonalSiteUrl: string
-  /** Value persisted to user_profiles.linkedin_url — kept on the profile as reference
-   *  only; no scraping or enrichment runs against LinkedIn. */
+  /** Kept on the profile as a reference link only — no scraping runs against LinkedIn. */
   initialLinkedinUrl: string
 }
 
-const REFRESH_INITIAL_STATE: ProfileActionState = { message: '', status: 'idle' }
+const INITIAL_ACTION_STATE: ProfileActionState = { message: '', status: 'idle' }
 
-interface SourceState {
-  /** The currently-saved URL. */
-  savedUrl: string
-  /** When true, the input is shown editable even if savedUrl is non-empty (user clicked the
-   *  pencil to change the URL). Re-submitting the main profile form locks it again. */
-  isEditing: boolean
-  /** Local fetch status for the refresh icon — mirrors the action's status so the
-   *  FieldSourceActions spin indicator + tooltip stay in sync. */
-  status: FieldSourceFetchStatus
-  /** Most recent action message for this source; surfaced via the refresh tooltip when in
-   *  the 'error' state. */
-  message: string
+/**
+ * Derive the FieldSourceActions display status from the two action states and pending flags.
+ * Pending wins (either save-or-refresh in flight → spinning). Otherwise the most recent
+ * non-idle result drives the display: error persists until the next action fires; success
+ * reads as "refreshed" until the next action fires. Keeping derivation inline (not via
+ * useEffect) avoids React 19's set-state-in-effect lint error and keeps the component a
+ * straight render.
+ */
+function deriveStatus(
+  saveAction: ProfileActionState,
+  refreshAction: ProfileActionState,
+  savePending: boolean,
+  refreshPending: boolean,
+): FieldSourceFetchStatus {
+  if (savePending || refreshPending) return 'fetching'
+  if (refreshAction.status === 'error' || saveAction.status === 'error') return 'error'
+  if (refreshAction.status === 'success' || saveAction.status === 'success') return 'refreshed'
+  return 'idle'
 }
 
-function deriveStatus(source: SourceState, actionState: ProfileActionState, isPending: boolean): FieldSourceFetchStatus {
-  if (isPending) return 'fetching'
-  if (actionState.status === 'error') return 'error'
-  if (actionState.status === 'success') return 'refreshed'
-  return source.status
+type SourceKind = 'portfolio_url' | 'personal_site'
+
+interface SourceFieldProps {
+  formId: string
+  label: string
+  name: 'portfolioPrimaryUrl' | 'personalSiteUrl'
+  sourceKind: SourceKind
+  sourceLabel: string
+  placeholder: string
+  initialUrl: string
+}
+
+function SourceField({
+  formId,
+  label,
+  name,
+  sourceKind,
+  sourceLabel,
+  placeholder,
+  initialUrl,
+}: SourceFieldProps) {
+  // Intrinsic local state — the canonical URL for this field as the operator last entered
+  // it, and whether the input is currently unlocked for editing. The post-action derived
+  // state (status/message) is computed inline below rather than mirrored via useEffect.
+  const [savedUrl, setSavedUrl] = useState<string>(initialUrl)
+  const [isEditing, setIsEditing] = useState<boolean>(!initialUrl)
+
+  // Two separate actions: one triggered when the user types and hits Enter ("save + pull"),
+  // one triggered by the refresh icon on an already-saved URL ("re-pull"). The refresh
+  // path is zero-arg (the URL is already stored); the save+pull path submits the URL.
+  const [saveActionState, saveFormAction, savePending] = useActionState(
+    saveAndRefreshProfileSourceAction,
+    INITIAL_ACTION_STATE,
+  )
+  const [refreshActionState, refreshFormAction, refreshPending] = useActionState(
+    refreshProfileSourceAction,
+    INITIAL_ACTION_STATE,
+  )
+
+  const status = deriveStatus(saveActionState, refreshActionState, savePending, refreshPending)
+  const locked = Boolean(savedUrl) && !isEditing && !savePending
+  const errorMessage =
+    status === 'error'
+      ? refreshActionState.message || saveActionState.message || undefined
+      : undefined
+
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  return (
+    <label className="field">
+      <span>{label}</span>
+      <FieldSourceActions
+        locked={locked}
+        status={status}
+        sourceLabel={sourceLabel}
+        errorMessage={errorMessage}
+        onRefresh={() => {
+          const formData = new FormData()
+          formData.set('sourceKind', sourceKind)
+          refreshFormAction(formData)
+        }}
+        onEdit={() => {
+          setIsEditing(true)
+          requestAnimationFrame(() => inputRef.current?.focus())
+        }}
+      >
+        <input
+          defaultValue={savedUrl}
+          disabled={locked}
+          form={formId}
+          name={name}
+          placeholder={placeholder}
+          readOnly={locked}
+          ref={inputRef}
+          type="url"
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || locked) return
+            event.preventDefault()
+            const value = event.currentTarget.value.trim()
+            // Lock the field optimistically so the refresh icon appears and starts
+            // spinning immediately. If the action fails, derived status will read
+            // 'error' and the tooltip will surface the cause — the field stays locked
+            // with the attempted URL until the operator clicks edit.
+            setSavedUrl(value)
+            setIsEditing(false)
+            const formData = new FormData()
+            formData.set('sourceKind', sourceKind)
+            formData.set('url', value)
+            saveFormAction(formData)
+          }}
+        />
+      </FieldSourceActions>
+    </label>
+  )
 }
 
 export function ProfilePublicLinks({
@@ -51,108 +144,26 @@ export function ProfilePublicLinks({
   initialPersonalSiteUrl,
   initialLinkedinUrl,
 }: ProfilePublicLinksProps) {
-  const [portfolioState, setPortfolioState] = useState<SourceState>({
-    savedUrl: initialPortfolioUrl,
-    isEditing: !initialPortfolioUrl,
-    status: 'idle',
-    message: '',
-  })
-  const [personalSiteState, setPersonalSiteState] = useState<SourceState>({
-    savedUrl: initialPersonalSiteUrl,
-    isEditing: !initialPersonalSiteUrl,
-    status: 'idle',
-    message: '',
-  })
-
-  // Separate action state per source so clicks on one button don't mis-fire status on the other.
-  const [portfolioActionState, portfolioFormAction, portfolioPending] = useActionState(
-    refreshProfileSourceAction,
-    REFRESH_INITIAL_STATE,
-  )
-  const [personalSiteActionState, personalSiteFormAction, personalSitePending] = useActionState(
-    refreshProfileSourceAction,
-    REFRESH_INITIAL_STATE,
-  )
-
-  // When the action returns success, clear the 'refreshed' tooltip back to 'idle' after 3s
-  // so the next interaction reads cleanly. Errors persist until the user clicks again.
-  useEffect(() => {
-    if (portfolioActionState.status !== 'success') return
-    const timer = window.setTimeout(() => {
-      setPortfolioState((current) => ({ ...current, status: 'idle', message: '' }))
-    }, 3000)
-    return () => window.clearTimeout(timer)
-  }, [portfolioActionState])
-
-  useEffect(() => {
-    if (personalSiteActionState.status !== 'success') return
-    const timer = window.setTimeout(() => {
-      setPersonalSiteState((current) => ({ ...current, status: 'idle', message: '' }))
-    }, 3000)
-    return () => window.clearTimeout(timer)
-  }, [personalSiteActionState])
-
-  const portfolioStatus = deriveStatus(portfolioState, portfolioActionState, portfolioPending)
-  const personalSiteStatus = deriveStatus(personalSiteState, personalSiteActionState, personalSitePending)
-
-  const portfolioLocked = Boolean(portfolioState.savedUrl) && !portfolioState.isEditing
-  const personalSiteLocked = Boolean(personalSiteState.savedUrl) && !personalSiteState.isEditing
-
   return (
     <div className="profile-fields">
-      <label className="field">
-        <span>Main portfolio link</span>
-        <form action={portfolioFormAction} hidden>
-          <input type="hidden" name="sourceKind" value="portfolio_url" />
-        </form>
-        <FieldSourceActions
-          locked={portfolioLocked}
-          status={portfolioStatus}
-          sourceLabel="portfolio"
-          errorMessage={portfolioActionState.status === 'error' ? portfolioActionState.message : undefined}
-          onRefresh={() => {
-            const formData = new FormData()
-            formData.set('sourceKind', 'portfolio_url')
-            portfolioFormAction(formData)
-          }}
-          onEdit={() => setPortfolioState((current) => ({ ...current, isEditing: true }))}
-        >
-          <input
-            defaultValue={portfolioState.savedUrl}
-            disabled={portfolioLocked}
-            form={formId}
-            name="portfolioPrimaryUrl"
-            placeholder="https://portfolio.site/project"
-            readOnly={portfolioLocked}
-            type="url"
-          />
-        </FieldSourceActions>
-      </label>
-      <label className="field">
-        <span>Personal website</span>
-        <FieldSourceActions
-          locked={personalSiteLocked}
-          status={personalSiteStatus}
-          sourceLabel="personal website"
-          errorMessage={personalSiteActionState.status === 'error' ? personalSiteActionState.message : undefined}
-          onRefresh={() => {
-            const formData = new FormData()
-            formData.set('sourceKind', 'personal_site')
-            personalSiteFormAction(formData)
-          }}
-          onEdit={() => setPersonalSiteState((current) => ({ ...current, isEditing: true }))}
-        >
-          <input
-            defaultValue={personalSiteState.savedUrl}
-            disabled={personalSiteLocked}
-            form={formId}
-            name="personalSiteUrl"
-            placeholder="https://your-site.com"
-            readOnly={personalSiteLocked}
-            type="url"
-          />
-        </FieldSourceActions>
-      </label>
+      <SourceField
+        formId={formId}
+        initialUrl={initialPortfolioUrl}
+        label="Main portfolio link"
+        name="portfolioPrimaryUrl"
+        placeholder="https://portfolio.site/project"
+        sourceKind="portfolio_url"
+        sourceLabel="portfolio"
+      />
+      <SourceField
+        formId={formId}
+        initialUrl={initialPersonalSiteUrl}
+        label="Personal website"
+        name="personalSiteUrl"
+        placeholder="https://your-site.com"
+        sourceKind="personal_site"
+        sourceLabel="personal website"
+      />
       <label className="field">
         <span>LinkedIn profile</span>
         <input

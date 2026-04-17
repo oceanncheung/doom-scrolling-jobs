@@ -61,9 +61,9 @@ export function FieldSourceActions({
   const isFetching = status === 'fetching'
 
   return (
-    <span className="field-source-actions-row">
+    <div className="field-source-actions-row">
       {children}
-      <span className="field-source-actions" aria-live="polite">
+      <div className="field-source-actions" aria-live="polite">
         <button
           aria-busy={isFetching}
           aria-label={refreshLabel}
@@ -87,7 +87,7 @@ export function FieldSourceActions({
         >
           <PencilIcon className="field-source-action__icon" height={14} width={14} />
         </button>
-      </span>
-    </span>
+      </div>
+    </div>
   )
 }

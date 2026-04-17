@@ -1185,6 +1185,11 @@ const VALID_PROFILE_SOURCE_KINDS: ReadonlyArray<'portfolio_url' | 'personal_site
   'personal_site',
 ]
 
+const SOURCE_KIND_TO_COLUMN: Record<'portfolio_url' | 'personal_site', 'portfolio_primary_url' | 'personal_site_url'> = {
+  portfolio_url: 'portfolio_primary_url',
+  personal_site: 'personal_site_url',
+}
+
 export async function refreshProfileSourceAction(
   _previousState: ProfileActionState,
   formData: FormData,
@@ -1252,6 +1257,103 @@ export async function refreshProfileSourceAction(
   } catch (error) {
     return {
       message: error instanceof Error ? error.message : 'Refresh failed.',
+      status: 'error',
+    }
+  }
+}
+
+/**
+ * Save a Public Links URL AND fire the extraction pipeline in one round trip. Triggered
+ * when the user types a URL in the editable field and presses Enter — the expectation is
+ * "the link should start pulling already, and the field should lock." This action persists
+ * the URL to user_profiles, then runs enrichActiveOperatorEvidence filtered to just that
+ * source so the operator sees spinning-refresh feedback immediately.
+ *
+ * Expected form fields:
+ *   - sourceKind: 'portfolio_url' | 'personal_site'
+ *   - url: the user-entered URL string (trimmed; empty clears the source)
+ */
+export async function saveAndRefreshProfileSourceAction(
+  _previousState: ProfileActionState,
+  formData: FormData,
+): Promise<ProfileActionState> {
+  void _previousState
+
+  if (!hasSupabaseServerEnv()) {
+    return { message: 'Storage unavailable; cannot save.', status: 'error' }
+  }
+
+  const rawSourceKind = asTextValue(formData.get('sourceKind'))
+  const sourceKind = VALID_PROFILE_SOURCE_KINDS.find((value) => value === rawSourceKind)
+  if (!sourceKind) {
+    return { message: 'Missing or invalid source kind.', status: 'error' }
+  }
+  const url = asTextValue(formData.get('url'))
+
+  const operatorContext = await getActiveOperatorContext()
+  if (!operatorContext?.operator?.id || !operatorContext.profileId) {
+    return { message: 'Select a workspace before saving.', status: 'error' }
+  }
+
+  // Persist the URL first so the extraction call below reads the fresh value.
+  const supabase = createClient()
+  const column = SOURCE_KIND_TO_COLUMN[sourceKind]
+  const { error: updateError } = await supabase
+    .from('user_profiles')
+    .update({ [column]: url || null })
+    .eq('id', operatorContext.profileId)
+
+  if (updateError) {
+    return { message: `Couldn't save URL: ${updateError.message}`, status: 'error' }
+  }
+
+  // Empty URL = user cleared the field; nothing to extract.
+  if (!url) {
+    revalidatePath('/profile')
+    return { message: 'Link cleared.', status: 'success' }
+  }
+
+  if (!hasOpenAIEnv()) {
+    revalidatePath('/profile')
+    return {
+      message: 'URL saved. Evidence extraction is unavailable, so no proof points were pulled.',
+      status: 'success',
+    }
+  }
+
+  try {
+    const result = await enrichActiveOperatorEvidence({ sourceFilter: sourceKind })
+    const sourceResult = result.sources.find((entry) => entry.sourceKind === sourceKind)
+    revalidatePath('/profile')
+
+    if (!sourceResult) {
+      return { message: 'URL saved but extraction returned no source result.', status: 'error' }
+    }
+    switch (sourceResult.status) {
+      case 'fetch-failed':
+        return {
+          message: sourceResult.error ? `Saved. Couldn't reach ${url}: ${sourceResult.error}` : `Saved. Couldn't reach ${url}.`,
+          status: 'error',
+        }
+      case 'no-entries-extracted':
+        return {
+          message: `URL saved. Fetched ${url} but found no proof points.`,
+          status: 'success',
+        }
+      case 'fetched':
+        return {
+          message: `URL saved. ${sourceResult.inserted} proof point${sourceResult.inserted === 1 ? '' : 's'} pulled; review them under Proof points.`,
+          status: 'success',
+        }
+      default:
+        return {
+          message: `URL saved; extraction returned ${sourceResult.status}.`,
+          status: 'success',
+        }
+    }
+  } catch (error) {
+    return {
+      message: `URL saved but extraction failed: ${error instanceof Error ? error.message : String(error)}`,
       status: 'error',
     }
   }

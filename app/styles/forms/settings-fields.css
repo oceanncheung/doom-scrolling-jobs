@@ -1157,22 +1157,37 @@
 }
 
 /*
- * Inline refresh + edit controls rendered by FieldSourceActions, sized to sit inline with
- * URL fields under .field. Icons are visually eyebrow-scale (14px) so they pair with the
- * 11px uppercase field label without overwhelming it; the 24×24 tap target keeps the
- * control accessibly clickable. Reuses the queue-refresh-icon-spin keyframe from
- * dashboard/queue-meta.css for the pending state (declared once, used in both surfaces).
+ * Inline refresh + edit controls rendered by FieldSourceActions. The row owns the 1px
+ * bottom hairline so it spans across BOTH the input and the icons (the old approach had
+ * the hairline only under the input and left the icons floating). Icons sit on that
+ * hairline — 24×24 tap targets with a 14×14 icon, visually eyebrow-scale so they pair
+ * with the 11px uppercase field label without overwhelming it. Reuses
+ * queue-refresh-icon-spin keyframe from dashboard/queue-meta.css for the pending state.
  */
 .field-source-actions-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 12px;
   min-width: 0;
+  border-bottom: 1px solid var(--line);
 }
 
-.field-source-actions-row > :where(input, textarea, label, .field-row, .overlay-option-field) {
+/*
+ * Must beat `.field input { border-bottom: 1px … }` (specificity 0,1,1). Using an explicit
+ * tag-qualified selector matches at 0,2,1 so the hairline moves cleanly to the row without
+ * a double-line. `:where()` was insufficient here — it contributes zero specificity and
+ * left the underlying `.field input` rule winning.
+ */
+.field .field-source-actions-row > input,
+.field .field-source-actions-row > textarea {
   flex: 1 1 auto;
   min-width: 0;
+  border-bottom: 0;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted);
 }
 
 .field-source-actions {
@@ -1180,6 +1195,9 @@
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
+  /* Offset icons slightly above the hairline so their bottom edge touches the rule rather
+   * than sitting on top of it. */
+  margin-bottom: 2px;
 }
 
 .field-source-action {
@@ -1222,159 +1240,4 @@
 
 .field-source-action.field-source-action--error {
   color: var(--status-attention);
-}
-
-/*
- * Proof-points cards pulled from portfolio / personal-site extraction. Rendered inside the
- * existing Proof points tab above the hand-authored proof_bank list. Matches the repo's
- * editorial-grid aesthetic: 1px separators, zero radius, mono labels, no shadows.
- */
-.proof-points-source-stack {
-  display: grid;
-  gap: 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-
-.proof-points-source-heading {
-  display: grid;
-  gap: 4px;
-  padding: 16px 0 12px;
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.proof-points-source-heading h3 {
-  margin: 0;
-  font-family: var(--font-body), sans-serif;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.proof-points-source-heading p {
-  margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--text);
-}
-
-.proof-points-source-card {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.proof-points-source-card:last-child {
-  border-bottom: 0;
-}
-
-.proof-points-source-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 10px;
-}
-
-.proof-points-source-card__title {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.proof-points-source-card__title strong {
-  font-family: var(--font-body), sans-serif;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.proof-points-source-card__meta {
-  font-family: var(--font-mono), monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.proof-points-source-card__actions {
-  display: inline-flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.proof-points-source-card__actions form {
-  margin: 0;
-}
-
-.proof-points-source-card__body {
-  display: grid;
-  grid-template-columns: minmax(0, 96px) minmax(0, 1fr);
-  row-gap: 6px;
-  column-gap: 16px;
-  margin: 0;
-}
-
-.proof-points-source-card__body > div {
-  display: contents;
-}
-
-.proof-points-source-card__body dt {
-  font-family: var(--font-body), sans-serif;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.proof-points-source-card__body dd {
-  margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--text);
-}
-
-.proof-points-source-card__excerpt {
-  color: var(--muted);
-  font-style: italic;
-}
-
-.proof-points-source-card--confirmed {
-  opacity: 0.85;
-}
-
-.proof-points-source-card__message {
-  margin: 8px 0 0;
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.proof-points-source-card__message--error {
-  color: var(--status-attention);
-}
-
-.proof-points-source-empty {
-  padding: 16px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  display: grid;
-  gap: 6px;
-}
-
-.proof-points-source-empty strong {
-  font-family: var(--font-body), sans-serif;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.proof-points-source-empty p {
-  margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--text);
 }
