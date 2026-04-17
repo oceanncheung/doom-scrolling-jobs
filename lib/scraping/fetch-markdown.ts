@@ -29,6 +29,14 @@ const DEFAULT_TIMEOUT_MS = 30_000
 // transcripts, etc.). Cap at ~40k chars so downstream LLM prompts don't blow past token
 // budgets. Callers can request a smaller cap per call.
 const DEFAULT_MAX_LENGTH = 40_000
+// Retry envelope for transient upstream failures (Jina rate limits on free tier; self-hosted
+// deployments may briefly 503 under load). Keep the total retry window short so a single bad
+// URL can't stall a portfolio walk — at 500/1000/2000 ms backoff we spend at most ~3.5s
+// before giving up and letting the caller move to the next subpage.
+const RETRY_STATUSES = new Set([429, 503])
+const MAX_RETRY_ATTEMPTS = 3
+const RETRY_BASE_DELAY_MS = 500
+const RETRY_MAX_DELAY_MS = 5_000
 
 export interface FetchMarkdownOptions {
   /** Override the base fetch service. Useful for tests (stub) and Firecrawl users. */
@@ -100,68 +108,118 @@ export async function fetchMarkdown(
   const maxLength = options.maxLength ?? DEFAULT_MAX_LENGTH
   const apiKey = options.apiKey ?? process.env.JINA_READER_API_KEY
 
-  const controller = new AbortController()
-  const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs)
-
-  try {
-    const headers: Record<string, string> = {
-      'X-Return-Format': 'markdown',
-      Accept: 'text/plain',
-    }
-    if (apiKey) {
-      headers.Authorization = `Bearer ${apiKey}`
-    }
-    const response = await fetch(readerEndpoint(base, targetUrl), {
-      headers,
-      signal: controller.signal,
-    })
-
-    if (!response.ok) {
-      return {
-        success: false,
-        sourceUrl: targetUrl,
-        error: `Fetch service returned HTTP ${response.status} ${response.statusText}.`,
-        errorKind: 'http-error',
-        status: response.status,
-        fetchedAt,
-      }
-    }
-
-    const rawText = await response.text()
-    const trimmed = rawText.trim()
-    if (!trimmed) {
-      return {
-        success: false,
-        sourceUrl: targetUrl,
-        error: 'Fetch service returned an empty body.',
-        errorKind: 'empty',
-        fetchedAt,
-      }
-    }
-
-    const truncated = trimmed.length > maxLength
-    const markdown = truncated ? trimmed.slice(0, maxLength) : trimmed
-
-    return {
-      success: true,
-      sourceUrl: targetUrl,
-      markdown,
-      contentLength: trimmed.length,
-      fetchedAt,
-      truncated,
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    const errorKind: FetchMarkdownFailure['errorKind'] =
-      error instanceof DOMException && error.name === 'AbortError' ? 'timeout' : 'network'
-    return {
-      success: false,
-      sourceUrl: targetUrl,
-      error: message || 'Network fetch failed.',
-      errorKind,
-      fetchedAt,
-    }
-  } finally {
-    clearTimeout(timeoutHandle)
+  const headers: Record<string, string> = {
+    'X-Return-Format': 'markdown',
+    Accept: 'text/plain',
   }
+  if (apiKey) {
+    headers.Authorization = `Bearer ${apiKey}`
+  }
+
+  let lastStatus: number | undefined
+  let lastStatusText = ''
+  for (let attempt = 0; attempt <= MAX_RETRY_ATTEMPTS; attempt += 1) {
+    const controller = new AbortController()
+    const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const response = await fetch(readerEndpoint(base, targetUrl), {
+        headers,
+        signal: controller.signal,
+      })
+
+      if (!response.ok) {
+        lastStatus = response.status
+        lastStatusText = response.statusText
+        if (RETRY_STATUSES.has(response.status) && attempt < MAX_RETRY_ATTEMPTS) {
+          // Honor Retry-After when present (capped at RETRY_MAX_DELAY_MS so a misbehaving
+          // upstream can't stall the whole walk) and otherwise fall back to exponential
+          // backoff. Both parsed forms of Retry-After are accepted — seconds and HTTP-date —
+          // though Jina/Firecrawl only ever send the seconds form in practice.
+          const retryAfter = response.headers.get('retry-after')
+          const backoffMs = parseRetryAfter(retryAfter) ?? Math.min(
+            RETRY_BASE_DELAY_MS * 2 ** attempt,
+            RETRY_MAX_DELAY_MS,
+          )
+          clearTimeout(timeoutHandle)
+          await delay(backoffMs)
+          continue
+        }
+        clearTimeout(timeoutHandle)
+        return {
+          success: false,
+          sourceUrl: targetUrl,
+          error: `Fetch service returned HTTP ${response.status} ${response.statusText}.`,
+          errorKind: 'http-error',
+          status: response.status,
+          fetchedAt,
+        }
+      }
+
+      const rawText = await response.text()
+      clearTimeout(timeoutHandle)
+      const trimmed = rawText.trim()
+      if (!trimmed) {
+        return {
+          success: false,
+          sourceUrl: targetUrl,
+          error: 'Fetch service returned an empty body.',
+          errorKind: 'empty',
+          fetchedAt,
+        }
+      }
+
+      const truncated = trimmed.length > maxLength
+      const markdown = truncated ? trimmed.slice(0, maxLength) : trimmed
+
+      return {
+        success: true,
+        sourceUrl: targetUrl,
+        markdown,
+        contentLength: trimmed.length,
+        fetchedAt,
+        truncated,
+      }
+    } catch (error) {
+      clearTimeout(timeoutHandle)
+      const message = error instanceof Error ? error.message : String(error)
+      const errorKind: FetchMarkdownFailure['errorKind'] =
+        error instanceof DOMException && error.name === 'AbortError' ? 'timeout' : 'network'
+      return {
+        success: false,
+        sourceUrl: targetUrl,
+        error: message || 'Network fetch failed.',
+        errorKind,
+        fetchedAt,
+      }
+    }
+  }
+
+  return {
+    success: false,
+    sourceUrl: targetUrl,
+    error: `Fetch service returned HTTP ${lastStatus ?? ''} ${lastStatusText} after ${MAX_RETRY_ATTEMPTS} retries.`.trim(),
+    errorKind: 'http-error',
+    status: lastStatus,
+    fetchedAt,
+  }
+}
+
+function parseRetryAfter(header: string | null): number | null {
+  if (!header) return null
+  const trimmed = header.trim()
+  if (!trimmed) return null
+  const seconds = Number(trimmed)
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.min(Math.round(seconds * 1000), RETRY_MAX_DELAY_MS)
+  }
+  const dateMs = Date.parse(trimmed)
+  if (Number.isFinite(dateMs)) {
+    const diff = dateMs - Date.now()
+    if (diff > 0) return Math.min(diff, RETRY_MAX_DELAY_MS)
+  }
+  return null
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }

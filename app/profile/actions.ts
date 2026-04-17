@@ -1239,6 +1239,11 @@ export async function refreshProfileSourceAction(
           message: `Fetched ${sourceResult.sourceUrl} but found no proof points to add.`,
           status: 'success',
         }
+      case 'thin-source':
+        return {
+          message: `Fetched ${sourceResult.sourceUrl} but the page was too thin to extract from (paywall, sign-in, or heavy JavaScript). Try the direct portfolio or case-study URL.`,
+          status: 'error',
+        }
       case 'fetched':
         return {
           message: `Refreshed from ${sourceResult.sourceUrl}. ${sourceResult.inserted} proof point${sourceResult.inserted === 1 ? '' : 's'} pulled; review them under Proof points.`,
@@ -1335,6 +1340,11 @@ export async function saveAndRefreshProfileSourceAction(
         return {
           message: `URL saved. Fetched ${url} but found no proof points.`,
           status: 'success',
+        }
+      case 'thin-source':
+        return {
+          message: `URL saved, but ${url} returned too little content to extract from (paywall, sign-in, or heavy JavaScript). Try the direct portfolio or case-study URL.`,
+          status: 'error',
         }
       case 'fetched':
         return {

@@ -23,13 +23,21 @@ export interface EnrichOperatorEvidenceResult {
   sources: Array<{
     sourceKind: EvidenceSourceKind
     sourceUrl: string
-    status: 'fetched' | 'fetch-failed' | 'skipped-no-url' | 'no-entries-extracted'
+    status: 'fetched' | 'fetch-failed' | 'skipped-no-url' | 'no-entries-extracted' | 'thin-source'
     contentLength?: number
     error?: string
     inserted: number
   }>
   insertedEntries: EvidenceBankEntryRecord[]
 }
+
+// Threshold below which a successful fetch is treated as a "thin source" signal. Set at
+// 1000 chars because empirically any real portfolio index (even a single-project landing
+// page) clears ~1500 chars once Jina strips chrome; hitting <1000 almost always means the
+// site is paywalled, behind auth, or JS-renders lazily in a way Jina didn't wait out.
+// Surfacing this as its own status lets the /profile refresh flow tell the user why we
+// found nothing instead of a silent "fetched but empty".
+const THIN_SOURCE_CONTENT_THRESHOLD = 1000
 
 export interface EnrichActiveOperatorEvidenceOptions {
   /** Explicit operator to enrich. When set, bypasses cookie-based selection. Used by the
@@ -231,10 +239,16 @@ export async function enrichActiveOperatorEvidence(
     })
 
     if (extracted.length === 0) {
+      // Differentiate "we got real content but the LLM found nothing relevant" from "the
+      // content itself was too thin to extract from" — the former is an LLM judgment call,
+      // the latter is a scraping signal the user needs to act on (usually by pasting a
+      // different URL or waiting for a JS-heavy site to settle). The UI in
+      // app/profile/actions.ts branches on this status to pick the right message.
+      const thin = fetchResult.snapshot.contentLength < THIN_SOURCE_CONTENT_THRESHOLD
       sources.push({
         sourceKind: plannedSource.sourceKind,
         sourceUrl: fetchResult.snapshot.url,
-        status: 'no-entries-extracted',
+        status: thin ? 'thin-source' : 'no-entries-extracted',
         contentLength: fetchResult.snapshot.contentLength,
         inserted: 0,
       })
