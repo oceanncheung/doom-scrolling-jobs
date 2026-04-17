@@ -1,6 +1,7 @@
 import { clearActiveOperatorSelection } from '@/app/operators/actions'
 import { WorkspaceRailShell } from '@/components/navigation/workspace-rail-shell'
 import { ProfileHeadlineTagField } from '@/components/profile/profile-headline-tag-field'
+import { ProfilePublicLinks } from '@/components/profile/profile-public-links'
 import { ProfileSaveButton } from '@/components/profile/profile-save-button'
 import { FieldLabelRow } from '@/components/ui/field-label-row'
 import { OverlayOptionField } from '@/components/ui/overlay-option-field'
@@ -166,38 +167,12 @@ export function ProfileSettingsRail({ formId, workspace }: ProfileSettingsRailPr
         <section className="today-block">
           <TodayBlockHeading label="Links" title="Public links" />
 
-          <div className="profile-fields">
-            <label className="field">
-              <span>Main portfolio link</span>
-              <input
-                defaultValue={workspace.profile.portfolioPrimaryUrl}
-                form={formId}
-                name="portfolioPrimaryUrl"
-                placeholder="https://portfolio.site/project"
-                type="url"
-              />
-            </label>
-            <label className="field">
-              <span>Personal website</span>
-              <input
-                defaultValue={workspace.profile.personalSiteUrl}
-                form={formId}
-                name="personalSiteUrl"
-                placeholder="https://your-site.com"
-                type="url"
-              />
-            </label>
-            <label className="field">
-              <span>LinkedIn profile</span>
-              <input
-                defaultValue={workspace.profile.linkedinUrl}
-                form={formId}
-                name="linkedinUrl"
-                placeholder="https://linkedin.com/in/your-name"
-                type="url"
-              />
-            </label>
-          </div>
+          <ProfilePublicLinks
+            formId={formId}
+            initialPortfolioUrl={workspace.profile.portfolioPrimaryUrl}
+            initialPersonalSiteUrl={workspace.profile.personalSiteUrl}
+            initialLinkedinUrl={workspace.profile.linkedinUrl}
+          />
         </section>
     </WorkspaceRailShell>
   )

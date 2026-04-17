@@ -26,6 +26,11 @@ import {
   asOptionalUnknownText,
   asTextValue,
 } from '@/lib/form/parse-helpers'
+import {
+  confirmEvidenceEntry,
+  discardEvidenceEntry,
+} from '@/lib/data/evidence-bank'
+import { enrichActiveOperatorEvidence } from '@/lib/jobs/enrich-operator-evidence'
 import { rescorePersistedImportedJobs } from '@/lib/jobs/real-feed'
 import {
   collectCoverLetterMasterIssues,
@@ -1164,6 +1169,133 @@ export async function saveOperatorProfile(
       ? `${operatorPayload.display_name} profile draft refreshed from the uploaded documents. Review the editable sections, then save profile when ready.${unresolvedDraftNote}${rankingRefreshNote}`
       : `${operatorPayload.display_name} workspace saved with ${experienceEntries.length} experience entries and ${portfolioItems.length} portfolio items.${approvalNote}${unresolvedDraftNote}${coverLetterDraftNote}${rankingRefreshNote}`,
     status: 'success',
+  }
+}
+
+/**
+ * Refresh action triggered by the FieldSourceActions refresh button on the Profile's Public
+ * Links section. Re-runs the portfolio/personal-site scrape for the active operator and
+ * re-extracts proof points into evidence_bank. Limited to the one source the user clicked
+ * on so refreshing the portfolio link doesn't also re-scrape the personal site.
+ *
+ * Form is expected to submit a `sourceKind` hidden input (`portfolio_url` | `personal_site`).
+ */
+const VALID_PROFILE_SOURCE_KINDS: ReadonlyArray<'portfolio_url' | 'personal_site'> = [
+  'portfolio_url',
+  'personal_site',
+]
+
+export async function refreshProfileSourceAction(
+  _previousState: ProfileActionState,
+  formData: FormData,
+): Promise<ProfileActionState> {
+  void _previousState
+
+  if (!hasSupabaseServerEnv()) {
+    return { message: "Refresh isn't available right now.", status: 'error' }
+  }
+  if (!hasOpenAIEnv()) {
+    return { message: "Evidence extraction isn't available right now.", status: 'error' }
+  }
+
+  const rawSourceKind = asTextValue(formData.get('sourceKind'))
+  const sourceKind = VALID_PROFILE_SOURCE_KINDS.find((value) => value === rawSourceKind)
+  if (!sourceKind) {
+    return { message: 'Missing or invalid source kind for refresh.', status: 'error' }
+  }
+
+  const operatorContext = await getActiveOperatorContext()
+  if (!operatorContext?.operator?.id) {
+    return { message: 'Select a workspace before refreshing.', status: 'error' }
+  }
+
+  try {
+    const result = await enrichActiveOperatorEvidence({ sourceFilter: sourceKind })
+    const sourceResult = result.sources.find((entry) => entry.sourceKind === sourceKind)
+
+    revalidatePath('/profile')
+
+    if (!sourceResult) {
+      return {
+        message: 'Refresh attempted but no source result was returned.',
+        status: 'error',
+      }
+    }
+
+    switch (sourceResult.status) {
+      case 'skipped-no-url':
+        return {
+          message: 'No URL on file for this source. Add one first.',
+          status: 'error',
+        }
+      case 'fetch-failed':
+        return {
+          message: sourceResult.error ? `Couldn't reach ${sourceResult.sourceUrl}: ${sourceResult.error}` : `Couldn't reach ${sourceResult.sourceUrl}.`,
+          status: 'error',
+        }
+      case 'no-entries-extracted':
+        return {
+          message: `Fetched ${sourceResult.sourceUrl} but found no proof points to add.`,
+          status: 'success',
+        }
+      case 'fetched':
+        return {
+          message: `Refreshed from ${sourceResult.sourceUrl}. ${sourceResult.inserted} proof point${sourceResult.inserted === 1 ? '' : 's'} pulled; review them under Proof points.`,
+          status: 'success',
+        }
+      default:
+        return {
+          message: `Refresh returned an unexpected state: ${sourceResult.status}.`,
+          status: 'error',
+        }
+    }
+  } catch (error) {
+    return {
+      message: error instanceof Error ? error.message : 'Refresh failed.',
+      status: 'error',
+    }
+  }
+}
+
+/**
+ * Confirm or discard an evidence_bank entry from the /profile Proof points tab.
+ * Expects a hidden `entryId` input and an `intent` of 'confirm' | 'discard'.
+ */
+export async function reviewEvidenceEntryAction(
+  _previousState: ProfileActionState,
+  formData: FormData,
+): Promise<ProfileActionState> {
+  void _previousState
+
+  if (!hasSupabaseServerEnv()) {
+    return { message: 'Storage unavailable; cannot update evidence.', status: 'error' }
+  }
+
+  const entryId = asTextValue(formData.get('entryId'))
+  const intent = asTextValue(formData.get('intent'))
+  if (!entryId) {
+    return { message: 'Missing evidence entry id.', status: 'error' }
+  }
+  if (intent !== 'confirm' && intent !== 'discard') {
+    return { message: `Unknown intent "${intent}".`, status: 'error' }
+  }
+
+  try {
+    if (intent === 'confirm') {
+      await confirmEvidenceEntry(entryId)
+    } else {
+      await discardEvidenceEntry(entryId)
+    }
+    revalidatePath('/profile')
+    return {
+      message: intent === 'confirm' ? 'Proof point confirmed.' : 'Proof point discarded.',
+      status: 'success',
+    }
+  } catch (error) {
+    return {
+      message: error instanceof Error ? error.message : 'Evidence update failed.',
+      status: 'error',
+    }
   }
 }
 
