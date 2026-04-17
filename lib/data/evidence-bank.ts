@@ -85,6 +85,13 @@ export async function insertExtractedEvidenceEntries(
 ): Promise<EvidenceBankEntryRecord[]> {
   if (entries.length === 0) return []
   const supabase = createClient()
+  // Extraction is trusted by default now — there's no separate confirmation gate in the UI
+  // (extracted entries become editable proof_bank rows directly on pull). We still stamp
+  // confirmed_at so Phase D generator integration — which filters evidence_bank by
+  // `confirmed_at NOT NULL` — picks them up without requiring an extra confirmation step.
+  // If extraction ever produces something the operator doesn't want, they delete it from
+  // the Proof points tab and the corresponding proof_bank row goes with it.
+  const confirmedAt = new Date().toISOString()
   const payload = entries.map((entry) => ({
     operator_id: input.operatorId,
     user_id: input.userId,
@@ -101,6 +108,7 @@ export async function insertExtractedEvidenceEntries(
     source_snapshot_excerpt: entry.sourceSnapshotExcerpt ?? null,
     source_fetched_at: input.sourceFetchedAt ?? null,
     linked_experience_source_key: entry.linkedExperienceSourceKey ?? null,
+    confirmed_at: confirmedAt,
   }))
   const { data, error } = await supabase
     .from('evidence_bank')

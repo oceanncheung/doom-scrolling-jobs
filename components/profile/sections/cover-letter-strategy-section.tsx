@@ -3,7 +3,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 
 import type { CoverLetterProofBankEntryRecord } from '@/lib/domain/types'
-import type { EvidenceBankEntryRecord } from '@/lib/domain/evidence'
 
 import {
   AddRowButton,
@@ -13,7 +12,6 @@ import {
   SettingsTabPanel,
   SettingsTabShell,
 } from '@/components/profile/profile-form-controls'
-import { PendingProofPointCard } from '@/components/profile/pending-proof-point-card'
 import { AutoSizeTextarea } from '@/components/ui/auto-size-textarea'
 import { BulletTextarea } from '@/components/ui/bullet-textarea'
 import { FieldLabelRow } from '@/components/ui/field-label-row'
@@ -26,16 +24,9 @@ interface CoverLetterStrategySectionProps {
   activeTab: CoverLetterStrategyTab | null
   capabilityDisciplineTags: string[]
   capabilityToolsTags: string[]
-  /** Evidence bank entries already confirmed by the operator — shown at the top of the
-   *  Proof points tab for reference. They feed both resume and cover-letter generation. */
-  confirmedEvidenceEntries: EvidenceBankEntryRecord[]
   createProofBankEntry: () => CoverLetterProofBankEntryRecord
   keyDifferentiatorTags: string[]
   lockedMessage?: string | null
-  /** Evidence bank entries extracted from the portfolio/personal-site but awaiting the
-   *  operator's review. Rendered at the top of the Proof points tab with confirm/discard
-   *  affordances. */
-  pendingEvidenceEntries: EvidenceBankEntryRecord[]
   positioningPhilosophy: string
   positioningReviewState: ReviewState
   proofBankEntries: CoverLetterProofBankEntryRecord[]
@@ -55,11 +46,9 @@ export function CoverLetterStrategySection({
   activeTab,
   capabilityDisciplineTags,
   capabilityToolsTags,
-  confirmedEvidenceEntries,
   createProofBankEntry,
   keyDifferentiatorTags,
   lockedMessage,
-  pendingEvidenceEntries,
   positioningPhilosophy,
   positioningReviewState,
   proofBankEntries,
@@ -78,7 +67,7 @@ export function CoverLetterStrategySection({
     <DisclosureSection
       className="disclosure-cover-letter"
       label="Positioning"
-      title="How you frame your work and voice beyond what's on the resume. Drawn on when tailoring both resumes and cover letters."
+      title="How you frame your work and voice."
       unwrapBody
     >
       <SectionLockFrame lockedMessage={lockedMessage}>
@@ -164,20 +153,6 @@ export function CoverLetterStrategySection({
                 />
               </div>
               <div className="repeat-list">
-                {pendingEvidenceEntries.map((entry, index) => (
-                  <PendingProofPointCard
-                    entry={entry}
-                    indexNumber={proofBankEntries.length + index + 1}
-                    key={entry.id}
-                  />
-                ))}
-                {confirmedEvidenceEntries.map((entry, index) => (
-                  <PendingProofPointCard
-                    entry={entry}
-                    indexNumber={proofBankEntries.length + pendingEvidenceEntries.length + index + 1}
-                    key={entry.id}
-                  />
-                ))}
                 {proofBankEntries.map((entry, index) => (
                   <article className="repeat-card" key={`${entry.label}-${index}`}>
                     <div className="repeat-card-header">

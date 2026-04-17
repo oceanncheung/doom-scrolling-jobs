@@ -370,15 +370,11 @@ export interface OperatorWorkspaceRecord {
   resumeMaster: ResumeMasterRecord
   status: ProfileWorkspaceStatusRecord
   /**
-   * Confirmed evidence_bank entries — fed into generation prompts because the operator
-   * has already reviewed them. Empty array when the operator hasn't run enrichment yet
-   * or has nothing confirmed.
+   * Evidence_bank entries produced by portfolio/personal-site extraction. Automatically
+   * trusted on insert (see lib/data/evidence-bank.ts) since the UI no longer gates on a
+   * confirm step — pulled entries are promoted to editable proof_bank rows directly.
+   * Phase D generator integration filters this list against a JD's industry tags when
+   * shaping the tailored resume + cover letter.
    */
   confirmedEvidenceEntries: EvidenceBankEntryRecord[]
-  /**
-   * Evidence entries that have been extracted from a source but not yet confirmed or
-   * discarded. Surfaced in the /profile Proof points tab so the operator can review and
-   * act on them inline. Never fed into resume/cover-letter generation until confirmed.
-   */
-  pendingEvidenceEntries: EvidenceBankEntryRecord[]
 }

@@ -173,7 +173,6 @@ const seededPortfolioItems: OperatorPortfolioItemRecord[] = []
 
 const seededWorkspace: OperatorWorkspaceRecord = {
   confirmedEvidenceEntries: [],
-  pendingEvidenceEntries: [],
   coverLetterMaster: seededCoverLetterMaster,
   portfolioItems: seededPortfolioItems,
   profile: seededProfile,
@@ -380,19 +379,16 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
     canonicalProfileReviewedAt: asString(profile.canonical_profile_reviewed_at) || undefined,
   }
 
-  const allEvidence =
+  const confirmedEvidenceEntries =
     evidenceResult.error || !Array.isArray(evidenceResult.data)
       ? []
       : (evidenceResult.data as Array<Record<string, unknown>>).map(rowToEvidenceBankRecord)
-  const confirmedEvidenceEntries = allEvidence.filter((entry) => Boolean(entry.confirmedAt))
-  const pendingEvidenceEntries = allEvidence.filter((entry) => !entry.confirmedAt)
 
   return {
     issue: issues.length > 0 ? issues.join(' ') : undefined,
     source: issues.length > 0 ? 'database-fallback' : 'database',
     workspace: {
       confirmedEvidenceEntries,
-      pendingEvidenceEntries,
       portfolioItems,
       profile: normalizedProfile,
       coverLetterMaster,

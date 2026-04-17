@@ -26,10 +26,6 @@ import {
   asOptionalUnknownText,
   asTextValue,
 } from '@/lib/form/parse-helpers'
-import {
-  confirmEvidenceEntry,
-  discardEvidenceEntry,
-} from '@/lib/data/evidence-bank'
 import { enrichActiveOperatorEvidence } from '@/lib/jobs/enrich-operator-evidence'
 import { rescorePersistedImportedJobs } from '@/lib/jobs/real-feed'
 import {
@@ -1359,45 +1355,4 @@ export async function saveAndRefreshProfileSourceAction(
   }
 }
 
-/**
- * Confirm or discard an evidence_bank entry from the /profile Proof points tab.
- * Expects a hidden `entryId` input and an `intent` of 'confirm' | 'discard'.
- */
-export async function reviewEvidenceEntryAction(
-  _previousState: ProfileActionState,
-  formData: FormData,
-): Promise<ProfileActionState> {
-  void _previousState
-
-  if (!hasSupabaseServerEnv()) {
-    return { message: 'Storage unavailable; cannot update evidence.', status: 'error' }
-  }
-
-  const entryId = asTextValue(formData.get('entryId'))
-  const intent = asTextValue(formData.get('intent'))
-  if (!entryId) {
-    return { message: 'Missing evidence entry id.', status: 'error' }
-  }
-  if (intent !== 'confirm' && intent !== 'discard') {
-    return { message: `Unknown intent "${intent}".`, status: 'error' }
-  }
-
-  try {
-    if (intent === 'confirm') {
-      await confirmEvidenceEntry(entryId)
-    } else {
-      await discardEvidenceEntry(entryId)
-    }
-    revalidatePath('/profile')
-    return {
-      message: intent === 'confirm' ? 'Proof point confirmed.' : 'Proof point discarded.',
-      status: 'success',
-    }
-  } catch (error) {
-    return {
-      message: error instanceof Error ? error.message : 'Evidence update failed.',
-      status: 'error',
-    }
-  }
-}
 

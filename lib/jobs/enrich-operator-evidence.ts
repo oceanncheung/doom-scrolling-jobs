@@ -252,15 +252,70 @@ export async function enrichActiveOperatorEvidence(
       extracted,
     )
 
+    // Promote new extractions into the operator's cover_letter_master.proof_bank so they
+    // appear in the /profile Proof points tab as regular, editable proof points alongside
+    // hand-authored ones. Evidence_bank keeps the rich metadata (industryTags, scope,
+    // source snippet) for Phase-D generator-side relevance matching; the user doesn't
+    // see that split — they just see "proof points."
+    const promotedCount = await mergeExtractedIntoProofBank(operatorId, persisted)
+
     insertedEntries.push(...persisted)
     sources.push({
       sourceKind: plannedSource.sourceKind,
       sourceUrl: fetchResult.snapshot.url,
       status: 'fetched',
       contentLength: fetchResult.snapshot.contentLength,
-      inserted: persisted.length,
+      inserted: promotedCount,
     })
   }
 
   return { operatorId, sources, insertedEntries }
+}
+
+/**
+ * Append extracted evidence entries as proof_bank rows on cover_letter_master. Deduplicates
+ * by case-insensitive label — if a proof_bank entry already exists with the same label,
+ * we skip it (user's edits stay intact; a re-pull never clobbers their work). Returns the
+ * count of NEW entries actually added to proof_bank.
+ */
+async function mergeExtractedIntoProofBank(
+  operatorId: string,
+  extracted: EvidenceBankEntryRecord[],
+): Promise<number> {
+  if (extracted.length === 0) return 0
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('cover_letter_master')
+    .select('proof_bank')
+    .eq('operator_id', operatorId)
+    .maybeSingle()
+  if (error || !data) return 0
+
+  const existing = Array.isArray((data as { proof_bank?: unknown }).proof_bank)
+    ? ((data as { proof_bank: Array<{ label?: string; context?: string; bullets?: string[] }> }).proof_bank)
+    : []
+  const existingLabels = new Set(existing.map((row) => String(row?.label ?? '').trim().toLowerCase()).filter(Boolean))
+
+  const additions: Array<{ label: string; context: string; bullets: string[] }> = []
+  for (const entry of extracted) {
+    const label = (entry.clientName || entry.summary || '').trim()
+    if (!label) continue
+    const key = label.toLowerCase()
+    if (existingLabels.has(key)) continue
+    existingLabels.add(key)
+    additions.push({
+      label,
+      context: entry.summary || '',
+      bullets: entry.proofPoints,
+    })
+  }
+
+  if (additions.length === 0) return 0
+
+  const { error: updateError } = await supabase
+    .from('cover_letter_master')
+    .update({ proof_bank: [...existing, ...additions] })
+    .eq('operator_id', operatorId)
+  if (updateError) return 0
+  return additions.length
 }

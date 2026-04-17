@@ -1032,6 +1032,18 @@
   align-self: stretch;
 }
 
+/*
+ * Hairline alignment — Context (left column, bottom field) and Supporting points (right
+ * column) should end at the same y so their underrules read as one continuous horizontal
+ * line. Both get the same min-height at every viewport width; the 1180+ breakpoint below
+ * already fixes both to exactly 112px, this just propagates the same rhythm downward so
+ * narrower layouts don't drift.
+ */
+.repeat-card-proof-context textarea,
+.repeat-card-proof-bullets .bullet-list-editor {
+  min-height: 112px;
+}
+
 @media (min-width: 1180px) {
   /* Wide desktop: paired history/proof fields should share one bottom line. */
   .repeat-card-history-summary textarea,
