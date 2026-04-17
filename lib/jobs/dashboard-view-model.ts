@@ -36,7 +36,12 @@ export function getQueueMetaViewModel({
     },
     potential: {
       eyebrow: 'Potential jobs',
-      label: `${potentialVisibleCount} of ${potentialTotalCount} screening jobs`,
+      // Non-breaking space between "screening" and "jobs" so the phrase stays
+      // atomic. On mobile the browser then wraps before "screening" instead of
+      // between "screening" and "jobs" — "X of Y" on line 1, "screening jobs"
+      // on line 2. On desktop the whole label fits one line so the NBSP has no
+      // visible effect.
+      label: `${potentialVisibleCount} of ${potentialTotalCount} screening\u00A0jobs`,
       note:
         potentialTotalCount > potentialVisibleCount
           ? 'Save or skip to replenish from the next ranked jobs.'
