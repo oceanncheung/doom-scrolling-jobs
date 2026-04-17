@@ -94,6 +94,19 @@ export interface NormalizedJobRecord {
   descriptionFetchedAt?: string
   /** If the most recent fetch failed, stores the reason so diagnostics can surface it. */
   descriptionFetchError?: string
+  /**
+   * Primary industry of the hiring company, classified by lib/ai/tasks/classify-job-industry.ts
+   * at ingest time (Phase C). Used by Phase D to match confirmed evidence_bank entries
+   * against this specific JD's industry signal. "generalist" when the JD carried no
+   * industry context; undefined when classification hasn't run yet.
+   */
+  primaryIndustry?: string
+  /** 2–4 related industry tags that would still qualify candidate work as relevant. */
+  adjacentIndustries: string[]
+  /** Short quoted-or-near-quoted phrases from the JD that support the classification. */
+  industryEvidence: string[]
+  /** When the industry classification was last run. */
+  industryClassifiedAt?: string
   requirements: string[]
   preferredQualifications: string[]
   skillsKeywords: string[]
