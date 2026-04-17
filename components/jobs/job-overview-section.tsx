@@ -44,8 +44,15 @@ export function JobOverviewSection({
         <div
           className={`job-flow-section-inner${hasOverviewActions ? ' job-overview-section-inner' : ''}`}
         >
+          {/*
+           * .u-grid-cell contract (see app/styles/utilities/grid.css, Commits 3/4b):
+           * first column gets u-grid-cell--first, second column gets u-grid-cell.
+           * Breathing between columns is owned by .job-review-grid's column gap
+           * (job-flow.css:254 — 32px desktop, narrower at ≤1440px via responsive).
+           * Pure annotation; computed styles unchanged vs pre-4e.
+           */}
           <div className="job-review-grid">
-            <div className="job-review-column">
+            <div className="job-review-column u-grid-cell--first">
               <p className="panel-label">Job overview</p>
               <p className="column-reading-copy">{overviewText}</p>
               <div className="inline-link-row">
@@ -54,7 +61,7 @@ export function JobOverviewSection({
                 </a>
               </div>
             </div>
-            <div className="job-review-column">
+            <div className="job-review-column u-grid-cell">
               <p className="panel-label">Skills</p>
               {job.skillsKeywords.length > 0 ? (
                 <div className="job-card-tags">

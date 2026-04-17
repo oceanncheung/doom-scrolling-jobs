@@ -97,8 +97,19 @@ TBD.
   - Desktop (1747): all 4 cells `pl:0 pr:0`, positions x:521 w:1177/1194 right:1698/1715 — identical pre-4c vs post-4c via stash/pop diff.
   - Mobile (375): all 4 cells `pl:0 pr:0 x:12 w:339 right:351` — grid stacks vertically, gap 24px.
 
-### Commits 4d-f — apply to remaining surfaces (planned)
-TBD — profile, job flow, operators. Each as a separate sub-commit with its own stash/pop verification.
+### Commit 4d — SKIPPED (profile)
+- **Rationale:** every profile grid renders inside a TSX file listed in AGENTS.md §Protected Surfaces (experience-strengths-section, cover-letter-strategy-section, job-targets-section, application-materials-section). And the contract is already satisfied on /profile — all cell elements have `padding-left: 0` by default (no CSS overrides). Applying the utility would be pure signage on Protected files with no behavioral improvement. Cost/benefit didn't warrant it.
+- **Contract remains documented** via the utility source in `app/styles/utilities/grid.css`. Future profile edits that introduce new grid-cell layouts should reference the utility.
+
+### Commit 4e — apply grid-cell contract to `.job-review-grid`
+- **Scope:** [components/jobs/job-overview-section.tsx:47](components/jobs/job-overview-section.tsx). Two `.job-review-column` children (Job overview + Skills). First column → `u-grid-cell--first`, second → `u-grid-cell`.
+- **Not a Protected Surface** — `job-overview-section.tsx` is not in AGENTS.md §Protected list (distinct from `job-flow-header.tsx` which IS).
+- **Pure annotation:** refined utility only sets `padding-left: 0` which matches `.job-review-column` default (no surface pl rule). Visual 24px gap between columns comes from `column-gap` in job-flow.css, unaffected.
+- **Verification (bit-for-bit identical):**
+  - Desktop (1747): both columns `pl:0 pr:0`, col 0 x:521 w:585 right:1106, col 1 x:1130 w:585 right:1715 — identical pre-4e vs post-4e via stash/pop diff.
+
+### Commit 4f — operators page grids (planned)
+TBD — `/operators` page. Scope + verify before editing.
 
 ### Commit 4 — roll contract to remaining surfaces (planned)
 TBD.
