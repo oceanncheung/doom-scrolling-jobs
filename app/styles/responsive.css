@@ -2516,29 +2516,59 @@
     border-left-color: var(--line);
   }
 
-  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(2) .button {
+  /* =========================================================================
+   * PACKET OVERVIEW EDGE-FLUSH CONTRACT (≤900px)
+   * =========================================================================
+   * The packet page's .job-flow-prep-overview-wrap bleeds through the
+   * queue-column's right padding at ≤900px to reach the viewport edge. That
+   * means every action button's left and right borders, if painted, would
+   * sit directly at the viewport — violating "edge of viewport = no border."
+   * The bleed rule below strips L/R on every button; the pair-right and
+   * triple-right slot restorations re-paint ONLY the interior seams.
+   *
+   * Visual grammar:
+   *   pair-right    : [  Generate  |  Review  ]
+   *                     L=0 bleed    L=1 seam  R=0 bleed
+   *   triple-right  : [          Apply          ]   (row 1, spans both)
+   *                   [ Regenerate  |  Archive  ]   (row 2)
+   *                     L=0 bleed    L=1 seam   R=0 bleed
+   *                     R=1 seam (see Regenerate comment below)
+   *
+   * Why slot 2 (Regenerate) carries its own right border instead of relying
+   * on slot 3 (Archive)'s left border: Regenerate is at z-index: 2 via the
+   * `:has(.screening-action-slot:nth-child(3):last-child)` protection rule
+   * in queue-rows.css, so its right edge paints on top of Archive. If only
+   * Archive owned the seam, Regenerate's hover fill (z:2) would mask it in
+   * the 1px margin-left overlap zone. With both slots carrying their side,
+   * whichever is hovered, the seam stays visible and the overlap collapses
+   * into a single painted 1px line.
+   * ------------------------------------------------------------------------- */
+
+  /* Shared: slot 2 and slot 3 both carry a top border to paint the row-2 top
+     rule across the whole width (row 1's bottom and row 2's top would
+     otherwise leave a 1px gap because of the margin-top: -1px overlap). */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(2) .button,
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(3) .button {
     border-top-width: 1px;
     border-top-color: var(--line);
-    /*
-     * Regenerate | Archive seam: give Regenerate its OWN right border rather than relying on
-     * Archive's restored left border. Regenerate carries z-index: 2 (the `:has(nth-child(3))`
-     * protection rule in queue-rows.css) so its own right edge stays painted on top of Archive
-     * in the 1px overlap — even when Regenerate's hover fill (surface-soft-hover) would
-     * otherwise mask the z:0 border drawn by Archive behind it. Both slots still carry their
-     * side (Regenerate right + Archive left, each 1px) so whichever is hovered, the seam
-     * stays visible. The 1px margin-left overlap collapses them into a single painted line.
-     */
+  }
+
+  /* Slot 2 (Regenerate): right side owns the Regenerate|Archive seam. */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(2) .button {
     border-right-width: 1px;
     border-right-color: var(--line);
   }
 
+  /* Slot 3 (Archive): left side also paints the Regenerate|Archive seam so
+     Archive's own hover fill can't hide Regenerate's right edge behind it. */
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(3) .button {
-    border-top-width: 1px;
-    border-top-color: var(--line);
     border-left-width: 1px;
     border-left-color: var(--line);
   }
 
+  /* Bleed rule: strip L/R on every button so the wrap's ±queue-column-pad
+     margin bleed doesn't paint lines at the viewport edges. Interior seams
+     get restored above. */
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button {
     border-left-width: 0;
     border-right-width: 0;
@@ -2546,24 +2576,14 @@
     overflow-wrap: anywhere;
   }
 
-  /*
-   * Secondary/ghost use --line-soft on all edges; with L/R stripped for bleed, the bottom was still soft grey
-   * on the right vs the black section hairline. Bottom edge of the control band stays black full width.
-   */
+  /* Secondary/ghost use --line-soft on all edges; with L/R stripped for bleed,
+     the bottom was still soft grey on the right vs the black section hairline.
+     Bottom edge of the control band stays black full width. */
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button.button-primary,
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button.button-secondary,
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions .button.button-ghost {
     border-bottom-color: var(--line);
   }
-
-  /*
-   * Last-slot right edge stays at 0 — the wrap bleeds through the queue-column's right
-   * padding to the viewport edge at ≤900px, so a painted 1px right border would sit flush
-   * against the viewport and violate the "edge of viewport = no border" editorial contract.
-   * A previous revision restored the right border "so the rectangle reads closed," but the
-   * viewport itself IS the edge; a painted line there is redundant and reads as a line glued
-   * to the screen. Keep the bleed rule's border-right-width: 0 from line ~2549.
-   */
 
   /*
    * Disabled buttons fade to opacity 0.35 (.button:disabled) which also fades their 1px top border.

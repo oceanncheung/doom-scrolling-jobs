@@ -50,6 +50,20 @@ For the flaky set, ALWAYS verify via computed-style diff across stash/unstash of
   - `.screening-actions-cluster > .screening-action-slot:last-child .button` at 1747px: `bl:0px, br:0px` in both states
 - **Next:** this was the pilot. On approval, the same co-location pattern applies to the packet-page triple-right block (`responsive.css:2537-2579`), the pair-right packet block, and the form-page edge rules (`settings-fields.css:172` and similar).
 
+### Commit 2a — packet triple-right consolidation
+- **Scope:** `responsive.css` `@media (max-width: 900px)` block around lines 2519-2566. Factored the shared `border-top: 1px / var(--line)` out of slot-2 and slot-3 restoration rules into a combined selector. Added a "PACKET OVERVIEW EDGE-FLUSH CONTRACT" block comment documenting the visual grammar for both pair-right and triple-right variants. Removed the dead comment about the deleted Archive right-border restoration (historical noise from the 5c1d47f fix).
+- **Verification:** computed-style diff on `.job-overview-actions--triple-right .screening-action-slot:nth-child(1|2|3) .button` at mobile (375px) produced identical border widths and colors in clean vs pilot states.
+- **Rule count:** 3 restoration rules → 3 rules (shared-selector for border-top, slot-2 border-right, slot-3 border-left). Net: same rule count, shared-selector for the truly-shared property makes future drift less likely.
+
+### Commit 2b — packet pair-right consolidation (planned)
+TBD.
+
+### Commit 2c — profile settings edge-flush consolidation (planned)
+TBD.
+
+### Commit 2d — misc edge-flush cleanup (planned)
+TBD.
+
 ### Commit 3 — grid-cell contract pilot on dashboard (planned)
 TBD.
 
