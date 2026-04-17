@@ -33,6 +33,13 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run repo quality harness
+        env:
+          # Supabase credentials the harness needs to run the workflow-transition smoke.
+          # `lib/env.ts` treats all three as required; add them as repo secrets in
+          # Settings → Secrets and variables → Actions.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: npm run eval
 
       - name: Upload harness artifacts
