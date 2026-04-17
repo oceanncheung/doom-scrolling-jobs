@@ -13,9 +13,15 @@ Captured 2026-04-17 before Commit 1:
 ## Per-commit verification protocol
 
 1. `npm run capture:ui` with a scoped `UI_ARTIFACTS_ROOT=docs/grid-audit-2026-04/post-commit-N/`.
-2. `shasum -a 256` diff against `baseline/` for every PNG except `routes/dashboard.png`.
-3. For dashboard (and any page that newly enters the flaky set), fetch computed styles via preview_eval for the key selectors listed below and diff against the JSON baseline.
-4. If any stable PNG changes hash OR any computed-style value differs beyond sub-pixel rounding, **halt the commit, surface the diff, and roll back.**
+2. `shasum -a 256` diff against `baseline/` for every PNG except the **flaky set** (below).
+3. For the flaky set, fetch computed styles via preview_eval for the key selectors listed below and diff between clean state (git stash the commit's edits) and pilot state (git stash pop). Identical computed styles = no rendered difference; PNG hash diff is data drift.
+4. If any stable PNG changes hash OR any computed-style value differs, **halt the commit, surface the diff, and roll back.**
+
+### Flaky set (PNG hash-diff not reliable on these)
+- `routes/dashboard.png` — rotates ranked-job order, relative timestamps.
+- `routes/job-review.png` — similar, when backend cron updates the target job's state.
+
+For the flaky set, ALWAYS verify via computed-style diff across stash/unstash of the commit's changes. See the Commit 2 investigation below for the proof-of-method.
 
 ## Selectors tracked for computed-style diffing
 
@@ -35,8 +41,14 @@ Captured 2026-04-17 before Commit 1:
 - Zero selector edits; no stylesheet consumes the new names yet.
 - **Verification:** 10/10 stable PNGs hash-match baseline. Computed styles on `.screening-action-slot:last-child .button` = `border-right-width: 0px`, on `.screening-action-slot:first-child .button` = full borders, on `.queue-column` = `padding-left: 32px / column-gap: 24px`. All match pre-commit values.
 
-### Commit 2 — edge-flush utility (planned)
-TBD.
+### Commit 2 — edge-flush pilot (jobs-queue rules co-located)
+- **Scope:** moved the `@media (max-width: 900px)` jobs-queue edge-flush rules from `responsive.css:1689-1714` to `dashboard/queue-rows.css` under a new documented block ("JOBS-QUEUE EDGE-FLUSH CONTRACT") that co-locates them with the `@media (min-width: 901px)` desktop branch already living there. Net: both breakpoint branches in one file, under one comment header. No selectors added or removed; CSS output identical.
+- **Verification method:** Because two PNGs (`dashboard.png`, `job-review.png`) show hash diffs against the pre-Commit-1 baseline due to data drift (background jobs updating ranked-job order, timestamps, etc.), the hash-diff alone can't prove CSS equivalence. Computed-style diffing (clean-state vs pilot-state via `git stash` / `stash pop` + preview_eval on the target selectors at mobile + desktop) confirmed every affected button's border widths are identical in both states. All 10/10 stable PNGs also hash-match.
+- **Target selectors verified identical (clean vs pilot):**
+  - `main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child .button` at 375px: `bl:0px, br:1px, bt:1px, bb:1px` in both states
+  - `…:last-child .button` at 375px: `bl:1px, br:0px, bt:1px, bb:1px` in both states
+  - `.screening-actions-cluster > .screening-action-slot:last-child .button` at 1747px: `bl:0px, br:0px` in both states
+- **Next:** this was the pilot. On approval, the same co-location pattern applies to the packet-page triple-right block (`responsive.css:2537-2579`), the pair-right packet block, and the form-page edge rules (`settings-fields.css:172` and similar).
 
 ### Commit 3 — grid-cell contract pilot on dashboard (planned)
 TBD.

@@ -688,14 +688,52 @@ main.jobs-index .queue-list .stage-actions-bar .stage-action-slot + .stage-actio
 }
 
 /*
- * Right-flushed buttons: the last slot of these clusters bleeds to the queue-column's right edge,
- * which is the viewport right edge at all desktop widths (queue-column has padding-right: 0 above
- * 900px). A 1px right border there reads as a line glued to the viewport. Zero it for the
- * flush-edge family across narrow desktop + desktop+wide; left/top/bottom borders are unaffected.
- */
+ * =============================================================================
+ * JOBS-QUEUE EDGE-FLUSH CONTRACT
+ * =============================================================================
+ * Every workflow-action row in the jobs queue bleeds through the queue-column's
+ * horizontal padding to reach the viewport edge at the breakpoints below.
+ * Whenever a button's border would otherwise land directly at the viewport
+ * edge, it paints a 1px line glued to the screen — violates "edge of viewport
+ * = no border." Zero the border-width on every viewport-adjacent edge.
+ *
+ * Both breakpoint branches live together in this block so a future edit can't
+ * miss half of it. The mobile branch (≤900px) previously lived in
+ * responsive.css lines ~1689-1714; moved here 2026-04-17 as Commit 2/5 of the
+ * grid audit refactor (docs/grid-audit-2026-04/).
+ * ----------------------------------------------------------------------------- */
 @media (min-width: 901px) {
+  /* Desktop: queue-column has padding-right: 0, so the LAST slot in any cluster
+     sits flush to the viewport right. Zero the right border there. Left/top/
+     bottom borders are unaffected (those carry interior seams and the row's
+     top rule). */
   .screening-actions-cluster > .screening-action-slot:last-child .button,
   .stage-actions-bar .stage-actions .stage-action-slot:last-child .button {
+    border-right-width: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Mobile + tablet: the whole actions bar bleeds to BOTH viewport edges
+     (margin-left/right: -queue-column-pad on the bar wrapper). Zero the
+     lateral borders that LAND at the viewport — first slot's left, last
+     slot's right. Interior seams keep their borders intact. */
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child .button,
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot:first-child .button {
+    border-left-width: 0;
+  }
+
+  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child .button,
+  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot:last-child .button {
+    border-right-width: 0;
+  }
+
+  /* Ready row 3-action variant: Apply spans `grid-column: 1 / -1` in row 1
+     (full viewport width), so it touches BOTH edges. First-child already
+     zeroes left above; this zeros right so the hover state's primary fill
+     doesn't paint a line glued to the viewport's right edge. Edge-flush
+     trumps seam-sharing: never paint on a viewport-flushed side, any state. */
+  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--remote-salary .button {
     border-right-width: 0;
   }
 }

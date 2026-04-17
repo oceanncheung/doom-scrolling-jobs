@@ -1687,31 +1687,13 @@
   }
 
   /*
-   * At mobile the actions bar bleeds to the viewport edges (margin-left/right: -queue-column-pad
-   * above). Only zero the lateral borders that LAND at the viewport: the first slot's left edge
-   * and the last slot's right edge. Interior seams come from the standard shared-seam rules —
-   * zeroing them here hides the seam and removes the Save button's visible right border.
+   * Jobs-queue edge-flush rules (first-slot left, last-slot right, and Ready-row
+   * full-width-primary right) moved to queue-rows.css under the "JOBS-QUEUE
+   * EDGE-FLUSH CONTRACT" block 2026-04-17. They were duplicating the concept
+   * from the ≥901px branch that already lived there; co-locating makes the
+   * pattern visible and keeps future edits from drifting. See
+   * docs/grid-audit-2026-04/README.md (Commit 2) for the migration record.
    */
-  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:first-child .button,
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot:first-child .button {
-    border-left-width: 0;
-  }
-
-  main.jobs-index .queue-list .screening-actions-bar .screening-action-slot:last-child .button,
-  main.jobs-index .queue-list .stage-actions-bar .stage-action-slot:last-child .button {
-    border-right-width: 0;
-  }
-
-  /*
-   * Full-width primary (Ready row's Apply spans `grid-column: 1 / -1` in row 1 — flush to BOTH
-   * viewport edges). First-child already has border-left-width: 0 above; this zeros border-right
-   * too. Without this, the hover state's `border-color: var(--line)` paints a visible right line
-   * at the exact viewport edge. Edge-flush trumps seam-sharing: no border on viewport-flushed
-   * sides, in any state.
-   */
-  main.jobs-index .queue-list .stage-actions-bar .stage-actions:has(.stage-action-slot:nth-child(3):last-child) > .stage-action-slot--remote-salary .button {
-    border-right-width: 0;
-  }
 
   .screening-actions-cluster,
   .stage-actions-cluster {
