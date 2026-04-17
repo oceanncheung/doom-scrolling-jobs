@@ -283,6 +283,25 @@ export async function createOperator(
     user_id: operatorId,
   }
 
+  /*
+   * Atomic signup: the four inserts (users, operators, user_profiles, resume_master,
+   * cover_letter_master) aren't wrapped in a Postgres transaction at the Supabase-JS layer,
+   * so a mid-flight failure used to leave orphan rows (operator committed, downstream missing),
+   * making the account unusable. We now roll back everything we wrote when any later step
+   * fails — best-effort application-level transaction. If you ever see this growing more
+   * dependent rows, promote the whole thing to a Postgres function (RPC).
+   */
+  const rollbackAndFail = async (message: string): Promise<OperatorSetupActionState> => {
+    await Promise.all([
+      supabase.from('user_profiles').delete().eq('operator_id', operatorId),
+      supabase.from('resume_master').delete().eq('operator_id', operatorId),
+      supabase.from('cover_letter_master').delete().eq('operator_id', operatorId),
+    ])
+    await supabase.from('operators').delete().eq('id', operatorId)
+    await supabase.from('users').delete().eq('id', operatorId)
+    return { message, status: 'error' }
+  }
+
   const userResult = await supabase.from('users').upsert(userPayload, { onConflict: 'id' })
 
   if (userResult.error) {
@@ -295,10 +314,7 @@ export async function createOperator(
   const operatorResult = await supabase.from('operators').upsert(operatorPayload, { onConflict: 'id' })
 
   if (operatorResult.error) {
-    return {
-      message: operatorResult.error.message,
-      status: 'error',
-    }
+    return rollbackAndFail(operatorResult.error.message)
   }
 
   const [profileResult, resumeResult, coverLetterResult] = await Promise.all([
@@ -310,10 +326,7 @@ export async function createOperator(
   const failure = profileResult.error ?? resumeResult.error ?? coverLetterResult.error
 
   if (failure) {
-    return {
-      message: failure.message,
-      status: 'error',
-    }
+    return rollbackAndFail(failure.message)
   }
 
   const cookieStore = await cookies()
