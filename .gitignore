@@ -43,6 +43,7 @@ Thumbs.db
 # Editor files
 .idea/
 .vscode/
+.claude/
 
 # Package manager artifacts generated locally
 .pnpm-store/
