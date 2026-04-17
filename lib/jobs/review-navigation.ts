@@ -39,9 +39,17 @@ export function getApplyNextAction(job: Pick<QualifiedJobRecord, 'applicationUrl
     }
   }
 
+  const label = getInternalJobReviewLabel(job.workflowStatus)
+  // "Generate Materials" / "Continue generation" should kick off generation as soon as the
+  // user lands on the packet page — they already chose the action, no reason to make them
+  // click again. The query param is consumed by GeneratePacketButton on mount.
+  const wantsAutoGenerate = label === 'Generate Materials' || label === 'Continue generation'
+  const baseHref = getJobReviewHref(job.id)
+  const href = wantsAutoGenerate ? `${baseHref}?generate=1` : baseHref
+
   return {
     external: false as const,
-    href: getJobReviewHref(job.id),
-    label: getInternalJobReviewLabel(job.workflowStatus),
+    href,
+    label,
   }
 }

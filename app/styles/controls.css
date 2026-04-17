@@ -60,6 +60,21 @@
   opacity: 1;
 }
 
+/*
+ * Disabled / loading primary buttons. The base .button:disabled rule fades the whole element
+ * to opacity 0.35, which works for ghost/text variants but turns the solid-black primary block
+ * into a featureless light-grey rectangle — the editorial frame disappears. Override here so
+ * loading states stay anchored: hollow the fill, restore a full black 1px border (box-sizing
+ * already keeps the outer footprint stable), and dim the label to muted-text instead of
+ * applying opacity to the whole button.
+ */
+.button.button-primary:disabled {
+  background-color: var(--bg);
+  border: 1px solid var(--text);
+  color: var(--muted);
+  opacity: 1;
+}
+
 .button.button-secondary,
 .button.button-ghost {
   border-color: var(--line);

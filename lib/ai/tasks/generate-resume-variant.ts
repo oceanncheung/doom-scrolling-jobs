@@ -10,14 +10,53 @@ function cleanLine(value: string) {
   return value.replace(/\s+/g, ' ').trim()
 }
 
+// Caps here are deliberately generous — the rendered DOCX is the authoritative size budget
+// (see RESUME_BUDGET in lib/jobs/document-system.ts). We let the LLM produce up to 5 bullets
+// per role so the renderer's two-page fitter has real material to work with; under-producing
+// here used to force shallow one-bullet roles even when the source had more to say.
+const MAX_HIGHLIGHTS_PER_ENTRY = 5
+const MAX_EXPERIENCE_ENTRIES = 6
+// Floor enforced AFTER the LLM call. If the model returns fewer bullets for a role than this,
+// we top it up using the candidate's own master-source bullets verbatim. This is truthful — we
+// never invent text — but it stops "1 bullet for a real role" from ever shipping. The user
+// explicitly said: "having one bullet is insanely weird." We match the renderer's
+// SUBSTANTIVE_ROLE_MIN_HIGHLIGHTS so the schema and renderer agree on the floor.
+const MIN_HIGHLIGHTS_PER_ENTRY = 3
+
+function dedupeHighlights(values: string[]) {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const value of values) {
+    const key = value.toLowerCase().replace(/\s+/g, ' ').trim()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push(value)
+  }
+  return out
+}
+
 function normalizeExperienceEntry(
   source: ResumeExperienceRecord,
   draft: Partial<ResumeExperienceRecord> | undefined,
 ): ResumeExperienceRecord {
   const summary = cleanLine(draft?.summary ?? source.summary)
-  const highlights = Array.isArray(draft?.highlights)
-    ? draft.highlights.filter((item): item is string => typeof item === 'string').map((item) => cleanLine(item)).filter(Boolean).slice(0, 4)
-    : source.highlights.slice(0, 4)
+  const draftHighlights = Array.isArray(draft?.highlights)
+    ? draft.highlights
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => cleanLine(item))
+        .filter(Boolean)
+    : source.highlights
+  // Pad up to the floor with master-source bullets the LLM didn't already cover. This protects
+  // against the LLM returning 1–2 bullets for a substantive role; we never fabricate, we just
+  // surface the user's own source content. If the master itself has fewer than 3 bullets, the
+  // role gets what the master has — we never make up text.
+  const sourceFallback = source.highlights.map((item) => cleanLine(item)).filter(Boolean)
+  const padded = dedupeHighlights([...draftHighlights, ...sourceFallback])
+  const targetCount = Math.min(
+    MAX_HIGHLIGHTS_PER_ENTRY,
+    Math.max(draftHighlights.length, Math.min(MIN_HIGHLIGHTS_PER_ENTRY, padded.length)),
+  )
+  const highlights = padded.slice(0, targetCount)
 
   return {
     companyName: source.companyName,
@@ -107,24 +146,27 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
     })
     .filter((entry): entry is ResumeExperienceRecord => entry !== null)
 
+  // Fallback when the LLM returned no usable entries: surface the candidate's most recent roles
+  // verbatim so the rendered resume still reflects real source material. The renderer's page
+  // fitter then trims as needed.
   const fallbackEntries =
     normalizedEntries.length > 0
       ? normalizedEntries
       : sourceExperience.length > 0
         ? sourceExperience
-            .slice(0, 2)
+            .slice(0, MAX_EXPERIENCE_ENTRIES)
             .map((entry) => normalizeExperienceEntry(entry, entry))
         : []
 
   const normalized: ResumeVariantOutput = {
     changeSummaryForUser: cleanLine(response.changeSummaryForUser ?? ''),
-    experienceEntries: fallbackEntries.slice(0, 3),
+    experienceEntries: fallbackEntries.slice(0, MAX_EXPERIENCE_ENTRIES),
     headline:
       cleanLine(response.headline ?? '') ||
       cleanLine(input.workspace.resumeMaster.baseTitle) ||
       cleanLine(input.workspace.profile.headline),
     highlightedRequirements: asStringArray(response.highlightedRequirements, 5),
-    skillsSection: asStringArray(response.skillsSection, 8),
+    skillsSection: asStringArray(response.skillsSection, 12),
     summary:
       cleanLine(response.summary ?? '') ||
       cleanLine(input.workspace.resumeMaster.summaryText) ||

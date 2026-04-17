@@ -4,20 +4,37 @@ import type { QualifiedJobRecord } from '@/lib/jobs/contracts'
 const PAGE_MARGIN_INCHES = 0.6
 const LETTER_PAGE_HEIGHT_PT = 11 * 72
 const PAGE_CONTENT_HEIGHT_PT = LETTER_PAGE_HEIGHT_PT - PAGE_MARGIN_INCHES * 2 * 72
-const RESUME_SAFE_PAGE_HEIGHT_PT = PAGE_CONTENT_HEIGHT_PT - 8
+// Two-page hard ceiling. Resumes may be 1 or 2 pages — never more. The 8pt buffer mirrors the
+// previous one-page logic and accounts for tiny rounding differences between our character-width
+// estimator and Word's actual layout.
+const RESUME_MAX_PAGES = 2
+const RESUME_SAFE_PAGE_HEIGHT_PT = PAGE_CONTENT_HEIGHT_PT * RESUME_MAX_PAGES - 8
+// Floor that defines a "substantive" role for the bullet-minimum invariant. Trims must not push
+// a substantive role below this number of bullets — that's how we used to end up with shallow
+// one-bullet roles. The page-fitter prefers dropping the entire oldest role over violating this.
+const SUBSTANTIVE_ROLE_MIN_HIGHLIGHTS = 3
+
+/*
+ * Editor-side placeholders (set by the canonical-source generator and shown in the profile
+ * editor as "[Add details]" / "[Add info]" / "[TBD]" prompts) must NEVER appear in the
+ * downloadable resume. If a field is empty enough that we'd otherwise emit a placeholder,
+ * we drop the field entirely — the user explicitly said: if a fact isn't on their source
+ * resume, don't invent a hint, just omit it.
+ */
+const PLACEHOLDER_TOKEN_RE = /\[\s*(?:add\s*details?|add\s*info|placeholder|tbd|todo|pending)\s*\]/gi
+
+function stripPlaceholderTokens(value: string | null | undefined) {
+  return String(value ?? '').replace(PLACEHOLDER_TOKEN_RE, ' ')
+}
 
 function normalizeBlockText(value: string | null | undefined) {
-  return String(value ?? '')
+  return stripPlaceholderTokens(value)
     .replace(/\r\n?/g, '\n')
     .trim()
 }
 
 function normalizeInlineText(value: string | null | undefined) {
   return normalizeBlockText(value).replace(/\s+/g, ' ').trim()
-}
-
-function isMeaningfulText(value: string | null | undefined) {
-  return Boolean(normalizeBlockText(value))
 }
 
 function unique(values: string[]) {
@@ -123,26 +140,6 @@ function splitParagraphs(value: string | null | undefined) {
     .filter(Boolean)
 }
 
-function joinWholeItems(values: string[], maxItems: number) {
-  return unique(values.map((value) => normalizeInlineText(value)))
-    .filter(Boolean)
-    .slice(0, maxItems)
-    .join(' | ')
-}
-
-function toAdditionalLine(label: string, values: string[], maxItems: number) {
-  const content = joinWholeItems(values, maxItems)
-
-  if (!content) {
-    return null
-  }
-
-  return {
-    label,
-    value: content,
-  }
-}
-
 const RESUME_SKILL_LABELS = new Map<string, string>([
   ['adobe', 'Adobe Creative Suite'],
   ['adobe creative suite', 'Adobe Creative Suite'],
@@ -223,10 +220,6 @@ function normalizeResumeSkill(value: string) {
   return RESUME_SKILL_LABELS.get(normalized.toLowerCase()) ?? normalized
 }
 
-function isConcreteResumeSkill(value: string) {
-  return RESUME_SKILL_PRIORITY_PATTERNS.some(([pattern]) => pattern.test(value))
-}
-
 function normalizeResumeBullet(value: string) {
   let normalized = normalizeInlineText(value).replace(/^[•\-–—\s]+/, '')
 
@@ -260,16 +253,15 @@ function scoreResumeBullet(value: string) {
     score += 3
   }
 
-  if (/(?:\bto\b|\bby\b|\bresulting in\b|\breduced\b|\bincreased\b|\bimproved\b|\bcut\b|\bboosted\b|\baccelerated\b|\bclarified\b)/.test(lower)) {
+  // Outcome / proof language earns the biggest bonus — these are the bullets that read like
+  // real hiring proof regardless of role type.
+  if (/(?:\bto\b|\bby\b|\bresulting in\b|\breduced\b|\bincreased\b|\bimproved\b|\bcut\b|\bboosted\b|\baccelerated\b|\bclarified\b|\bgenerated\b|\blaunched\b|\bdrove\b|\bshipped\b|\bdelivered\b|\bgrew\b|\bsaved\b|\bnegotiated\b|\bclosed\b)/.test(lower)) {
     score += 2
   }
 
-  if (/\d|%/.test(normalized)) {
-    score += 1
-  }
-
-  if (/(figma|accessibility|design systems|user research|prototype|workflow|hiring|product|ux|ui|content design)/.test(lower)) {
-    score += 1
+  // Quantified bullets ("$3M", "20%", "12 markets") almost always win — bumped from +1 to +2.
+  if (/\d|%|\$/.test(normalized)) {
+    score += 2
   }
 
   if (/^(helped|worked on|responsible for|assisted|supported|involved in|participated in)\b/i.test(lower)) {
@@ -283,16 +275,31 @@ function scoreResumeBullet(value: string) {
   return score
 }
 
+/*
+ * Resume + cover letter visual theme. Modernised 2026-04 to match the screenshot template:
+ * Aptos throughout (Microsoft's new default sans, ships with Word 365 / Office 2024+ — Word
+ * substitutes Calibri or system sans on older installs, both of which still parse cleanly
+ * through every modern ATS). Section headings get a thin bottom border (see
+ * sectionHeading() in packet-material-export.ts) so the document reads as designed rather
+ * than as a flat ATS dump.
+ */
 export const SHARED_DOCUMENT_THEME = {
   color: {
     primary: '000000',
     secondary: '666666',
   },
-  fontFamily: 'Times New Roman',
+  fontFamily: 'Aptos',
   fontSizePt: {
     body: 10,
-    heading: 14,
-    name: 18,
+    // Section heading dropped from 14 → 10.5 so the bold ALL CAPS + bottom-rule treatment
+    // reads as a section divider, not a sub-headline. The visual weight comes from the rule,
+    // not the type size.
+    heading: 10.5,
+    // Job/role title sits between body and section-heading: a hair larger and bold so the
+    // entry is visibly the start of a new role at a glance.
+    roleTitle: 11,
+    // Name was 18; bumped to 20 for the modern hero-name look.
+    name: 20,
   },
   lineHeight: {
     body: 1,
@@ -300,30 +307,47 @@ export const SHARED_DOCUMENT_THEME = {
   page: {
     marginInches: PAGE_MARGIN_INCHES,
   },
+  // Border sizing for paragraph rules. `size` is in 1/8 pt — value 6 = 0.75pt, which is what
+  // Word ships as its default horizontal-rule thickness when you type "---" on a blank line.
+  // `space` is the gap (in pt) between the text and the rule.
+  border: {
+    sectionRuleSize: 6,
+    sectionRuleSpace: 2,
+  },
   spacingPt: {
-    afterBody: 2,
+    afterBody: 4,
     afterCompact: 0,
-    afterSectionHeading: 2,
-    beforeSectionHeading: 4,
+    afterRoleEntry: 6,
+    afterSectionHeading: 4,
+    beforeSectionHeading: 10,
     beforeSignature: 12,
   },
 } as const
 
 const RESUME_BUDGET = {
-  additionalLineMaxLength: 90,
-  additionalSectionMaxLines: 3,
-  bulletMaxLength: 100,
-  educationEntryMaxLength: 110,
-  educationEntryMaxCount: 1,
-  experienceEntryMaxRoles: 3,
-  roleHeadingMaxLength: 84,
-  roleHighlightMaxCount: 3,
-  roleMetaMaxLength: 72,
-  roleSummaryMaxLength: 110,
+  // Bumped from 100 → 180 so a single bullet can carry the action + scope + outcome shape the
+  // prompt now requires. Bullets may wrap to a 2nd line; that's normal resume formatting and
+  // does not change the rendered template's structure.
+  bulletMaxLength: 180,
+  educationEntryMaxLength: 140,
+  educationEntryMaxCount: 3,
+  // Bumped from 3 → 6 so senior candidates' fuller history can appear when it fits in 2 pages.
+  // Older roles get the bullet minimums and are first to drop if we'd overflow.
+  experienceEntryMaxRoles: 6,
+  roleHeadingMaxLength: 96,
+  // Bumped from 3 → 5. The page-fitter (fitResumeDraftToPageBudget) trims downward from this
+  // ceiling per role to hit the 2-page cap, never below SUBSTANTIVE_ROLE_MIN_HIGHLIGHTS for
+  // substantive roles.
+  roleHighlightMaxCount: 5,
+  roleMetaMaxLength: 84,
+  roleSummaryMaxLength: 160,
   secondaryContactLinkCount: 2,
-  skillsMaxCount: 8,
-  skillsMaxLength: 140,
-  summaryMaxLength: 240,
+  // Bumped from 8 → 12 so the prompt's "8–12 entries, tools first" guidance has room to land.
+  // The skills-line builder still wraps to a single line by character width, so this is a
+  // ceiling, not a floor.
+  skillsMaxCount: 12,
+  skillsMaxLength: 200,
+  summaryMaxLength: 280,
 } as const
 
 const COVER_LETTER_BUDGET = {
@@ -337,20 +361,44 @@ export interface SharedDocumentHeader {
   secondaryContactLine?: string
 }
 
+/*
+ * Resume schema — split apart so the renderer can style the role title, company line, and
+ * date range distinctly (bold left / italic-right tab / italic line). Previously the heading
+ * was a single concatenated string which forced the renderer into a flat one-line look.
+ */
+export interface ResumeExperienceEntry {
+  roleTitle: string
+  companyLine: string
+  dateRange: string
+  highlights: string[]
+  summary: string
+}
+
+export interface ResumeEducationEntry {
+  credential: string
+  schoolLine: string
+  dateRange: string
+  notes: string
+}
+
+export interface ResumeCertificateEntry {
+  title: string
+}
+
+export const RESUME_SECTION_ORDER = [
+  'Summary',
+  'Work Experience',
+  'Education',
+  'Skills',
+  'Certificates',
+] as const
+
 export interface ResumeDocumentSchema {
-  additionalDetails: Array<{
-    label: string
-    value: string
-  }>
-  education: string[]
-  experience: Array<{
-    heading: string
-    highlights: string[]
-    meta: string
-    summary: string
-  }>
+  certificates: ResumeCertificateEntry[]
+  education: ResumeEducationEntry[]
+  experience: ResumeExperienceEntry[]
   header: SharedDocumentHeader
-  sectionOrder: readonly ['Professional Summary', 'Core Skills', 'Professional Experience', 'Education', 'Additional Details']
+  sectionOrder: typeof RESUME_SECTION_ORDER
   skillsLine: string
   summary: string
 }
@@ -366,19 +414,11 @@ export interface CoverLetterDocumentSchema {
 }
 
 interface ResumeSchemaDraft {
-  additionalDetails: Array<{
-    label: string
-    value: string
-  }>
-  education: string[]
-  experience: Array<{
-    heading: string
-    highlights: string[]
-    meta: string
-    summary: string
-  }>
+  certificates: ResumeCertificateEntry[]
+  education: ResumeEducationEntry[]
+  experience: ResumeExperienceEntry[]
   header: SharedDocumentHeader
-  sectionOrder: ResumeDocumentSchema['sectionOrder']
+  sectionOrder: typeof RESUME_SECTION_ORDER
   skillsItems: string[]
   summary: string
 }
@@ -472,15 +512,27 @@ function scoreResumeSkill(value: string, index: number) {
   return score
 }
 
-function prioritizeResumeSkills(values: string[]) {
+/*
+ * Order skills with concrete tools/software first (highest ATS-keyword payoff), then everything
+ * else by the existing priority patterns and source order. Tools are identified by the
+ * candidate's own `toolsPlatforms` list (authoritative source) rather than a hardcoded keyword
+ * whitelist — this keeps the function role-agnostic so it works for non-designers too. The old
+ * implementation filtered out anything not matching the designer-keyword priority patterns,
+ * which silently dropped real skills like "Salesforce", "Python", "financial modeling".
+ */
+function prioritizeResumeSkills(values: string[], toolNames: ReadonlySet<string>) {
+  const normalizedTools = new Set(Array.from(toolNames).map((name) => name.toLowerCase()))
+
   return unique(values.map((value) => normalizeResumeSkill(value)))
     .filter(Boolean)
-    .filter((value) => isConcreteResumeSkill(value))
-    .map((text, index) => ({
-      index,
-      score: scoreResumeSkill(text, index),
-      text,
-    }))
+    .map((text, index) => {
+      const isTool = normalizedTools.has(text.toLowerCase())
+      // Tools get a flat 1000-point boost so they always sort above non-tools regardless of
+      // the heuristic priority patterns. Within tools, source order wins; within non-tools,
+      // the existing scoreResumeSkill ranking applies.
+      const score = isTool ? 1000 - index * 0.01 : scoreResumeSkill(text, index)
+      return { index, score, text }
+    })
     .sort((left, right) => right.score - left.score || left.index - right.index)
     .map((item) => item.text)
 }
@@ -511,9 +563,12 @@ function isUsableResumeBullet(value: string) {
     return false
   }
 
+  // Allow up to 2 wrapped lines per bullet — required to fit action + scope + outcome shape
+  // without truncating to a one-line summary. Anything wrapping past 2 lines is rejected to
+  // keep the visual rhythm of the rendered DOCX consistent across resumes.
   return (
     normalized.length <= RESUME_BUDGET.bulletMaxLength &&
-    getWrappedLineCount(normalized, RESUME_LAYOUT_WIDTH_UNITS.bullet) <= 1
+    getWrappedLineCount(normalized, RESUME_LAYOUT_WIDTH_UNITS.bullet) <= 2
   )
 }
 
@@ -541,7 +596,7 @@ function paragraphHeightForFontPt(lineCount: number, fontSizePt: number, afterPt
 
 function toResumeSchema(draft: ResumeSchemaDraft): ResumeDocumentSchema {
   return {
-    additionalDetails: draft.additionalDetails,
+    certificates: draft.certificates,
     education: draft.education,
     experience: draft.experience,
     header: draft.header,
@@ -551,13 +606,23 @@ function toResumeSchema(draft: ResumeSchemaDraft): ResumeDocumentSchema {
   }
 }
 
+function sectionHeadingHeight() {
+  return paragraphHeightForFontPt(
+    1,
+    SHARED_DOCUMENT_THEME.fontSizePt.heading,
+    SHARED_DOCUMENT_THEME.spacingPt.afterSectionHeading + SHARED_DOCUMENT_THEME.border.sectionRuleSize / 8 + SHARED_DOCUMENT_THEME.border.sectionRuleSpace,
+    SHARED_DOCUMENT_THEME.spacingPt.beforeSectionHeading,
+  )
+}
+
 function measureResumeDraft(draft: ResumeSchemaDraft): number {
   let totalHeightPt = 0
 
+  // Header
   totalHeightPt += paragraphHeightForFontPt(
     getWrappedLineCount(draft.header.name, RESUME_LAYOUT_WIDTH_UNITS.name),
     SHARED_DOCUMENT_THEME.fontSizePt.name,
-    SHARED_DOCUMENT_THEME.spacingPt.afterBody,
+    SHARED_DOCUMENT_THEME.spacingPt.afterCompact,
   )
 
   if (draft.header.primaryContactLine) {
@@ -576,13 +641,9 @@ function measureResumeDraft(draft: ResumeSchemaDraft): number {
     )
   }
 
+  // Summary section
   if (draft.summary) {
-    totalHeightPt += paragraphHeightForFontPt(
-      getWrappedLineCount('Professional Summary', RESUME_LAYOUT_WIDTH_UNITS.heading),
-      SHARED_DOCUMENT_THEME.fontSizePt.heading,
-      SHARED_DOCUMENT_THEME.spacingPt.afterSectionHeading,
-      SHARED_DOCUMENT_THEME.spacingPt.beforeSectionHeading,
-    )
+    totalHeightPt += sectionHeadingHeight()
     totalHeightPt += paragraphHeightForFontPt(
       getWrappedLineCount(draft.summary, RESUME_LAYOUT_WIDTH_UNITS.body),
       SHARED_DOCUMENT_THEME.fontSizePt.body,
@@ -590,42 +651,24 @@ function measureResumeDraft(draft: ResumeSchemaDraft): number {
     )
   }
 
-  const skillsLine = buildSkillsLine(draft.skillsItems)
-
-  if (skillsLine) {
-    totalHeightPt += paragraphHeightForFontPt(
-      getWrappedLineCount('Core Skills', RESUME_LAYOUT_WIDTH_UNITS.heading),
-      SHARED_DOCUMENT_THEME.fontSizePt.heading,
-      SHARED_DOCUMENT_THEME.spacingPt.afterSectionHeading,
-      SHARED_DOCUMENT_THEME.spacingPt.beforeSectionHeading,
-    )
-    totalHeightPt += paragraphHeightForFontPt(
-      getWrappedLineCount(skillsLine, RESUME_LAYOUT_WIDTH_UNITS.body),
-      SHARED_DOCUMENT_THEME.fontSizePt.body,
-      SHARED_DOCUMENT_THEME.spacingPt.afterBody,
-    )
-  }
-
+  // Work experience section
   if (draft.experience.length > 0) {
-    totalHeightPt += paragraphHeightForFontPt(
-      getWrappedLineCount('Professional Experience', RESUME_LAYOUT_WIDTH_UNITS.heading),
-      SHARED_DOCUMENT_THEME.fontSizePt.heading,
-      SHARED_DOCUMENT_THEME.spacingPt.afterSectionHeading,
-      SHARED_DOCUMENT_THEME.spacingPt.beforeSectionHeading,
-    )
+    totalHeightPt += sectionHeadingHeight()
 
     for (const entry of draft.experience) {
-      if (entry.heading) {
-        totalHeightPt += paragraphHeightForFontPt(
-          getWrappedLineCount(entry.heading, RESUME_LAYOUT_WIDTH_UNITS.body),
-          SHARED_DOCUMENT_THEME.fontSizePt.body,
-          SHARED_DOCUMENT_THEME.spacingPt.afterCompact,
-        )
-      }
+      // Title + right-aligned date sit on a single paragraph; one line for the pair.
+      totalHeightPt += paragraphHeightForFontPt(
+        Math.max(
+          getWrappedLineCount(entry.roleTitle, RESUME_LAYOUT_WIDTH_UNITS.body),
+          getWrappedLineCount(entry.dateRange, RESUME_LAYOUT_WIDTH_UNITS.compact),
+        ) || 1,
+        SHARED_DOCUMENT_THEME.fontSizePt.roleTitle,
+        SHARED_DOCUMENT_THEME.spacingPt.afterCompact,
+      )
 
-      if (entry.meta) {
+      if (entry.companyLine) {
         totalHeightPt += paragraphHeightForFontPt(
-          getWrappedLineCount(entry.meta, RESUME_LAYOUT_WIDTH_UNITS.compact),
+          getWrappedLineCount(entry.companyLine, RESUME_LAYOUT_WIDTH_UNITS.body),
           SHARED_DOCUMENT_THEME.fontSizePt.body,
           SHARED_DOCUMENT_THEME.spacingPt.afterCompact,
         )
@@ -646,37 +689,64 @@ function measureResumeDraft(draft: ResumeSchemaDraft): number {
           SHARED_DOCUMENT_THEME.spacingPt.afterCompact,
         )
       }
+
+      // After-entry breathing space between roles.
+      totalHeightPt += SHARED_DOCUMENT_THEME.spacingPt.afterRoleEntry
     }
   }
 
+  // Education section
   if (draft.education.length > 0) {
-    totalHeightPt += paragraphHeightForFontPt(
-      getWrappedLineCount('Education', RESUME_LAYOUT_WIDTH_UNITS.heading),
-      SHARED_DOCUMENT_THEME.fontSizePt.heading,
-      SHARED_DOCUMENT_THEME.spacingPt.afterSectionHeading,
-      SHARED_DOCUMENT_THEME.spacingPt.beforeSectionHeading,
-    )
+    totalHeightPt += sectionHeadingHeight()
 
     for (const entry of draft.education) {
       totalHeightPt += paragraphHeightForFontPt(
-        getWrappedLineCount(entry, RESUME_LAYOUT_WIDTH_UNITS.body),
-        SHARED_DOCUMENT_THEME.fontSizePt.body,
-        SHARED_DOCUMENT_THEME.spacingPt.afterBody,
+        Math.max(
+          getWrappedLineCount(entry.credential, RESUME_LAYOUT_WIDTH_UNITS.body),
+          getWrappedLineCount(entry.dateRange, RESUME_LAYOUT_WIDTH_UNITS.compact),
+        ) || 1,
+        SHARED_DOCUMENT_THEME.fontSizePt.roleTitle,
+        SHARED_DOCUMENT_THEME.spacingPt.afterCompact,
       )
+
+      if (entry.schoolLine) {
+        totalHeightPt += paragraphHeightForFontPt(
+          getWrappedLineCount(entry.schoolLine, RESUME_LAYOUT_WIDTH_UNITS.body),
+          SHARED_DOCUMENT_THEME.fontSizePt.body,
+          SHARED_DOCUMENT_THEME.spacingPt.afterCompact,
+        )
+      }
+
+      if (entry.notes) {
+        totalHeightPt += paragraphHeightForFontPt(
+          getWrappedLineCount(entry.notes, RESUME_LAYOUT_WIDTH_UNITS.bullet),
+          SHARED_DOCUMENT_THEME.fontSizePt.body,
+          SHARED_DOCUMENT_THEME.spacingPt.afterCompact,
+        )
+      }
+
+      totalHeightPt += SHARED_DOCUMENT_THEME.spacingPt.afterRoleEntry
     }
   }
 
-  if (draft.additionalDetails.length > 0) {
-    totalHeightPt += paragraphHeightForFontPt(
-      getWrappedLineCount('Additional Details', RESUME_LAYOUT_WIDTH_UNITS.heading),
-      SHARED_DOCUMENT_THEME.fontSizePt.heading,
-      SHARED_DOCUMENT_THEME.spacingPt.afterSectionHeading,
-      SHARED_DOCUMENT_THEME.spacingPt.beforeSectionHeading,
-    )
+  // Skills section
+  const skillsLine = buildSkillsLine(draft.skillsItems)
 
-    for (const detail of draft.additionalDetails) {
+  if (skillsLine) {
+    totalHeightPt += sectionHeadingHeight()
+    totalHeightPt += paragraphHeightForFontPt(
+      getWrappedLineCount(skillsLine, RESUME_LAYOUT_WIDTH_UNITS.body),
+      SHARED_DOCUMENT_THEME.fontSizePt.body,
+      SHARED_DOCUMENT_THEME.spacingPt.afterBody,
+    )
+  }
+
+  // Certificates section
+  if (draft.certificates.length > 0) {
+    totalHeightPt += sectionHeadingHeight()
+    for (const cert of draft.certificates) {
       totalHeightPt += paragraphHeightForFontPt(
-        getWrappedLineCount(`${detail.label}: ${detail.value}`, RESUME_LAYOUT_WIDTH_UNITS.body),
+        getWrappedLineCount(cert.title, RESUME_LAYOUT_WIDTH_UNITS.body),
         SHARED_DOCUMENT_THEME.fontSizePt.body,
         SHARED_DOCUMENT_THEME.spacingPt.afterCompact,
       )
@@ -686,8 +756,27 @@ function measureResumeDraft(draft: ResumeSchemaDraft): number {
   return totalHeightPt
 }
 
-function trimResumeDraftToOnePage(draft: ResumeSchemaDraft): ResumeOnePageDiagnostics {
+/*
+ * Fit the draft within the 2-page hard ceiling. Trim order is biased to drop the LEAST
+ * load-bearing content first: oldest roles' tail bullets, then summaries, then the oldest
+ * role entirely, with skills/additional details only touched when role trims aren't enough.
+ *
+ * Key invariant: a substantive role (one with >= SUBSTANTIVE_ROLE_MIN_HIGHLIGHTS bullets after
+ * generation) is never trimmed below that floor. If we'd otherwise have to, we drop the entire
+ * oldest role instead. This is what prevents the "shallow one-bullet role" failure mode the
+ * old one-page trimmer produced.
+ *
+ * Diagnostics keep the field name `fitsOnePage` for backward compatibility with any caller
+ * inspecting it; semantically it now means "fits within the page budget" (1 or 2 pages).
+ */
+function fitResumeDraftToPageBudget(draft: ResumeSchemaDraft): ResumeOnePageDiagnostics {
   const trimSteps: string[] = []
+
+  // Snapshot the as-generated bullet count per role so we can tell substantive from thin
+  // roles. The floor only applies to roles that started substantive — a thin 2-bullet role
+  // can be trimmed to 1 or even 0 if absolutely needed.
+  const initialHighlightCount = draft.experience.map((entry) => entry.highlights.length)
+  const isSubstantive = (index: number) => initialHighlightCount[index] >= SUBSTANTIVE_ROLE_MIN_HIGHLIGHTS
 
   const applyTrim = (label: string, trim: () => boolean) => {
     if (!trim()) {
@@ -698,56 +787,77 @@ function trimResumeDraftToOnePage(draft: ResumeSchemaDraft): ResumeOnePageDiagno
     return true
   }
 
+  // Trim oldest-first by walking the experience array from the end (reverse-chronological
+  // means index 0 is most recent). Drop a tail bullet only if doing so wouldn't push a
+  // substantive role below the floor.
+  const trimOldestRoleTailBullet = () => {
+    for (let index = draft.experience.length - 1; index >= 0; index -= 1) {
+      const entry = draft.experience[index]
+      const floor = isSubstantive(index) ? SUBSTANTIVE_ROLE_MIN_HIGHLIGHTS : 1
+      if (entry.highlights.length > floor) {
+        entry.highlights.pop()
+        return true
+      }
+    }
+    return false
+  }
+
+  const trimOldestRoleSummary = () => {
+    for (let index = draft.experience.length - 1; index >= 0; index -= 1) {
+      if (draft.experience[index].summary) {
+        draft.experience[index].summary = ''
+        return true
+      }
+    }
+    return false
+  }
+
+  const dropOldestRole = () => {
+    if (draft.experience.length === 0) {
+      return false
+    }
+    draft.experience.pop()
+    initialHighlightCount.pop()
+    return true
+  }
+
+  const reduceGlobalSummary = () => {
+    const sentences = splitCompleteSentences(draft.summary)
+    if (sentences.length > 1) {
+      draft.summary = sentences.slice(0, sentences.length - 1).join(' ')
+      return true
+    }
+    if (draft.summary) {
+      draft.summary = ''
+      return true
+    }
+    return false
+  }
+
+  const trimCertificate = () => {
+    if (draft.certificates.length === 0) {
+      return false
+    }
+    draft.certificates.pop()
+    return true
+  }
+
+  const trimSkillsTail = () => {
+    if (draft.skillsItems.length === 0) {
+      return false
+    }
+    draft.skillsItems.pop()
+    return true
+  }
+
+  // Order matters. Earlier steps preserve more value; later steps are last resorts.
   const trimOrder: Array<() => boolean> = [
-    () => applyTrim('Reduced global summary.', () => {
-      const sentences = splitCompleteSentences(draft.summary)
-
-      if (sentences.length > 1) {
-        draft.summary = sentences.slice(0, sentences.length - 1).join(' ')
-        return true
-      }
-
-      if (draft.summary) {
-        draft.summary = ''
-        return true
-      }
-
-      return false
-    }),
-    () => applyTrim('Removed lowest-priority additional detail.', () => {
-      if (draft.additionalDetails.length === 0) {
-        return false
-      }
-
-      draft.additionalDetails.pop()
-      return true
-    }),
-    () => applyTrim('Reduced skills list.', () => {
-      if (draft.skillsItems.length === 0) {
-        return false
-      }
-
-      draft.skillsItems.pop()
-      return true
-    }),
-    () => applyTrim('Removed oldest role summary.', () => {
-      for (let index = draft.experience.length - 1; index >= 0; index -= 1) {
-        if (draft.experience[index].summary) {
-          draft.experience[index].summary = ''
-          return true
-        }
-      }
-
-      return false
-    }),
-    () => applyTrim('Dropped lowest-priority role.', () => {
-      if (draft.experience.length === 0) {
-        return false
-      }
-
-      draft.experience.pop()
-      return true
-    }),
+    () => applyTrim('Trimmed tail bullet from oldest role.', trimOldestRoleTailBullet),
+    () => applyTrim('Cleared summary on oldest role.', trimOldestRoleSummary),
+    () => applyTrim('Dropped oldest role entirely.', dropOldestRole),
+    () => applyTrim('Reduced global summary.', reduceGlobalSummary),
+    () => applyTrim('Removed lowest-priority certificate.', trimCertificate),
+    () => applyTrim('Reduced skills list.', trimSkillsTail),
   ]
 
   let totalHeightPt = measureResumeDraft(draft)
@@ -800,67 +910,126 @@ function buildSharedHeader(workspace: OperatorWorkspaceRecord): SharedDocumentHe
   }
 }
 
-export function buildResumeDocumentSchema(
+/*
+ * Build a flat, opinionated experience entry from the master/packet source. Splits the
+ * heading into its three displayable parts (bold role title, italic company line,
+ * right-tabbed italic date) so the renderer can style each one. Skips empty fields
+ * silently rather than emitting placeholder text.
+ */
+function buildExperienceEntry(entry: {
+  companyName: string
+  roleTitle: string
+  locationLabel: string
+  startDate: string
+  endDate: string
+  highlights: string[]
+  summary: string
+}): ResumeExperienceEntry {
+  const roleTitle = normalizeInlineText(entry.roleTitle)
+  const company = normalizeInlineText(entry.companyName)
+  const location = normalizeInlineText(entry.locationLabel)
+  // "Acme Corp (New York, NY)" — but if either piece is missing, just print what we have.
+  const companyLine = company && location ? `${company} (${location})` : company || ''
+  return {
+    roleTitle,
+    companyLine,
+    dateRange: formatDateRange(entry.startDate, entry.endDate),
+    highlights: selectResumeHighlights(entry.highlights),
+    summary: limitToWholeSentences(entry.summary, 1),
+  }
+}
+
+function buildEducationEntry(entry: {
+  credential: string
+  fieldOfStudy: string
+  schoolName: string
+  startDate: string
+  endDate: string
+  notes: string
+}): ResumeEducationEntry | null {
+  const credentialPieces = [entry.credential, entry.fieldOfStudy]
+    .map((item) => normalizeInlineText(item))
+    .filter(Boolean)
+  const credential = credentialPieces.join(' in ')
+  const schoolLine = normalizeInlineText(entry.schoolName)
+  const dateRange = formatDateRange(entry.startDate, entry.endDate)
+  const notes = normalizeInlineText(entry.notes)
+
+  if (!credential && !schoolLine && !notes && !dateRange) {
+    return null
+  }
+
+  return {
+    credential,
+    schoolLine,
+    dateRange,
+    notes,
+  }
+}
+
+function buildSkillsItems(packet: ApplicationPacketRecord, workspace: OperatorWorkspaceRecord) {
+  // Tools/platforms come first so they sort to the front of the skills line — that's the
+  // candidate's authoritative software-and-tools list, which is what ATS keyword scanners
+  // prize most. Then the LLM-tailored skillsSection, then the master's skillsSection.
+  const toolNames = new Set(
+    workspace.resumeMaster.toolsPlatforms
+      .map((item) => normalizeResumeSkill(item))
+      .filter(Boolean),
+  )
+  return prioritizeResumeSkills(
+    [
+      ...workspace.resumeMaster.toolsPlatforms.map((item) => normalizeResumeSkill(item)),
+      ...packet.resumeVersion.skillsSection.map((item) => normalizeResumeSkill(item)),
+      ...workspace.resumeMaster.skillsSection.map((item) => normalizeResumeSkill(item)),
+    ],
+    toolNames,
+  )
+}
+
+function buildCertificateEntries(workspace: OperatorWorkspaceRecord): ResumeCertificateEntry[] {
+  return unique(workspace.resumeMaster.certifications.map((item) => normalizeInlineText(item)))
+    .filter(Boolean)
+    .map((title) => ({ title }))
+}
+
+function buildResumeDraft(
   packet: ApplicationPacketRecord,
   workspace: OperatorWorkspaceRecord,
-): ResumeDocumentSchema {
-  // Keep the resume safely within one letter page by budgeting content here,
-  // before docx rendering, instead of shrinking typography later.
+): ResumeSchemaDraft {
   const summarySource =
     normalizeBlockText(packet.professionalSummary) ||
     normalizeBlockText(packet.resumeVersion.summaryText) ||
     normalizeBlockText(workspace.resumeMaster.summaryText)
-  const skillsSource = prioritizeResumeSkills([
-    ...packet.resumeVersion.skillsSection.map((item) => normalizeResumeSkill(item)),
-    ...workspace.resumeMaster.skillsSection.map((item) => normalizeResumeSkill(item)),
-    ...workspace.resumeMaster.toolsPlatforms.map((item) => normalizeResumeSkill(item)),
-  ])
-  const experience = packet.resumeVersion.experienceEntries.slice(0, RESUME_BUDGET.experienceEntryMaxRoles).map((entry) => ({
-    heading: joinLine([entry.roleTitle, entry.companyName]),
-    highlights: selectResumeHighlights(entry.highlights),
-    meta: joinLine([entry.locationLabel, formatDateRange(entry.startDate, entry.endDate)]),
-    summary: limitToWholeSentences(entry.summary, 1),
-  }))
-  const education = workspace.resumeMaster.educationEntries.slice(0, RESUME_BUDGET.educationEntryMaxCount).map((entry) =>
-    [
-      [entry.credential, entry.schoolName].filter((item) => isMeaningfulText(item)).map(normalizeInlineText).join(', '),
-      [entry.fieldOfStudy, formatDateRange(entry.startDate, entry.endDate)]
-        .filter((item) => isMeaningfulText(item))
-        .map(normalizeInlineText)
-        .join(' | '),
-      isMeaningfulText(entry.notes) ? ensureTerminalPunctuation(entry.notes) : '',
-    ]
-      .filter(Boolean)
-      .join(' | '),
-  )
-  const additionalDetails = [
-    toAdditionalLine('Certifications', workspace.resumeMaster.certifications, 3),
-    toAdditionalLine('Languages', workspace.resumeMaster.languages, 4),
-    toAdditionalLine('Additional', workspace.resumeMaster.additionalInformation, 2),
-  ]
-    .filter((item): item is { label: string; value: string } => item !== null)
-    .slice(0, RESUME_BUDGET.additionalSectionMaxLines)
+  const skillsItems = buildSkillsItems(packet, workspace).slice(0, RESUME_BUDGET.skillsMaxCount)
+  const experience = packet.resumeVersion.experienceEntries
+    .slice(0, RESUME_BUDGET.experienceEntryMaxRoles)
+    .map(buildExperienceEntry)
+    .filter((entry) =>
+      Boolean(entry.roleTitle || entry.companyLine || entry.summary || entry.highlights.length > 0 || entry.dateRange),
+    )
+  const education = workspace.resumeMaster.educationEntries
+    .slice(0, RESUME_BUDGET.educationEntryMaxCount)
+    .map(buildEducationEntry)
+    .filter((entry): entry is ResumeEducationEntry => entry !== null)
+  const certificates = buildCertificateEntries(workspace)
 
-  const draft: ResumeSchemaDraft = {
-    additionalDetails,
-    education: education.filter(Boolean),
-    experience: experience.filter(
-      (entry) => Boolean(entry.heading || entry.meta || entry.summary || entry.highlights.length > 0),
-    ),
+  return {
+    certificates,
+    education,
+    experience,
     header: buildSharedHeader(workspace),
-    sectionOrder: [
-      'Professional Summary',
-      'Core Skills',
-      'Professional Experience',
-      'Education',
-      'Additional Details',
-    ],
-    skillsItems: skillsSource.slice(0, RESUME_BUDGET.skillsMaxCount),
-    summary: limitToWholeSentences(summarySource, 2),
+    sectionOrder: RESUME_SECTION_ORDER,
+    skillsItems,
+    summary: limitToWholeSentences(summarySource, 3),
   }
+}
 
-  trimResumeDraftToOnePage(draft)
-
+export function buildResumeDocumentSchema(
+  packet: ApplicationPacketRecord,
+  workspace: OperatorWorkspaceRecord,
+): ResumeDocumentSchema {
+  const draft = buildResumeDraft(packet, workspace)
+  fitResumeDraftToPageBudget(draft)
   return toResumeSchema(draft)
 }
 
@@ -868,60 +1037,8 @@ export function getResumeOnePageDiagnostics(
   packet: ApplicationPacketRecord,
   workspace: OperatorWorkspaceRecord,
 ): ResumeOnePageDiagnostics {
-  const summarySource =
-    normalizeBlockText(packet.professionalSummary) ||
-    normalizeBlockText(packet.resumeVersion.summaryText) ||
-    normalizeBlockText(workspace.resumeMaster.summaryText)
-  const skillsSource = prioritizeResumeSkills([
-    ...packet.resumeVersion.skillsSection.map((item) => normalizeResumeSkill(item)),
-    ...workspace.resumeMaster.skillsSection.map((item) => normalizeResumeSkill(item)),
-    ...workspace.resumeMaster.toolsPlatforms.map((item) => normalizeResumeSkill(item)),
-  ])
-  const draft: ResumeSchemaDraft = {
-    additionalDetails: [
-      toAdditionalLine('Certifications', workspace.resumeMaster.certifications, 3),
-      toAdditionalLine('Languages', workspace.resumeMaster.languages, 4),
-      toAdditionalLine('Additional', workspace.resumeMaster.additionalInformation, 2),
-    ]
-      .filter((item): item is { label: string; value: string } => item !== null)
-      .slice(0, RESUME_BUDGET.additionalSectionMaxLines),
-    education: workspace.resumeMaster.educationEntries
-      .slice(0, RESUME_BUDGET.educationEntryMaxCount)
-      .map((entry) =>
-        [
-          [entry.credential, entry.schoolName].filter((item) => isMeaningfulText(item)).map(normalizeInlineText).join(', '),
-          [entry.fieldOfStudy, formatDateRange(entry.startDate, entry.endDate)]
-            .filter((item) => isMeaningfulText(item))
-            .map(normalizeInlineText)
-            .join(' | '),
-          isMeaningfulText(entry.notes) ? ensureTerminalPunctuation(entry.notes) : '',
-        ]
-          .filter(Boolean)
-          .join(' | '),
-      )
-      .filter(Boolean),
-    experience: packet.resumeVersion.experienceEntries
-      .slice(0, RESUME_BUDGET.experienceEntryMaxRoles)
-      .map((entry) => ({
-        heading: joinLine([entry.roleTitle, entry.companyName]),
-        highlights: selectResumeHighlights(entry.highlights),
-        meta: joinLine([entry.locationLabel, formatDateRange(entry.startDate, entry.endDate)]),
-        summary: limitToWholeSentences(entry.summary, 1),
-      }))
-      .filter((entry) => Boolean(entry.heading || entry.meta || entry.summary || entry.highlights.length > 0)),
-    header: buildSharedHeader(workspace),
-    sectionOrder: [
-      'Professional Summary',
-      'Core Skills',
-      'Professional Experience',
-      'Education',
-      'Additional Details',
-    ],
-    skillsItems: skillsSource.slice(0, RESUME_BUDGET.skillsMaxCount),
-    summary: limitToWholeSentences(summarySource, 2),
-  }
-
-  return trimResumeDraftToOnePage(draft)
+  const draft = buildResumeDraft(packet, workspace)
+  return fitResumeDraftToPageBudget(draft)
 }
 
 export function buildCoverLetterDocumentSchema({
