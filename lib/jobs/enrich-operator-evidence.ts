@@ -6,7 +6,6 @@ import { getOperatorProfile } from '@/lib/data/operator-profile'
 import { getActiveOperatorContext } from '@/lib/data/operators'
 import type { EvidenceBankEntryRecord, EvidenceSourceKind } from '@/lib/domain/evidence'
 import { hasOpenAIEnv, hasSupabaseServerEnv } from '@/lib/env'
-import { readLinkedInExportSnapshot } from '@/lib/scraping/sources/linkedin-export'
 import { fetchPersonalSiteSnapshot, fetchPortfolioSnapshot } from '@/lib/scraping/sources/portfolio'
 import { createClient } from '@/lib/supabase/server'
 
@@ -38,9 +37,9 @@ export interface EnrichActiveOperatorEvidenceOptions {
   operatorIdOverride?: string
   /** Explicit operator slug. Resolved to id via the operators table. */
   operatorSlugOverride?: string
-  /** Path to an extracted LinkedIn data-export directory. When set, the CSVs are parsed
-   *  and fed through the same extract-evidence pipeline as the portfolio scrape. */
-  linkedinExportDirectory?: string
+  /** When set, only the named source is fetched. Used by the /profile refresh action so
+   *  clicking "refresh" on the portfolio URL doesn't also re-fetch the personal site. */
+  sourceFilter?: 'portfolio_url' | 'personal_site'
 }
 
 interface ResolvedOperatorTarget {
@@ -188,10 +187,13 @@ export async function enrichActiveOperatorEvidence(
   const sources: EnrichOperatorEvidenceResult['sources'] = []
   const insertedEntries: EvidenceBankEntryRecord[] = []
 
-  const plan: Array<{ sourceKind: EvidenceSourceKind; sourceKindLabel: string; url?: string }> = [
+  const allPlans: Array<{ sourceKind: EvidenceSourceKind; sourceKindLabel: string; url?: string }> = [
     { sourceKind: 'portfolio_url', sourceKindLabel: 'portfolio', url: portfolioUrl },
     { sourceKind: 'personal_site', sourceKindLabel: 'personal site', url: personalSiteUrl },
   ]
+  const plan = options.sourceFilter
+    ? allPlans.filter((p) => p.sourceKind === options.sourceFilter)
+    : allPlans
 
   for (const plannedSource of plan) {
     const url = (plannedSource.url ?? '').trim()
@@ -258,59 +260,6 @@ export async function enrichActiveOperatorEvidence(
       contentLength: fetchResult.snapshot.contentLength,
       inserted: persisted.length,
     })
-  }
-
-  // LinkedIn export path — user-supplied directory, parsed into markdown from the CSVs.
-  // We treat it as a separate source so entries carry `source_kind = linkedin_export` and
-  // the source_url points to the directory path for provenance (the real URL would be the
-  // LinkedIn profile the export came from; we don't have that here, and the directory is
-  // enough for the user to re-verify).
-  if (options.linkedinExportDirectory) {
-    const linkedinResult = await readLinkedInExportSnapshot(options.linkedinExportDirectory)
-    if (!linkedinResult.success) {
-      sources.push({
-        sourceKind: 'linkedin_export',
-        sourceUrl: linkedinResult.error.directory,
-        status: 'fetch-failed',
-        error: linkedinResult.error.error,
-        inserted: 0,
-      })
-    } else {
-      const extracted = await extractEvidenceFromMarkdown({
-        sourceMarkdown: linkedinResult.snapshot.markdown,
-        sourceKindLabel: `LinkedIn export (sections: ${linkedinResult.snapshot.sectionsFound.join(', ')})`,
-        existingExperienceKeys,
-        candidateContext,
-      })
-      if (extracted.length === 0) {
-        sources.push({
-          sourceKind: 'linkedin_export',
-          sourceUrl: linkedinResult.snapshot.directory,
-          status: 'no-entries-extracted',
-          contentLength: linkedinResult.snapshot.markdown.length,
-          inserted: 0,
-        })
-      } else {
-        const persisted = await insertExtractedEvidenceEntries(
-          {
-            operatorId,
-            userId,
-            sourceKind: 'linkedin_export',
-            sourceUrl: linkedinResult.snapshot.directory,
-            sourceFetchedAt: linkedinResult.snapshot.fetchedAt,
-          },
-          extracted,
-        )
-        insertedEntries.push(...persisted)
-        sources.push({
-          sourceKind: 'linkedin_export',
-          sourceUrl: linkedinResult.snapshot.directory,
-          status: 'fetched',
-          contentLength: linkedinResult.snapshot.markdown.length,
-          inserted: persisted.length,
-        })
-      }
-    }
   }
 
   return { operatorId, sources, insertedEntries }

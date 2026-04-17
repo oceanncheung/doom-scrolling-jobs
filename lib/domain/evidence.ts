@@ -21,8 +21,6 @@ export type EvidenceConfidence = (typeof evidenceConfidenceLevels)[number]
 export const evidenceSourceKinds = [
   'portfolio_url',
   'personal_site',
-  'linkedin_export',
-  'linkedin_page',
   'behance',
   'dribbble',
   'manual',
