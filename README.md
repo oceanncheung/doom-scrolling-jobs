@@ -1,5 +1,5 @@
 # AI Job Search Dashboard & Application Prep Hub
-_Last updated: April 1, 2026_
+_Last updated: April 17, 2026_
 
 ## 1. Product Definition
 
@@ -69,16 +69,19 @@ Phase 1 does **not** include direct application submission automation.
 
 ## 6. Current Foundation
 
-The repo now includes an initial Next.js + Supabase-ready foundation in addition to the planning docs.
+The repo ships a Next.js + Supabase foundation with real discovery, ranking, and packet-prep surfaces on top of the planning docs.
 The product is currently set up as a **single-user internal tool**, so there is no login flow in Phase 1.
 
-- `app/` -> App Router layout, homepage, ranked jobs dashboard, job detail route, and health endpoint
+- `app/` -> App Router layout, homepage, ranked jobs dashboard, job detail route, packet review route, operators setup, and health/audit endpoints
 - `app/profile/` -> single-user operator workspace with one freeform search brief plus structured profile, resume, and portfolio data
-- `app/jobs/[jobId]` -> first job detail route with score breakdown, reasons, and risks
-- `lib/` -> shared product constants, scoring weights, model routing, domain types, and Supabase helpers
+- `app/jobs/[jobId]` -> job detail route with score breakdown, fit reasons, red flags, and prep-open workflow actions
+- `app/jobs/[jobId]/packet` -> packet review screen with editable resume version, cover letter, checklist, and structured application answers
+- `app/api/jobs/import` -> import/refresh diagnostics endpoint for ingestion runs
+- `lib/` -> shared product constants, scoring weights, model routing, domain types, AI task contracts, and Supabase helpers
+- `lib/jobs/` -> source registry, company watchlist, Greenhouse ATS importer, deterministic dedupe, remote + designer-first import gates, and the workflow-learning loop that reweights ranking from shortlist/dismiss/apply signals
 - `supabase/` -> migrations, seed data, and local project config
 - `.env.example` -> required Supabase public URL plus the server-only service role key for internal writes
-- `README.md` / `PRD.md` / `SCHEMA.md` / `SCORING.md` / `TASKS.md` / `DECISIONS.md` -> durable product context
+- `README.md` / `PRD.md` / `SCHEMA.md` / `SCORING.md` / `TASKS.md` / `DECISIONS.md` / `DESIGN.md` / `AGENTS.md` / `UI_CHANGE_PROTOCOL.md` -> durable product and repo context
 
 ## 7. Local Setup
 
@@ -103,12 +106,42 @@ Notes:
 
 Useful scripts:
 
+Baseline checks:
+
 - `npm run lint`
 - `npm run typecheck`
 - `npm run check:ui-system`
 - `npm run build`
-- `npm run check`
-- `npm run eval`
+- `npm run check` — runs lint, typecheck, ui-system audit, and build in sequence
+
+Quality harness (see `docs/repo-harness.md`):
+
+- `npm run eval` — full 4-layer eval (100-point score)
+- `npm run eval:correctness`
+- `npm run eval:workflows`
+- `npm run eval:ui`
+- `npm run eval:ui-artifacts`
+- `npm run capture:ui` — regenerate UI review screenshots only
+
+Targeted smokes (feed into `eval:workflows`):
+
+- `npm run smoke:import-contract`
+- `npm run smoke:routes`
+- `npm run smoke:packet`
+- `npm run smoke:packet-persistence`
+- `npm run smoke:server-action-workflow`
+- `npm run smoke:workflow-state`
+- `npm run smoke:workflow-transition`
+- `npm run smoke:resume-v4`
+
+Live diagnostics (non-gating, separate from eval):
+
+- `npm run diagnostic:external-sourcing`
+
+One-offs:
+
+- `npm run backfill:job-review-copy`
+- `npm run cleanup:packet-generation`
 - `npm run deploy:cloud-run`
 
 ## 8.5 Quality Harness
@@ -151,13 +184,10 @@ Current structure and intended ownership:
 
 ## 10. Next Steps
 
-1. Build the normalization pipeline and source-selection logic behind the new job intake contracts.
-2. Replace seeded `job_scores` with the first real scoring service using the model in `SCORING.md`.
-3. Add shortlist, dismiss, and workflow mutation actions on the jobs dashboard.
-4. Build the first packet review screen so profile -> jobs -> packet becomes a real flow.
-5. Add generation services incrementally:
-   - job parsing
-   - scoring explanations
-   - resume tailoring
-   - portfolio recommendation
-   - field-by-field application prep
+Current priorities (see `TASKS.md` for the full execution checklist):
+
+1. Harden the packet lifecycle so saved packets, resume versions, workflow moves, and application events stay fully in sync.
+2. Add a practical resume PDF export flow from saved `resume_versions`.
+3. Add saved searches and reusable dashboard filter presets backed by `saved_searches`.
+4. Wire the `prompts` table into real task contracts for scoring and packet-generation work.
+5. Add a job activity timeline view with status history, packet linkage, and manual notes.
