@@ -108,8 +108,12 @@ TBD.
 - **Verification (bit-for-bit identical):**
   - Desktop (1747): both columns `pl:0 pr:0`, col 0 x:521 w:585 right:1106, col 1 x:1130 w:585 right:1715 — identical pre-4e vs post-4e via stash/pop diff.
 
-### Commit 4f — operators page grids (planned)
-TBD — `/operators` page. Scope + verify before editing.
+### Commit 4f — apply grid-cell contract to `.operator-row-button`
+- **Scope:** [components/operators/operator-access-form.tsx:27](components/operators/operator-access-form.tsx). Two `<span>` children of each `.operator-row-button`: `.operator-row-main` (name + email stack) gets `u-grid-cell--first`, `.operator-row-meta` (status label) gets `u-grid-cell`.
+- **Not a Protected Surface.** The operators page isn't listed in AGENTS.md §Protected Surfaces.
+- **Pure annotation:** refined utility only sets `padding-left: 0`, matching both cells' default (no surface pl rule). Breathing between cells comes from `.operator-row-button`'s `gap: 16px` (operators.css:229), unaffected.
+- **Verification (bit-for-bit identical):**
+  - Desktop (1747): both cells `pl:0 pr:0` — cell 0 x:521 w:1129 right:1650, cell 1 x:1666 w:57 right:1723. Identical pre-4f vs post-4f via stash/pop diff. Gap between cells = 1666 − 1650 = 16px as expected.
 
 ### Commit 4 — roll contract to remaining surfaces (planned)
 TBD.

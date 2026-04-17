@@ -24,12 +24,19 @@ export function OperatorAccessForm({
             return (
               <form action={selectOperator} className="operator-row" key={operator.id}>
                 <input name="operatorId" type="hidden" value={operator.id} />
+                {/*
+                 * .u-grid-cell contract (see app/styles/utilities/grid.css, Commits 3/4b):
+                 * first cell (name + email stack) gets u-grid-cell--first, second cell
+                 * (status label) gets u-grid-cell. Breathing between cells is owned by
+                 * .operator-row-button's `gap: 16px` (operators.css:229).
+                 * Pure annotation; computed styles unchanged vs pre-4f.
+                 */}
                 <button className="operator-row-button" type="submit">
-                  <span className="operator-row-main">
+                  <span className="operator-row-main u-grid-cell--first">
                     <strong>{operator.displayName}</strong>
                     <span>{operator.email}</span>
                   </span>
-                  <span className="operator-row-meta">{isActive ? 'Signed in' : 'Sign in'}</span>
+                  <span className="operator-row-meta u-grid-cell">{isActive ? 'Signed in' : 'Sign in'}</span>
                 </button>
               </form>
             )
