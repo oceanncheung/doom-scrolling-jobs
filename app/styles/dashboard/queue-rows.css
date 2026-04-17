@@ -525,6 +525,44 @@ main.jobs-index .queue-list .screening-summary-grid > .screening-cell:not(.scree
   border-bottom: none;
 }
 
+/*
+ * Action-bar top hairline — anchor-at-bar-level.
+ *
+ * Bug motivating this block: on mobile the screening-actions-bar bleeds to
+ * both viewport edges (see JOBS-QUEUE EDGE-FLUSH CONTRACT above), which
+ * strips the buttons' border-left and border-right. Only the top border
+ * remains as the visual separator from the row above. When the user clicks
+ * a primary button (Save → "Saving…", Apply → "Applying…"), React sets it
+ * disabled; .screening-actions-bar .button:disabled fades opacity to 0.4.
+ * The button's own 1px top border fades with it, so on a solid-black primary
+ * fill the faded top border is visually indistinguishable from the faded
+ * background — the top hairline looks gone.
+ *
+ * Matches the same fix already in place for the packet overview wrap at
+ * responsive.css ~line 2587 (its Apply | Regenerate | Archive bar had the
+ * same problem). A pseudo-element at the bar level paints a full-width 1px
+ * black rule at z-index: 2; the overlay isn't affected by any individual
+ * button's opacity, so the top hairline stays solid in every state (rest /
+ * hover / pending / disabled).
+ * --------------------------------------------------------------------------- */
+main.jobs-index .queue-list .screening-actions-bar,
+main.jobs-index .queue-list .stage-actions-bar {
+  position: relative;
+}
+
+main.jobs-index .queue-list .screening-actions-bar::before,
+main.jobs-index .queue-list .stage-actions-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 2;
+}
+
 .screening-actions-cluster {
   grid-column: 4 / -1;
   display: grid;
