@@ -392,6 +392,171 @@ test('real-shape end-to-end: HA buckets low, Montran/MM.S/RBC bucket high, HA dr
   assert.equal(sorted[sorted.length - 1].endDate, '2023', 'Past role (RBC) ends up last')
 })
 
+test('Gruns-shape regression: sparse JD must not drop long-tenure design roles', () => {
+  // This mirrors the exact production failure that shipped MM.S off Ocean's Grüns resume:
+  // the JD had only 2 usable skill keywords, neither appeared literally in MM.S's bullets,
+  // and "Creative Director" didn't stem-match "Graphic Designer" (creat vs graph/desig).
+  // MM.S got filtered out by the code-level Tier-D drop even though it's a 7-year
+  // design-leadership role. Two v4.3 changes should prevent this:
+  //   1. Domain synonym groups rescue the title similarity (creative/director → design family)
+  //   2. Substantive-role rescue guards against any other heuristic failure on 24mo+/3+bullet roles
+  const entries: Array<ResumeExperienceRecord & { id: string }> = [
+    {
+      id: 'exp_1',
+      companyName: 'Montran',
+      roleTitle: 'Design & Digital Marketing Lead',
+      locationLabel: 'Remote',
+      startDate: '2024',
+      endDate: 'Present',
+      summary: '',
+      highlights: [
+        'Led brand identity system for product marketing launches',
+        'Shipped Figma component library across customer-facing work',
+        'Owned marketing visuals for investor presentations',
+      ],
+    },
+    {
+      id: 'exp_2',
+      companyName: 'MM.S',
+      roleTitle: 'Founder / Fractional Creative Director',
+      locationLabel: 'Remote',
+      startDate: '2019',
+      endDate: 'Present',
+      summary: '',
+      highlights: [
+        'Led brand identity engagements for B2B SaaS clients',
+        'Directed visual identity rebrands including typography, color, logo systems',
+        'Shipped marketing sites and product UI across multiple client launches',
+        'Partnered with founders on early brand positioning and visual direction',
+      ],
+    },
+    {
+      id: 'exp_3',
+      companyName: 'RBC',
+      roleTitle: 'Creative Consultant / Senior Communication Designer',
+      locationLabel: 'Toronto',
+      startDate: '2021',
+      endDate: '2023',
+      summary: '',
+      highlights: [
+        'Designed internal brand comms templates at scale',
+        'Partnered with marketing on campaign visuals',
+        'Shipped stakeholder-ready presentation systems',
+      ],
+    },
+  ]
+  // The real Grüns JD had exactly this sparse keyword list — nothing else.
+  const job = {
+    title: 'Senior Graphic Designer',
+    skillsKeywords: ['Design & UX', 'Senior', 'graphic design'],
+    requirements: [],
+    preferredQualifications: [],
+  } as unknown as RankedJobRecord
+
+  const hints = computeRelevanceHints(entries, job)
+  const mmHint = hints.find((h) => h.id === 'exp_2')!
+  assert.ok(
+    mmHint.relevanceHint !== 'low',
+    `MM.S must not bucket 'low' on a sparse design-role JD — got ${mmHint.relevanceHint} (titleSim=${mmHint.titleSimilarity})`,
+  )
+
+  // Even if hint were somehow 'low', the substantive-role rescue must keep MM.S.
+  const relevance = new Map(hints.map((h) => {
+    const source = entries.find((e) => e.id === h.id)!
+    return [`${source.companyName}::${source.roleTitle}`.toLowerCase(), h] as const
+  }))
+  const filtered = filterIrrelevantEntries(
+    entries.map((e) => {
+      const { id: _id, ...rest } = e as ResumeExperienceRecord & { id?: string }
+      void _id
+      return rest
+    }),
+    relevance,
+  )
+  const keptCompanies = filtered.kept.map((entry) => entry.companyName)
+  assert.ok(keptCompanies.includes('MM.S'), `MM.S must survive filter; kept: ${keptCompanies.join(', ')}`)
+  assert.ok(keptCompanies.includes('Montran'), `Montran must survive filter; kept: ${keptCompanies.join(', ')}`)
+  assert.ok(keptCompanies.includes('RBC'), `RBC must survive filter; kept: ${keptCompanies.join(', ')}`)
+})
+
+test('synonym groups map Creative Director to Designer family', () => {
+  const entries = [
+    {
+      id: 'a',
+      companyName: 'Studio',
+      roleTitle: 'Creative Director',
+      locationLabel: '',
+      startDate: '2020',
+      endDate: 'Present',
+      summary: '',
+      highlights: ['Led brand identity programs', 'Directed campaign visuals'],
+    },
+  ]
+  const job = {
+    title: 'Senior Graphic Designer',
+    skillsKeywords: ['Brand identity'],
+    requirements: [],
+    preferredQualifications: [],
+  } as unknown as RankedJobRecord
+  const hints = computeRelevanceHints(entries, job)
+  assert.ok(
+    hints[0].titleSimilarity >= 0.5,
+    `Creative Director ↔ Graphic Designer should match via synonym group; got ${hints[0].titleSimilarity}`,
+  )
+})
+
+test('HA-style unrelated role still drops even with substantive-rescue added', () => {
+  // Regression check: HA (executive-assistant, <2yr, 1 bullet) should STILL drop because
+  // it's not substantive. The v4.3 rescue only protects long-tenure multi-bullet roles —
+  // irrelevant short roles must still be filterable.
+  const ha: ResumeExperienceRecord = {
+    companyName: 'Hospital Authority, HKSAR Government',
+    roleTitle: 'Executive Assistant, Internal Communications',
+    locationLabel: 'Hong Kong',
+    startDate: '2019',
+    endDate: '2020',
+    summary: '',
+    highlights: ['Coordinated scheduling for the internal communications department'],
+  }
+  const montran: ResumeExperienceRecord = {
+    companyName: 'Montran',
+    roleTitle: 'Design & Digital Marketing Lead',
+    locationLabel: 'Remote',
+    startDate: '2024',
+    endDate: 'Present',
+    summary: '',
+    highlights: ['Led brand identity system', 'Shipped Figma components', 'Owned marketing design'],
+  }
+  const mm: ResumeExperienceRecord = {
+    companyName: 'MM.S',
+    roleTitle: 'Founder / Fractional Creative Director',
+    locationLabel: 'Remote',
+    startDate: '2019',
+    endDate: 'Present',
+    summary: '',
+    highlights: ['Led brand identity engagements', 'Directed visual identity rebrands', 'Shipped marketing sites'],
+  }
+  const relevance = new Map<string, RelevanceAnnotation>([
+    [
+      'montran::design & digital marketing lead',
+      { id: 'a', relevanceHint: 'high', keywordMatches: 3, keywordTotal: 5, titleSimilarity: 0.5 },
+    ],
+    [
+      'mm.s::founder / fractional creative director',
+      { id: 'b', relevanceHint: 'high', keywordMatches: 3, keywordTotal: 5, titleSimilarity: 0.5 },
+    ],
+    [
+      'hospital authority, hksar government::executive assistant, internal communications',
+      { id: 'c', relevanceHint: 'low', keywordMatches: 0, keywordTotal: 5, titleSimilarity: 0 },
+    ],
+  ])
+  const result = filterIrrelevantEntries([montran, mm, ha], relevance)
+  assert.ok(
+    !result.kept.some((e) => e.companyName === 'Hospital Authority, HKSAR Government'),
+    `HA must drop even with substantive rescue present; kept: ${result.kept.map((e) => e.companyName).join(', ')}`,
+  )
+})
+
 test('seniority words no longer inflate title similarity', () => {
   const entries = [
     {

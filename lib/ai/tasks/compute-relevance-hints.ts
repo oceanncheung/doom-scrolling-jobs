@@ -105,21 +105,93 @@ function keywordAppears(keyword: string, haystack: string) {
 // share 6 chars but "designate" is rare enough in role titles that we accept the risk).
 const STEM_MATCH_PREFIX_LEN = 5
 
+/**
+ * Domain synonym groups — tokens within a group are treated as semantically equivalent for the
+ * purpose of title-similarity matching. This exists because stem matching fails on cross-word
+ * synonyms: "Creative Director" ≡ "Graphic Designer" in the design industry, but they share no
+ * 5-char stem. Without this, a Creative Director role would score 0 similarity against a
+ * Designer JD and get bucketed low even though it's obviously the same function.
+ *
+ * Keep this list conservative — each group should be tokens that a hiring manager would
+ * unambiguously read as the same role family on a resume. If a word appears in multiple
+ * industries (e.g. "manager"), leave it out rather than risk false-positive cross-domain
+ * matches.
+ */
+const DOMAIN_SYNONYM_GROUPS: Record<string, ReadonlySet<string>> = {
+  design: new Set([
+    'design', 'designer', 'designing',
+    'creative', 'creator', 'creatives',
+    'director',
+    'visual', 'visuals',
+    'art', 'artist', 'artistic',
+    'graphic', 'graphics',
+    'brand', 'branding',
+    'ux', 'ui',
+    'typography', 'typographic',
+    'layout',
+    'illustrator', 'illustration',
+  ]),
+  engineering: new Set([
+    'engineer', 'engineering', 'engineers',
+    'developer', 'developers', 'dev',
+    'software',
+    'programmer', 'programming',
+    'coder', 'coding',
+    'architect', 'architecture',
+  ]),
+  marketing: new Set([
+    'marketing', 'marketer', 'marketers',
+    'growth',
+    'content', 'copy', 'copywriter',
+    'communications', 'comms',
+    'seo', 'sem',
+    'social',
+  ]),
+  product: new Set([
+    'product',
+    'pm',
+    'owner',
+  ]),
+  data: new Set([
+    'data',
+    'analyst', 'analytics', 'analysis',
+    'scientist', 'science',
+    'statistician',
+  ]),
+}
+
+function findSynonymGroup(token: string): string | null {
+  for (const groupName in DOMAIN_SYNONYM_GROUPS) {
+    if (DOMAIN_SYNONYM_GROUPS[groupName].has(token)) return groupName
+  }
+  return null
+}
+
 function titleSimilarityScore(sourceTitle: string, jdTitle: string) {
   const sourceTokens = tokenize(sourceTitle)
   const jdTokens = tokenize(jdTitle)
   if (jdTokens.length === 0) return 0
+
+  // Pre-compute synonym-group membership on the source side so we can check once per JD token.
+  const sourceGroups = new Set<string>()
+  for (const token of sourceTokens) {
+    const group = findSynonymGroup(token)
+    if (group) sourceGroups.add(group)
+  }
+
   let matches = 0
   for (const jdToken of jdTokens) {
     let matched = false
+
+    // 1. Exact token match.
     for (const sourceToken of sourceTokens) {
       if (jdToken === sourceToken) {
         matched = true
         break
       }
-      // Stem match: shared prefix. Catches designer↔design, engineer↔engineering,
-      // marketer↔marketing, etc. — the most common shape of title-vs-title overlap.
+      // 2. Stem match: shared 5-char prefix. Catches designer↔design, engineer↔engineering, etc.
       if (
+        !matched &&
         jdToken.length >= STEM_MATCH_PREFIX_LEN &&
         sourceToken.length >= STEM_MATCH_PREFIX_LEN &&
         jdToken.slice(0, STEM_MATCH_PREFIX_LEN) === sourceToken.slice(0, STEM_MATCH_PREFIX_LEN)
@@ -128,6 +200,16 @@ function titleSimilarityScore(sourceTitle: string, jdTitle: string) {
         break
       }
     }
+
+    // 3. Synonym group match: the JD token and the source title share a domain family
+    //    (e.g. JD says "Designer", candidate says "Creative Director" — both are `design`).
+    if (!matched) {
+      const jdGroup = findSynonymGroup(jdToken)
+      if (jdGroup && sourceGroups.has(jdGroup)) {
+        matched = true
+      }
+    }
+
     if (matched) matches += 1
   }
   return matches / jdTokens.length

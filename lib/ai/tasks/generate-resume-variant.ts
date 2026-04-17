@@ -411,6 +411,20 @@ function toSourceKey(entry: Pick<ResumeExperienceRecord, 'companyName' | 'roleTi
   return `${entry.companyName}::${entry.roleTitle}`.toLowerCase()
 }
 
+// Rescue thresholds: a role with this much tenure AND this many source bullets is a clear
+// career-anchor block. The filter must not drop it even if keyword/title heuristics miss,
+// because those heuristics fail on (a) poorly-structured JDs with tiny keyword pools and
+// (b) cross-word role synonyms the stem/synonym check misses.
+//
+// Real-world trigger for these constants: Ocean's "Founder / Fractional Creative Director"
+// at MM.S (7 years tenure, 8 source bullets) was dropped on the Grüns "Senior Graphic
+// Designer" JD because the JD only had 2 skill keywords and neither appeared literally in
+// MM.S's bullets. A 7-year design-leadership role must NEVER be filtered out regardless of
+// what the keyword heuristic scores. Synonym groups now rescue most of these via title
+// similarity; this is belt-and-suspenders.
+const SUBSTANTIVE_ROLE_MIN_TENURE_MONTHS = 24
+const SUBSTANTIVE_ROLE_MIN_SOURCE_BULLETS = 3
+
 /**
  * Code-level Tier-D filter. The prompt asks the LLM to omit irrelevant roles, but the LLM
  * sometimes keeps them as "credibility anchors" when they aren't credibility anchors — e.g.
@@ -421,8 +435,10 @@ function toSourceKey(entry: Pick<ResumeExperienceRecord, 'companyName' | 'roleTi
  * Drop rule (must satisfy ALL):
  *   - relevanceHint === 'low'
  *   - titleSimilarity < 0.2 (title tokens share virtually nothing with the JD title after
- *     stopwords, including seniority markers)
+ *     stopwords, including seniority markers; synonym groups can rescue this — see
+ *     DOMAIN_SYNONYM_GROUPS in compute-relevance-hints.ts)
  *   - keywordMatches === 0 (no JD skill keyword found in the role's source text)
+ *   - NOT a substantive role (tenure < 24 months OR source bullets < 3)
  *
  * Safety net: never strip below MIN_EXPERIENCE_ENTRIES. A thin resume beats an empty one,
  * and an early-career candidate with no JD-matched history would otherwise have nothing.
@@ -440,10 +456,15 @@ export function filterIrrelevantEntries(
     const titleSim = annotation?.titleSimilarity ?? 0
     const keywords = annotation?.keywordMatches ?? 0
 
-    if (hint === 'low' && titleSim < 0.2 && keywords === 0) {
+    const tenureMonths = computeTenureMonths(entry)
+    const isSubstantiveRole =
+      tenureMonths >= SUBSTANTIVE_ROLE_MIN_TENURE_MONTHS &&
+      entry.highlights.length >= SUBSTANTIVE_ROLE_MIN_SOURCE_BULLETS
+
+    if (hint === 'low' && titleSim < 0.2 && keywords === 0 && !isSubstantiveRole) {
       drops.push({
         entry,
-        reason: `relevanceHint=low titleSimilarity=${titleSim.toFixed(2)} keywordMatches=0`,
+        reason: `relevanceHint=low titleSim=${titleSim.toFixed(2)} keywordMatches=0 tenure=${tenureMonths}mo bullets=${entry.highlights.length}`,
       })
       continue
     }
