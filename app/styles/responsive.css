@@ -1021,6 +1021,21 @@
     overflow-x: visible;
   }
 
+  /*
+   * Operator entry workspace: on mobile the queue-column stacks under the rail's create-account
+   * card and is empty until Sign In is clicked. The default seam border reads as an orphan
+   * divider floating at the bottom of the card. Drop it; the signin panel, when revealed, owns
+   * its own section rhythm.
+   */
+  .dashboard-workspace.operator-entry-workspace .queue-column {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .dashboard-workspace.operator-entry-workspace--signin .queue-column {
+    padding-top: 24px;
+  }
+
   .workspace-main > main.workspace-surface {
     overflow-x: visible;
   }

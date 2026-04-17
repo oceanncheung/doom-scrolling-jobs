@@ -21,7 +21,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # `npm run eval` uses `--experimental-transform-types` which first landed in Node 22.6.
+          # Node 20 rejects the flag with `bad option` (exit 9) before the script loads.
+          node-version: 22
           cache: npm
 
       - name: Install dependencies

@@ -4,44 +4,181 @@
 }
 
 /*
- * Dedicated /login page layout: a single full-page column that scrolls naturally with the
- * viewport (no fixed rail). Replaces the previous inline Sign In reveal inside the
- * operator-entry workspace, which on mobile sat below the fold with no scroll affordance.
- * The layout's WorkspaceChrome already provides the site header, so the login page just owns
- * its content column.
+ * Sign In reveals the operator list as the main column's content — same route, same component,
+ * same ideology across breakpoints. Desktop renders the panel inline in the main column next to
+ * the rail; mobile/tablet (≤900px) promotes the panel to a full-viewport overlay (like the
+ * today-rail expand) so the list reads as a sub-page instead of stacking below the fold.
  */
-.login-page {
-  padding: 32px var(--site-gutter);
-  gap: 32px;
-  box-sizing: border-box;
-}
-
-.login-page-content {
+.operator-signin-panel {
   display: grid;
+  /* 24px separates the heading stack from the lead, matching the effective title-to-subtitle
+   * rhythm of the left rail's create-account block (where `.today-block { gap: 16px }` plus the
+   * h2 line-box extras produce the same visual 24px). Same 24px then separates the lead from
+   * the operator list below, mirroring `.operator-access-shell` internal rhythm. */
   gap: 24px;
-  max-width: 40rem;
   width: 100%;
+  /* Right padding mirrors the left-side 24px inset (queue-column's padding-left on desktop, and
+   * the mobile overlay's --site-gutter padding). Without it, the queue-column's padding-right of
+   * 0 at ≥1180px meant the "Sign in" meta label sat flush to the viewport edge. On mobile the
+   * media-query shorthand below sets all four sides, so this declaration applies only at desktop. */
+  padding-right: 24px;
+  box-sizing: border-box;
+  /* Close button (mobile/tablet overlay) positions against the panel's right edge, so the panel
+   * owns the positioning context. */
+  position: relative;
+  /* The panel itself spans the main column's full width so the operator-row divider can bleed
+   * to the viewport right. Reading-width caps are applied to the heading + lead individually.
+   * When the panel is promoted to a full-viewport overlay (mobile/tablet), the grid's implicit
+   * rows would otherwise stretch each child to fill the viewport — align-content: start keeps
+   * rows content-sized; align-items: start keeps each row's cell content-sized. */
+  align-content: start;
+  align-items: start;
 }
 
-.login-page-heading {
+/*
+ * Typography mirrors the left-rail `.today-block-heading` so the right panel reads as a sibling
+ * surface, not a different component. Matching: eyebrow-to-title gap of 8px (section eyebrow
+ * stack), h1 at 1.5rem / 600 / -0.01em, and the lead below at 0.875rem muted line-height 1.5 —
+ * identical to `.profile-note` that sits under "Create account" on the left.
+ */
+.operator-signin-heading {
   display: grid;
-  gap: 8px;
+  gap: var(--section-eyebrow-stack-gap);
+  align-content: start;
+  align-items: start;
+  max-width: 40rem;
 }
 
-.login-page-heading h1 {
+.operator-signin-heading h1 {
   margin: 0;
   font-family: var(--font-display), sans-serif;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
-.login-page-lead {
+.operator-signin-lead {
   margin: 0;
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.16px;
   line-height: 1.5;
+  max-width: 36rem;
+}
+
+/* Back affordance is mobile/tablet only — desktop keeps the panel inline so there's nothing to
+ * close. The × glyph is flush to the button's right edge so it right-aligns with the row's
+ * "Sign in" meta label at viewport-right − --site-gutter. */
+.operator-signin-close {
+  display: none;
+  justify-self: end;
+  width: var(--site-header-row-height, 44px);
+  height: var(--site-header-row-height, 44px);
+  align-items: center;
+  justify-content: flex-end;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.operator-signin-close:hover {
+  color: var(--text);
+  opacity: 0.7;
+}
+
+/*
+ * Enter / exit for the mobile/tablet sign-in overlay. Mirrors the today-rail expand
+ * (settings-profile-rail-scroll-enter/exit) — 320ms, `cubic-bezier(0.22, 1, 0.36, 1)`, fade
+ * + 28px slide — so the sub-page transition reads as part of the same animation language as
+ * the apply-next / profile rails.
+ */
+@keyframes operator-signin-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes operator-signin-panel-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+
+@media (max-width: 900px) {
+  .operator-entry-workspace--signin .operator-signin-panel {
+    position: fixed;
+    /* Sit below the rail brand row (Doom Scrolling Jobs) so users keep a wayfinding anchor. */
+    top: var(--site-header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 7;
+    max-width: none;
+    padding: 24px var(--site-gutter) 32px;
+    background: var(--bg);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    animation: operator-signin-panel-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .operator-entry-workspace--signin .operator-signin-panel.is-signin-closing {
+    animation: operator-signin-panel-exit 320ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .operator-entry-workspace--signin .operator-signin-panel,
+    .operator-entry-workspace--signin .operator-signin-panel.is-signin-closing {
+      animation: none;
+    }
+  }
+
+  /* Close button anchors to the panel (not the heading) so it sits at the viewport's right
+   * regardless of the heading's 40rem reading-width cap. */
+  .operator-signin-close {
+    display: inline-flex;
+    position: absolute;
+    top: 24px;
+    right: var(--site-gutter);
+  }
+
+  .operator-signin-heading {
+    /* Reserve space so the close button (position: absolute) doesn't collide with the h1. */
+    padding-right: var(--site-header-row-height, 44px);
+  }
+
+  /* The overlay panel pads by --site-gutter (not --queue-column-pad, which is 12px at compact
+   * mobile). Override the row's default divider bleed so the line reaches the viewport right. */
+  .operator-entry-workspace--signin .operator-signin-panel .operator-row::after {
+    right: calc(-1 * var(--site-gutter));
+  }
+}
+
+/*
+ * Row meta label ("Sign in" / "Signed in") aligns its baseline with the email address (the
+ * second line of the left column's stacked label), so the two lines read as a horizontal pair
+ * rather than meta floating at row-center.
+ */
+.operator-row-meta {
+  align-self: end;
 }
 
 .operator-page-header {
@@ -66,8 +203,14 @@
 .operator-row::after {
   content: '';
   position: absolute;
+  /*
+   * Flush left to the row start and bleed past the queue-column's right padding so the divider
+   * reaches the viewport right edge at mobile/tablet (where the operator-list sits inside a
+   * padded queue-column). `var(--queue-column-pad, 0px)` keeps the rule valid on surfaces like
+   * /login that don't set the token (the /login-specific override below supplies the proper bleed).
+   */
   left: 0;
-  right: 0;
+  right: calc(-1 * var(--queue-column-pad, 0px));
   bottom: 0;
   height: 1px;
   background: var(--line-soft);
@@ -78,7 +221,12 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px;
   width: 100%;
-  padding: 16px var(--queue-column-pad) 16px 0;
+  /* Vertical breathing room between the email (second line in the stack) and the divider below.
+   * Horizontal padding is 0 on both sides — the panel already pads with --site-gutter on the
+   * mobile overlay and --queue-column-pad on desktop, so adding padding here produced an
+   * asymmetric ~24px extra on the right (the "Sign in" label sat further from the viewport
+   * right than the email sat from the left). */
+  padding: 20px 0 24px;
   border: 0;
   border-bottom: 0;
   background: transparent;
