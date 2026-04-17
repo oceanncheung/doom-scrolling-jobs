@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Suspense } from 'react'
@@ -20,6 +20,18 @@ export const metadata: Metadata = {
     template: `%s | ${site.name}`,
   },
   description: site.description,
+}
+
+// Behave like a native app surface on mobile: disable pinch-to-zoom / double-tap-zoom that
+// otherwise rescales the Swiss-grid layout and breaks measured tokens. `maximum-scale: 1`
+// is the broadly-honored lever (iOS Safari ignores `user-scalable: no`). Horizontal overflow
+// is further guarded at the CSS layer (`html, body { overflow-x: hidden }` at mobile) so a
+// single misbehaving input or badge can't drag the whole page sideways.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 function HeaderFallback({ counts }: { counts?: Partial<Record<QueueView, number>> }) {
@@ -52,7 +64,7 @@ function HeaderFallback({ counts }: { counts?: Partial<Record<QueueView, number>
           <Link className="site-workflow-link" href={getQueueViewHref(view)} key={view}>
             <span>{getQueueViewLabel(view)}</span>
             {typeof counts?.[view] === 'number' ? (
-              <span className="site-workflow-count">{counts[view]}</span>
+              <span className="site-workflow-count">{(counts[view] as number) >= 100 ? '99+' : counts[view]}</span>
             ) : null}
           </Link>
         ))}
@@ -67,7 +79,7 @@ function HeaderFallback({ counts }: { counts?: Partial<Record<QueueView, number>
           <Link className="site-mobile-menu-link" href={getQueueViewHref(view)} key={view}>
             <span>{getQueueViewLabel(view)}</span>
             {typeof counts?.[view] === 'number' ? (
-              <span className="site-mobile-menu-item-meta site-workflow-count">{counts[view]}</span>
+              <span className="site-mobile-menu-item-meta site-workflow-count">{(counts[view] as number) >= 100 ? '99+' : counts[view]}</span>
             ) : null}
           </Link>
         ))}

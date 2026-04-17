@@ -83,7 +83,11 @@ export function ProfileSettingsRail({ formId, workspace }: ProfileSettingsRailPr
         <div className="settings-profile-rail-footer">
           <section className="today-block settings-rail-actions-block">
             <div className="settings-rail-heading-with-status">
-              <TodayBlockHeading label="Actions" title="Account" />
+              <TodayBlockHeading
+                className="settings-rail-actions-heading"
+                label="Actions"
+                title="Account"
+              />
               {updatedAtLabel ? (
                 <p className="settings-rail-updated-at">
                   <span className="settings-rail-updated-at-label">Last updated</span>

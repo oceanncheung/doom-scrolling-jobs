@@ -32,6 +32,31 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      - name: Apply pending Supabase migrations
+        # Idempotent migration runner: tracks applied files in public._applied_migrations and
+        # only runs the diff on each push. This replaces manual `supabase/migrations/*.sql`
+        # application — once a new migration file is committed, the next push to main applies
+        # it before eval + deploy so the schema is in sync with the code that depends on it.
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          applied=0
+          skipped=0
+          for f in supabase/migrations/*.sql; do
+            name="$(basename "$f")"
+            is_applied="$(psql "$SUPABASE_DB_URL" -tA -c "select 1 from public._applied_migrations where filename='$name'" 2>/dev/null)"
+            if [ -z "$is_applied" ]; then
+              echo "→ Applying $name..."
+              psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+              psql "$SUPABASE_DB_URL" -c "insert into public._applied_migrations (filename) values ('$name') on conflict do nothing"
+              applied=$((applied + 1))
+            else
+              skipped=$((skipped + 1))
+            fi
+          done
+          echo "Migrations: $applied applied, $skipped already up to date."
+
       - name: Run repo quality harness
         env:
           # Supabase credentials the harness needs to run the workflow-transition smoke.

@@ -131,7 +131,12 @@
     bottom: 0;
     z-index: 7;
     max-width: none;
-    padding: 24px var(--site-gutter) 32px;
+    /* Match the create-account rail's horizontal inset. `--queue-column-pad` tracks the same
+     * per-breakpoint value as the rail's `--today-rail-pad-left` (16px at mobile, 12px at
+     * compact-mobile) and, unlike the rail token, is defined on the panel's ancestor chain via
+     * `.queue-column`. Using `--site-gutter` (24px) here made the signin copy sit further right
+     * than the "NEED AN ACCOUNT?" eyebrow behind it. */
+    padding: 24px var(--queue-column-pad, var(--site-gutter)) 32px;
     background: var(--bg);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -152,12 +157,13 @@
   }
 
   /* Close button anchors to the panel (not the heading) so it sits at the viewport's right
-   * regardless of the heading's 40rem reading-width cap. */
+   * regardless of the heading's 40rem reading-width cap. Right inset matches the panel's
+   * horizontal padding so the × lines up with the left rail's brand + create-account content. */
   .operator-signin-close {
     display: inline-flex;
     position: absolute;
     top: 24px;
-    right: var(--site-gutter);
+    right: var(--queue-column-pad, var(--site-gutter));
   }
 
   .operator-signin-heading {
@@ -165,10 +171,11 @@
     padding-right: var(--site-header-row-height, 44px);
   }
 
-  /* The overlay panel pads by --site-gutter (not --queue-column-pad, which is 12px at compact
-   * mobile). Override the row's default divider bleed so the line reaches the viewport right. */
+  /* The overlay panel pads by --queue-column-pad (16px mobile, 12px compact) to match the
+   * create-account rail. Override the row's default divider bleed so the line reaches the
+   * viewport right. */
   .operator-entry-workspace--signin .operator-signin-panel .operator-row::after {
-    right: calc(-1 * var(--site-gutter));
+    right: calc(-1 * var(--queue-column-pad, var(--site-gutter)));
   }
 }
 

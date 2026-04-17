@@ -14,6 +14,11 @@ import {
 import { getQueueViewLabel } from '@/lib/jobs/workflow-state'
 
 const MENU_CLOSE_MS = 280
+
+function formatQueueCount(value: number) {
+  return value >= 100 ? '99+' : String(value)
+}
+
 export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView, number>> }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -153,7 +158,7 @@ export function WorkspaceHeader({ counts }: { counts?: Partial<Record<QueueView,
           >
             <span>{getQueueViewLabel(view)}</span>
             {typeof counts?.[view] === 'number' ? (
-              <span className="site-workflow-count">{counts[view]}</span>
+              <span className="site-workflow-count">{formatQueueCount(counts[view] as number)}</span>
             ) : null}
           </Link>
         ))}

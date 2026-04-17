@@ -99,6 +99,19 @@
   margin-top: 0;
 }
 
+/*
+ * Hide the "Actions / Account" eyebrow + title on mobile/tablet — the rail's collapsed preview
+ * already tells the user this is the profile surface, and in the expanded sheet that heading
+ * occupies ~1/3 of the viewport height without adding information. Keep it on desktop where
+ * the rail is a persistent two-column split and the heading pairs with the profile form's
+ * "About you / Identity" block.
+ */
+@media (max-width: 900px) {
+  .settings-rail-actions-heading {
+    display: none;
+  }
+}
+
 /* Match today-rail PREPARE (primary): solid hover, full opacity (not .button:hover fade) */
 .settings-profile-rail-footer .today-block .button.button-primary:hover:not(:disabled),
 .settings-profile-rail-footer .today-block .button.button-primary:focus-visible {
