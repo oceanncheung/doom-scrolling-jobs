@@ -89,7 +89,14 @@ async function runSmoke() {
   const markers = {
     applicationMaterials: reviewHtml.includes('Application materials'),
     applicationQuestions: reviewHtml.includes('Application questions'),
-    generateMaterials: />\s*Generate Materials\s*</.test(reviewHtml),
+    // A prep-open packet renders one of two generation buttons depending on whether packet
+    // content already exists for this operator + job: "Generate Materials" (fresh) or
+    // "Regenerate" (previously generated). Both signal that the packet flow is open and
+    // actionable, which is what this smoke actually tests. Requiring only one made the
+    // smoke brittle to lingering fixture content (see application_packets for the smoke
+    // job — Ocean has a prior packet generated that naturally flips the label).
+    generateMaterials:
+      />\s*Generate Materials\s*</.test(reviewHtml) || />\s*Regenerate\s*</.test(reviewHtml),
     jobOverview: reviewHtml.includes('Job overview'),
     markReady: />\s*Mark Ready\s*</.test(reviewHtml),
     prepare: />\s*Prepare\s*</.test(reviewHtml) || />\s*Continue prep\s*</.test(reviewHtml),

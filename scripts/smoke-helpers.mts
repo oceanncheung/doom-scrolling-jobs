@@ -4,6 +4,7 @@ import path from 'node:path'
 import { defaultOperator } from '@/lib/config/runtime'
 import { activeOperatorCookieName, listOperators } from '@/lib/data/operators'
 import { hasSupabaseServerEnv } from '@/lib/env'
+import { createClient } from '@/lib/supabase/server'
 
 export const defaultSmokeBaseUrl = 'http://127.0.0.1:3001'
 export const defaultSmokeJobId = 'ec47ed58-6782-46e4-8ce7-4b3241ef345c'
@@ -54,6 +55,31 @@ export function getSmokeJobId(input?: string) {
   )
 }
 
+// Find the first operator whose canonical profile has been reviewed — i.e. whose user_profiles
+// row has `canonical_profile_reviewed_at` set. As of commit 805d0e5 (feat(signin): route
+// incomplete profiles to /profile), the sign-in flow lands un-reviewed profiles on /profile
+// instead of /dashboard, which gates every downstream UI and workflow smoke. Picking a
+// reviewed operator keeps the dashboard populated, the job detail visible, and the packet
+// action bars rendered. Falls back to null when no operator qualifies so the existing
+// first-operator behavior still applies on fresh or seed-only databases.
+async function findFirstReadyOperatorId(): Promise<string | null> {
+  try {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('operator_id')
+      .not('canonical_profile_reviewed_at', 'is', null)
+      .not('operator_id', 'is', null)
+      .order('canonical_profile_reviewed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error || !data?.operator_id) return null
+    return String(data.operator_id)
+  } catch {
+    return null
+  }
+}
+
 async function resolveSmokeOperatorValue() {
   const override = process.env.SMOKE_OPERATOR_ID?.trim()
 
@@ -63,6 +89,11 @@ async function resolveSmokeOperatorValue() {
 
   if (!hasSupabaseServerEnv()) {
     return defaultOperator.userId
+  }
+
+  const readyOperatorId = await findFirstReadyOperatorId()
+  if (readyOperatorId) {
+    return readyOperatorId
   }
 
   const operators = await listOperators()
