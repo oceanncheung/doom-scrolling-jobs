@@ -28,6 +28,7 @@
     "smoke:routes": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/smoke-routes.mts",
     "smoke:workflow-state": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/smoke-workflow-state.mts",
     "smoke:workflow-transition": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/smoke-workflow-transition.mts",
+    "smoke:resume-v4": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/smoke-resume-v4-helpers.mts",
     "diagnostic:external-sourcing": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/diagnostic-external-sourcing.mts",
     "backfill:job-review-copy": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/backfill-job-review-copy.mts",
     "cleanup:packet-generation": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/clear-packet-generation.mts"
