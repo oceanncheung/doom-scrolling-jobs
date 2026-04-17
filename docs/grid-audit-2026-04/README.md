@@ -76,8 +76,16 @@ TBD.
   - LAST cell: `padding-right: 0` (container's page padding owns the right edge; if the cluster bleeds to the viewport edge, the edge-flush contracts in queue-rows.css / settings-fields.css zero the button-level right border).
 - **Verification:** dashboard's `.screening-summary-grid` already implements this exact contract today — `.queue-column` has `padding-left: 32px`, title cell has `padding-left: 0 / padding-right: 0`, meta cells have `padding-left: 0 / padding-right: 32px`. Applying the utility classes in Commit 4 will be pure annotation with identical computed output.
 
-### Commit 4 — apply grid-cell contract to concrete surfaces (planned)
-TBD — one surface per sub-commit (4a dashboard pilot, 4b packet, 4c profile, 4d job flow, 4e operators), each verified against the baseline with stash/pop computed-style diffs before landing.
+### Commit 4a — apply grid-cell contract to dashboard queue rows (pilot)
+- **Scope:** [components/dashboard/stage-row.tsx](components/dashboard/stage-row.tsx) + [components/dashboard/potential-row.tsx](components/dashboard/potential-row.tsx). Title cell gets `u-grid-cell--first`, meta cells 2-5 get `u-grid-cell`. Both files are Protected Surfaces per AGENTS.md §Queue row family; user gave explicit approval to touch them for this pure-annotation pass.
+- **No CSS changes.** The existing queue-rows.css rule (`main.jobs-index .queue-list .screening-summary-grid > .screening-cell:not(.screening-title-cell) { padding-right: var(--queue-column-pad); }`) has specificity `(0,4,1)` and wins over the utility's `(0,1,0)`. The utility's default `padding-right: var(--grid-gap-standard)` (16px) is therefore dormant on dashboard; the surface rule continues to own the value, breakpoint-responsive per `--queue-column-pad`.
+- **Verification (bit-for-bit identical):**
+  - Desktop (1747): all 5 cells have identical `pl`, `pr`, `x`, `w`, `right` values in clean vs pilot states. Title `pl:0 pr:0 x:521 w:418 right:939`; meta cells `pl:0 pr:32`, last cell `right:1747` (flush to viewport).
+  - Mobile (375): identical across all 5 cells. Title `pl:0 pr:0 x:12 w:351 right:363`; meta cells `pl:0 pr:12`, last cell `right:363`.
+- **Pattern documented in the TSX** via a block comment above the grid so the next editor sees the contract named without having to trace the CSS.
+
+### Commit 4b-e — apply to remaining surfaces (planned)
+TBD — packet, profile, job flow, operators. Each as a separate sub-commit with its own stash/pop verification.
 
 ### Commit 4 — roll contract to remaining surfaces (planned)
 TBD.

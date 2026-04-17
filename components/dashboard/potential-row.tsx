@@ -39,30 +39,37 @@ export function PotentialRow({
     <article className="screening-row">
       <details className="screening-disclosure">
         <summary className="screening-summary">
+          {/*
+           * .u-grid-cell contract (see app/styles/utilities/grid.css, Commit 3):
+           * first-cell gets its left inset from the .queue-column container (page
+           * padding); non-first cells align to the column grid line (padding-left: 0)
+           * with the surface rule at queue-rows.css:384 owning padding-right.
+           * Classes are pure annotation — computed styles unchanged vs pre-4a.
+           */}
           <div className="screening-summary-grid">
-            <div className="screening-cell screening-title-cell">
+            <div className="screening-cell screening-title-cell u-grid-cell--first">
               <strong>{job.title}</strong>
               <span>{job.companyName}</span>
               <p className="screening-match">{getMatchReason(job)}</p>
             </div>
 
-            <div className="screening-cell">
+            <div className="screening-cell u-grid-cell">
               <span className="stage-column-label">Remote / location</span>
               <strong>{getLocationDisplay(job)}</strong>
             </div>
 
-            <div className="screening-cell">
+            <div className="screening-cell u-grid-cell">
               <span className="stage-column-label">{salary.label}</span>
               <strong>{salary.value}</strong>
             </div>
 
-            <div className="screening-cell">
+            <div className="screening-cell u-grid-cell">
               <span className="stage-column-label">Fit</span>
               <strong>{fit.label}</strong>
               <span className="screening-fit-meta">{fit.score}</span>
             </div>
 
-            <div className="screening-cell">
+            <div className="screening-cell u-grid-cell">
               <span className="stage-column-label">Posted</span>
               <strong>{formatDateLabel(job.postedAt)}</strong>
               <span className="screening-freshness">{getFreshnessLabel(job)}</span>
