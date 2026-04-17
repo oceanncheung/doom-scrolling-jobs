@@ -11,6 +11,8 @@ import {
   type WorkflowStatus,
 } from '@/lib/domain/types'
 import { hasSupabaseServerEnv } from '@/lib/env'
+import type { ActionState } from '@/lib/form/action-state'
+import { asOptionalText, asTextValue } from '@/lib/form/parse-helpers'
 import { generateAndPersistApplicationPacket } from '@/lib/jobs/application-packet-generation'
 import {
   getPacketSaveGuardMessage,
@@ -34,20 +36,9 @@ import {
 import { persistJobWorkflowTransition } from '@/lib/jobs/workflow-transition'
 import { createClient } from '@/lib/supabase/server'
 
-export interface JobWorkflowActionState {
-  message: string
-  status: 'error' | 'idle' | 'success'
-}
-
-export interface ApplicationPacketActionState {
-  message: string
-  status: 'error' | 'idle' | 'success'
-}
-
-export interface PacketGenerationActionState {
-  message: string
-  status: 'error' | 'idle' | 'success'
-}
+export type JobWorkflowActionState = ActionState
+export type ApplicationPacketActionState = ActionState
+export type PacketGenerationActionState = ActionState
 
 const initialJobWorkflowActionState: JobWorkflowActionState = {
   message: '',
@@ -57,18 +48,8 @@ const initialJobWorkflowActionState: JobWorkflowActionState = {
 const MISSING_COVER_LETTER_CHANGE_SUMMARY_COLUMN =
   "Could not find the 'cover_letter_change_summary' column of 'application_packets' in the schema cache"
 
-function asTextValue(value: FormDataEntryValue | null) {
-  return String(value ?? '').trim()
-}
-
 function asWorkflowStatus(value: string): WorkflowStatus | null {
   return workflowStatuses.includes(value as WorkflowStatus) ? (value as WorkflowStatus) : null
-}
-
-function asOptionalText(value: FormDataEntryValue | null) {
-  const text = asTextValue(value)
-
-  return text.length > 0 ? text : null
 }
 
 function asFieldArray(formData: FormData, name: string) {

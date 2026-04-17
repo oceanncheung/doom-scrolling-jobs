@@ -18,6 +18,14 @@ import type {
   ResumeExperienceRecord,
 } from '@/lib/domain/types'
 import { hasOpenAIEnv, hasSupabaseServerEnv } from '@/lib/env'
+import type { ActionState } from '@/lib/form/action-state'
+import {
+  asList,
+  asOptionalInteger,
+  asOptionalText,
+  asOptionalUnknownText,
+  asTextValue,
+} from '@/lib/form/parse-helpers'
 import { rescorePersistedImportedJobs } from '@/lib/jobs/real-feed'
 import {
   collectCoverLetterMasterIssues,
@@ -31,10 +39,7 @@ import {
 import { defaultMatchingPreferences, normalizeMatchingPreferences } from '@/lib/profile/matching-preferences'
 import { createClient } from '@/lib/supabase/server'
 
-export interface ProfileActionState {
-  message: string
-  status: 'error' | 'idle' | 'success'
-}
+export type ProfileActionState = ActionState
 
 interface ParseResult<T> {
   error?: string
@@ -44,38 +49,6 @@ interface ParseResult<T> {
 interface UploadedSourceDocument {
   fileName: string | null
   parsedText: string | null
-}
-
-function asTextValue(value: FormDataEntryValue | null) {
-  return String(value ?? '').trim()
-}
-
-function asOptionalText(value: FormDataEntryValue | null) {
-  const text = asTextValue(value)
-  return text.length > 0 ? text : null
-}
-
-function asOptionalUnknownText(value: unknown) {
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
-}
-
-function asList(value: FormDataEntryValue | null) {
-  return String(value ?? '')
-    .split(/[\n,]/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
-
-function asOptionalInteger(value: FormDataEntryValue | null) {
-  const raw = asTextValue(value)
-
-  if (!raw) {
-    return null
-  }
-
-  const parsed = Number.parseInt(raw, 10)
-
-  return Number.isFinite(parsed) ? parsed : null
 }
 
 function asUploadedFile(value: FormDataEntryValue | null) {

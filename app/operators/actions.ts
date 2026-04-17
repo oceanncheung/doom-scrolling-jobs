@@ -6,17 +6,12 @@ import { revalidatePath } from 'next/cache'
 
 import { activeOperatorCookieName } from '@/lib/data/operators'
 import { hasSupabaseServerEnv } from '@/lib/env'
+import type { ActionState } from '@/lib/form/action-state'
+import { asTextValue } from '@/lib/form/parse-helpers'
 import { defaultMatchingPreferences } from '@/lib/profile/matching-preferences'
 import { createClient } from '@/lib/supabase/server'
 
-export interface OperatorSetupActionState {
-  message: string
-  status: 'error' | 'idle' | 'success'
-}
-
-function asTextValue(value: FormDataEntryValue | null) {
-  return String(value ?? '').trim()
-}
+export type OperatorSetupActionState = ActionState
 
 function normalizeSlug(value: string) {
   return value
