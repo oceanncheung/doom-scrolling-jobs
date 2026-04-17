@@ -618,6 +618,28 @@
   }
 }
 
+/*
+ * Save Profile — rested (disabled because nothing to save) state.
+ * The base .button.button-primary:disabled override in controls.css keeps a white fill
+ * with a black border — correct for LOADING primaries (Create operator mid-submit, etc.)
+ * where an anchored block signals "working." But Save Profile is a LATENT primary: it
+ * sits in the rail waiting for any form edit to re-arm it. The user reads the white fill
+ * as "active but for some reason muted," not "nothing to save right now."
+ *
+ * Align with the "profile generated" treatment on the upload-slot action button (see
+ * forms/settings-fields.css :185) — soft-grey fill + line-soft label — but keep the
+ * black 1px border so the editorial frame stays visible on every breakpoint (desktop
+ * rail, mobile rail-collapse, tablet). Selector wins specificity over both
+ * .button.button-primary:disabled (0,3,0) and .rail-collapse-action .settings-save-button
+ * (0,2,0) so it applies in all layouts without per-breakpoint duplication.
+ */
+.button.button-primary.settings-save-button:disabled {
+  background: var(--surface-soft);
+  color: var(--line-soft);
+  border-color: var(--line);
+  opacity: 1;
+}
+
 .settings-section-state-shell {
   display: grid;
   gap: var(--settings-stack-gap);
