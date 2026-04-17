@@ -15,9 +15,32 @@
  * Safe to run anytime — the enrichment helper is idempotent and never throws.
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
+
 import { hasSupabaseServerEnv } from '@/lib/env'
 import { enrichJobDescriptionById } from '@/lib/jobs/description-enrichment'
 import { createClient } from '@/lib/supabase/server'
+
+// Load .env.local / .env the same way smoke-helpers does, so `npm run` pick up the
+// operator's local Supabase + OpenAI credentials without needing dotenv plumbing.
+function loadEnvFile(filename: string) {
+  const filepath = path.join(process.cwd(), filename)
+  if (!fs.existsSync(filepath)) return
+  for (const line of fs.readFileSync(filepath, 'utf8').split(/\n+/)) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const separatorIndex = trimmed.indexOf('=')
+    if (separatorIndex <= 0) continue
+    const key = trimmed.slice(0, separatorIndex).trim()
+    const rawValue = trimmed.slice(separatorIndex + 1).trim()
+    const value = rawValue.replace(/^['"]|['"]$/g, '')
+    if (!(key in process.env)) process.env[key] = value
+  }
+}
+
+loadEnvFile('.env.local')
+loadEnvFile('.env')
 
 interface Args {
   limit?: number
