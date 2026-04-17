@@ -6,7 +6,11 @@ export default defineConfig([
   ...nextVitals,
   ...nextTypeScript,
   globalIgnores([
-    '.next/**',
+    // `.next*/**` covers both `.next/` (active build output) and any ` 2`/`3`-suffixed
+    // duplicates created by editors or stale rebuilds (e.g. `.next 2/`). Keeping these
+    // out of the lint crawl prevents transpiled output from flooding the report with
+    // false errors about `require()` and unused-vars in generated code.
+    '.next*/**',
     'out/**',
     'build/**',
     'dist/**',
