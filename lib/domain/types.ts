@@ -1,3 +1,5 @@
+import type { EvidenceBankEntryRecord } from './evidence'
+
 export const workflowStatuses = [
   'new',
   'ranked',
@@ -367,4 +369,11 @@ export interface OperatorWorkspaceRecord {
   profile: OperatorProfileRecord
   resumeMaster: ResumeMasterRecord
   status: ProfileWorkspaceStatusRecord
+  /**
+   * Confirmed evidence_bank entries (Phase A enrichment, confirmed via Phase B flow or
+   * CLI). Populated by `getOperatorProfile`; the generator consumes only confirmed
+   * entries so unverified extraction results never reach a shipped resume.
+   * Empty array when the operator hasn't run enrichment yet or has nothing confirmed.
+   */
+  confirmedEvidenceEntries: EvidenceBankEntryRecord[]
 }

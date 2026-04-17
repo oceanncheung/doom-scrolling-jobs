@@ -40,7 +40,7 @@ function asEnum<T extends string>(value: unknown, allowed: readonly T[], fallbac
   return fallback
 }
 
-function rowToRecord(row: Record<string, unknown>): EvidenceBankEntryRecord {
+export function rowToEvidenceBankRecord(row: Record<string, unknown>): EvidenceBankEntryRecord {
   return {
     id: asString(row.id),
     operatorId: asString(row.operator_id),
@@ -109,7 +109,7 @@ export async function insertExtractedEvidenceEntries(
   if (error) {
     throw new Error(`Failed to insert evidence entries: ${error.message}`)
   }
-  return ((data as Array<Record<string, unknown>>) ?? []).map(rowToRecord)
+  return ((data as Array<Record<string, unknown>>) ?? []).map(rowToEvidenceBankRecord)
 }
 
 export async function listEvidenceForOperator(operatorId: string): Promise<EvidenceBankEntryRecord[]> {
@@ -122,7 +122,7 @@ export async function listEvidenceForOperator(operatorId: string): Promise<Evide
   if (error) {
     throw new Error(`Failed to load evidence bank: ${error.message}`)
   }
-  return ((data as Array<Record<string, unknown>>) ?? []).map(rowToRecord)
+  return ((data as Array<Record<string, unknown>>) ?? []).map(rowToEvidenceBankRecord)
 }
 
 export async function listConfirmedEvidenceForOperator(
@@ -139,7 +139,7 @@ export async function listConfirmedEvidenceForOperator(
   if (error) {
     throw new Error(`Failed to load confirmed evidence: ${error.message}`)
   }
-  return ((data as Array<Record<string, unknown>>) ?? []).map(rowToRecord)
+  return ((data as Array<Record<string, unknown>>) ?? []).map(rowToEvidenceBankRecord)
 }
 
 export async function confirmEvidenceEntry(

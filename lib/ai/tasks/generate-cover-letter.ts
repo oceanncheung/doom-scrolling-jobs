@@ -4,6 +4,7 @@ import { generateOpenAIJson, canGenerateWithOpenAI } from '@/lib/ai/client'
 import type { CoverLetterInput, CoverLetterOutput } from '@/lib/ai/contracts'
 import { generateCoverLetterPrompt } from '@/lib/ai/prompts/generate-cover-letter'
 import { getOpenAIEnv } from '@/lib/env'
+import { formatEvidenceForPrompt, selectRelevantEvidenceForJob } from '@/lib/jobs/evidence-matching'
 
 function cleanLine(value: string) {
   return value.replace(/\s+/g, ' ').trim()
@@ -24,10 +25,32 @@ export async function generateCoverLetter(input: CoverLetterInput): Promise<Cove
     fetchedDescription.length > feedDescription.length * 1.5 && fetchedDescription.length >= 400
       ? fetchedDescription
       : feedDescription
+
+  // Phase D: pull in confirmed evidence_bank entries that match this JD's industry.
+  // Cover letters benefit especially from this — the "why this company" paragraph is
+  // where named client work (Curated Health on a supplements JD, EVIIVE on a biotech JD)
+  // lands most naturally.
+  const relevantEvidence = selectRelevantEvidenceForJob(
+    input.workspace.confirmedEvidenceEntries,
+    input.job,
+  )
+  const industryTagLine = input.job.primaryIndustry
+    ? `${input.job.primaryIndustry}${
+        input.job.adjacentIndustries.length > 0
+          ? ` (adjacent: ${input.job.adjacentIndustries.join(', ')})`
+          : ''
+      }`
+    : 'unclassified'
+  const evidenceLines = relevantEvidence.entries.map(formatEvidenceForPrompt)
+
   const user = [
     `Target role: ${input.job.title} at ${input.job.companyName}`,
+    `Target job industry: ${industryTagLine}`,
     `Job description: ${descriptionForPrompt}`,
     `Requirements: ${input.job.requirements.join(' | ')}`,
+    evidenceLines.length > 0
+      ? `Confirmed industry-relevant work from the candidate (use as factual anchor points when relevant; do not embellish beyond what is listed): ${evidenceLines.join(' || ')}`
+      : '',
     `Preferred qualifications: ${input.job.preferredQualifications.join(' | ')}`,
     `Profile headline: ${input.workspace.profile.headline}`,
     `Profile summary: ${input.workspace.profile.bioSummary}`,

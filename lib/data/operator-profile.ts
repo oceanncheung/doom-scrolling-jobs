@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { defaultOperator } from '@/lib/config/runtime'
+import { rowToEvidenceBankRecord } from '@/lib/data/evidence-bank'
 import { getActiveOperatorContext } from '@/lib/data/operators'
 import type {
   CoverLetterMasterRecord,
@@ -171,6 +172,7 @@ const seededCoverLetterMaster: CoverLetterMasterRecord = {
 const seededPortfolioItems: OperatorPortfolioItemRecord[] = []
 
 const seededWorkspace: OperatorWorkspaceRecord = {
+  confirmedEvidenceEntries: [],
   coverLetterMaster: seededCoverLetterMaster,
   portfolioItems: seededPortfolioItems,
   profile: seededProfile,
@@ -253,7 +255,7 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
 
   const supabase = createClient()
 
-  const [profileResult, resumeResult, coverLetterResult, portfolioResult] = await Promise.all([
+  const [profileResult, resumeResult, coverLetterResult, portfolioResult, evidenceResult] = await Promise.all([
     supabase
       .from('user_profiles')
       .select('*')
@@ -275,6 +277,13 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
       .eq('operator_id', operatorContext.operator.id)
       .order('is_primary', { ascending: false })
       .order('created_at', { ascending: true }),
+    supabase
+      .from('evidence_bank')
+      .select('*')
+      .eq('operator_id', operatorContext.operator.id)
+      .not('confirmed_at', 'is', null)
+      .is('discarded_at', null)
+      .order('confirmed_at', { ascending: false }),
   ])
 
   if (profileResult.error || !profileResult.data) {
@@ -371,10 +380,16 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
     canonicalProfileReviewedAt: asString(profile.canonical_profile_reviewed_at) || undefined,
   }
 
+  const confirmedEvidenceEntries =
+    evidenceResult.error || !Array.isArray(evidenceResult.data)
+      ? []
+      : (evidenceResult.data as Array<Record<string, unknown>>).map(rowToEvidenceBankRecord)
+
   return {
     issue: issues.length > 0 ? issues.join(' ') : undefined,
     source: issues.length > 0 ? 'database-fallback' : 'database',
     workspace: {
+      confirmedEvidenceEntries,
       portfolioItems,
       profile: normalizedProfile,
       coverLetterMaster,

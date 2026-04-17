@@ -7,6 +7,7 @@ import { computeRelevanceHints, type RelevanceAnnotation, type RelevanceHint } f
 import { verifyResumeVariant } from '@/lib/ai/tasks/verify-resume-variant'
 import type { ResumeExperienceRecord } from '@/lib/domain/types'
 import { getOpenAIEnv } from '@/lib/env'
+import { formatEvidenceForPrompt, selectRelevantEvidenceForJob } from '@/lib/jobs/evidence-matching'
 
 function cleanLine(value: string) {
   return value.replace(/\s+/g, ' ').trim()
@@ -556,12 +557,36 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
     fetchedDescription.length > feedDescription.length * 1.5 && fetchedDescription.length >= 400
       ? fetchedDescription
       : feedDescription
+
+  // Phase D: surface confirmed evidence_bank entries that match this JD's industry /
+  // scope. Unconfirmed entries are filtered out upstream (see operator-profile loader).
+  // Entries flow into the prompt as a structured block so the LLM can weave them into
+  // the summary or bullets when the candidate's existing source doesn't already mention
+  // the relevant industry touchpoint (e.g. Curated Health brand work surfacing on a
+  // supplement-brand resume even though MM.S's generic bullets don't name it).
+  const relevantEvidence = selectRelevantEvidenceForJob(
+    input.workspace.confirmedEvidenceEntries,
+    input.job,
+  )
+  const industryTagLine = input.job.primaryIndustry
+    ? `${input.job.primaryIndustry}${
+        input.job.adjacentIndustries.length > 0
+          ? ` (adjacent: ${input.job.adjacentIndustries.join(', ')})`
+          : ''
+      }`
+    : 'unclassified'
+  const evidenceLines = relevantEvidence.entries.map(formatEvidenceForPrompt)
+
   const user = [
     `Target role: ${input.job.title} at ${input.job.companyName}`,
+    `Target job industry: ${industryTagLine}`,
     `Target job description: ${descriptionForPrompt}`,
     `Requirements: ${input.job.requirements.join(' | ')}`,
     `Preferred qualifications: ${input.job.preferredQualifications.join(' | ')}`,
     `Skills keywords: ${input.job.skillsKeywords.join(' | ')}`,
+    evidenceLines.length > 0
+      ? `Confirmed industry-relevant work from the candidate's portfolio / web presence (use as extra proof points; already verified by the candidate — do not invent beyond what is listed here): ${evidenceLines.join(' || ')}`
+      : 'Confirmed industry-relevant work from the candidate: (none matched this JD)',
     `Profile headline: ${input.workspace.profile.headline}`,
     `Base resume title: ${input.workspace.resumeMaster.baseTitle}`,
     `Base resume summary: ${input.workspace.resumeMaster.summaryText}`,
