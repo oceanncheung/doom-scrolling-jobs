@@ -4,6 +4,7 @@ import {
   AlignmentType,
   BorderStyle,
   Document,
+  ExternalHyperlink,
   LevelFormat,
   LineRuleType,
   PageOrientation,
@@ -17,6 +18,7 @@ import {
 import type { ApplicationPacketRecord, OperatorWorkspaceRecord } from '@/lib/domain/types'
 import { type QualifiedJobRecord } from '@/lib/jobs/contracts'
 import {
+  type HeaderContactEntry,
   SHARED_DOCUMENT_THEME,
   buildCoverLetterDocumentSchema,
   buildResumeDocumentSchema,
@@ -98,16 +100,47 @@ function bodyParagraph(text: string) {
   })
 }
 
-function compactParagraph(text: string, secondary = false) {
+/**
+ * Build a single contact line (e.g. "Toronto | +1 416 555 0100 | name@example.com") where
+ * entries carrying an href render as Word ExternalHyperlink runs and plain-text entries
+ * render as regular TextRuns. The pipe separator stays a TextRun — standard convention so
+ * Word doesn't try to hyperlink the "|". The hiring recipient's Word app picks up the
+ * built-in Hyperlink style (blue + underline), which is the universal cue that these are
+ * clickable — matches the monochrome body for everything else.
+ */
+function contactEntriesParagraph(entries: HeaderContactEntry[], secondary = false) {
+  const color = secondary
+    ? SHARED_DOCUMENT_THEME.color.secondary
+    : SHARED_DOCUMENT_THEME.color.primary
+  const fontSize = toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body)
+
+  const children: Array<TextRun | ExternalHyperlink> = []
+  entries.forEach((entry, index) => {
+    if (index > 0) {
+      children.push(
+        new TextRun({
+          color,
+          font: SHARED_DOCUMENT_THEME.fontFamily,
+          size: fontSize,
+          text: ' | ',
+        }),
+      )
+    }
+    const labelRun = new TextRun({
+      color,
+      font: SHARED_DOCUMENT_THEME.fontFamily,
+      size: fontSize,
+      text: entry.label,
+    })
+    if (entry.href) {
+      children.push(new ExternalHyperlink({ children: [labelRun], link: entry.href }))
+    } else {
+      children.push(labelRun)
+    }
+  })
+
   return new Paragraph({
-    children: [
-      new TextRun({
-        color: secondary ? SHARED_DOCUMENT_THEME.color.secondary : SHARED_DOCUMENT_THEME.color.primary,
-        font: SHARED_DOCUMENT_THEME.fontFamily,
-        size: toHalfPoints(SHARED_DOCUMENT_THEME.fontSizePt.body),
-        text,
-      }),
-    ],
+    children,
     spacing: {
       after: toTwip(SHARED_DOCUMENT_THEME.spacingPt.afterCompact),
       line: BODY_LINE_HEIGHT,
@@ -323,13 +356,15 @@ export async function buildResumeDocxBuffer({
     )
   }
 
-  // Contact lines stay close to the name so the header reads as one block.
-  if (content.header.primaryContactLine) {
-    children.push(compactParagraph(content.header.primaryContactLine))
+  // Contact lines stay close to the name so the header reads as one block. Entries with
+  // hrefs (email → mailto, linkedin/portfolio/website → https) render as clickable
+  // ExternalHyperlink runs so a hiring manager can tap through without retyping.
+  if (content.header.primaryContactEntries.length > 0) {
+    children.push(contactEntriesParagraph(content.header.primaryContactEntries))
   }
 
-  if (content.header.secondaryContactLine) {
-    children.push(compactParagraph(content.header.secondaryContactLine))
+  if (content.header.secondaryContactEntries.length > 0) {
+    children.push(contactEntriesParagraph(content.header.secondaryContactEntries))
   }
 
   if (content.summary) {
@@ -460,12 +495,14 @@ export async function buildCoverLetterDocxBuffer({
     )
   }
 
-  if (content.header.primaryContactLine) {
-    children.push(compactParagraph(content.header.primaryContactLine))
+  // Hyperlinked contact header, same pattern as the resume — email goes mailto:,
+  // linkedin/portfolio/website go https:.
+  if (content.header.primaryContactEntries.length > 0) {
+    children.push(contactEntriesParagraph(content.header.primaryContactEntries))
   }
 
-  if (content.header.secondaryContactLine) {
-    children.push(compactParagraph(content.header.secondaryContactLine))
+  if (content.header.secondaryContactEntries.length > 0) {
+    children.push(contactEntriesParagraph(content.header.secondaryContactEntries))
   }
 
   children.push(bodyParagraph(content.dateLine))

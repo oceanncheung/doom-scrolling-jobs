@@ -65,6 +65,15 @@ function clipAtWord(text: string, maxLength: number) {
   return `${(boundary > 0 ? clipped.slice(0, boundary) : clipped).trim()}...`
 }
 
+/**
+ * Clip a paragraph to fit within `maxLength` characters while preferring whole-sentence
+ * boundaries. Previously we always fell through to clipAtWord, which appends "..." mid-
+ * sentence when a paragraph spills over budget — the user reported a cover letter ending
+ * on "...aligning..." which is exactly that failure mode. Now we keep entire sentences
+ * until adding another one would bust the cap, then stop. Word-boundary clipping is kept
+ * as a fallback for the pathological case where even a single sentence is longer than the
+ * whole budget (the downstream prompt targets 4–6 sentence paragraphs, so this is rare).
+ */
 function clipParagraph(text: string, maxLength: number, maxSentences?: number) {
   const normalized = normalizeBlockText(text)
 
@@ -77,9 +86,28 @@ function clipParagraph(text: string, maxLength: number, maxSentences?: number) {
     .map((sentence) => sentence.trim())
     .filter(Boolean)
 
-  const limited = typeof maxSentences === 'number' ? sentences.slice(0, maxSentences).join(' ') : normalized
+  const candidateSentences =
+    typeof maxSentences === 'number' ? sentences.slice(0, maxSentences) : sentences
 
-  return clipAtWord(limited, maxLength)
+  const kept: string[] = []
+  let running = 0
+  for (const sentence of candidateSentences) {
+    const separatorLength = kept.length > 0 ? 1 : 0
+    if (running + separatorLength + sentence.length > maxLength) {
+      break
+    }
+    kept.push(sentence)
+    running += separatorLength + sentence.length
+  }
+
+  if (kept.length > 0) {
+    return kept.join(' ')
+  }
+
+  // Single-sentence-exceeds-budget fallback: clip the first sentence at a word boundary.
+  // Only reachable when the LLM writes an outlier paragraph; we still prefer a clean
+  // mid-word clip to dropping the paragraph entirely, which would starve the letter.
+  return clipAtWord(candidateSentences[0] ?? normalized, maxLength)
 }
 
 function ensureTerminalPunctuation(value: string) {
@@ -111,13 +139,6 @@ function splitCompleteSentences(value: string | null | undefined) {
 
 function limitToWholeSentences(value: string | null | undefined, maxSentences: number) {
   return splitCompleteSentences(value).slice(0, maxSentences).join(' ')
-}
-
-function joinLine(values: Array<string | null | undefined>) {
-  return values
-    .map((value) => normalizeInlineText(value))
-    .filter(Boolean)
-    .join(' | ')
 }
 
 function formatDisplayUrl(value: string | null | undefined) {
@@ -350,15 +371,43 @@ const RESUME_BUDGET = {
   summaryMaxLength: 280,
 } as const
 
+/**
+ * Cover letter length budget. A well-structured cover letter is 3–4 paragraphs (open / fit /
+ * why-this-company / close), ~275–350 words total, roughly 400–700 characters per paragraph.
+ * The prompt targets that shape directly; this budget is a ceiling, not a target.
+ *
+ * Historically capped at 700/paragraph and 3 paragraphs, but that forced "aligning..."
+ * mid-sentence truncation on longer outputs and collapsed the close into the body. We now
+ * carry 4 paragraphs and 1400 chars each — ample headroom for natural prose while still
+ * enforcing an upper bound on pathological LLM output. Combined with the sentence-boundary
+ * clip in clipParagraph(), nothing in the DOCX should ever end on a partial sentence.
+ */
 const COVER_LETTER_BUDGET = {
-  bodyParagraphMaxLength: 700,
-  maxParagraphs: 3,
+  bodyParagraphMaxLength: 1400,
+  maxParagraphs: 4,
 } as const
+
+/**
+ * A single contact-header field, carrying both the display label and (for URL-bearing
+ * entries) the raw href so the DOCX renderer can wrap it in an ExternalHyperlink. Plain
+ * text entries (location, phone display) leave href undefined and render as TextRun.
+ */
+export interface HeaderContactEntry {
+  label: string
+  href?: string
+}
 
 export interface SharedDocumentHeader {
   name: string
+  /** Joined string form — location | phone | email. Kept for the page-fitter which
+   *  measures wrapped-line height from the full string. The renderer uses
+   *  `primaryContactEntries` instead so emails render as clickable mailto: links. */
   primaryContactLine: string
+  /** Joined display-URL form — linkedin | portfolio | website. Kept for the page-fitter,
+   *  rendered from `secondaryContactEntries` in the DOCX builder. */
   secondaryContactLine?: string
+  primaryContactEntries: HeaderContactEntry[]
+  secondaryContactEntries: HeaderContactEntry[]
 }
 
 /*
@@ -891,22 +940,67 @@ function fitResumeDraftToPageBudget(draft: ResumeSchemaDraft): ResumeOnePageDiag
   }
 }
 
+function buildHeaderEntry(label: string, href?: string): HeaderContactEntry | null {
+  const normalizedLabel = normalizeInlineText(label)
+  if (!normalizedLabel) return null
+  const normalizedHref = href ? normalizeInlineText(href) : undefined
+  return { label: normalizedLabel, href: normalizedHref || undefined }
+}
+
+function ensureAbsoluteUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
 function buildSharedHeader(workspace: OperatorWorkspaceRecord): SharedDocumentHeader {
   const contact = workspace.resumeMaster.contactSnapshot
-  const primaryContactLine = joinLine([contact.location, contact.phone, contact.email])
-  const secondaryLinks = [
-    contact.linkedinUrl,
-    contact.portfolioUrl || contact.websiteUrl,
-    contact.websiteUrl && contact.websiteUrl !== contact.portfolioUrl ? contact.websiteUrl : '',
+
+  // Primary row — location (plain text) · phone (tel: link when present) · email
+  // (mailto: link when present). Every entry that carries a real URL gets an href so
+  // the DOCX renderer can wrap it in ExternalHyperlink; text-only entries (location,
+  // formatted phone) render as plain TextRun.
+  const primaryContactEntries: HeaderContactEntry[] = [
+    buildHeaderEntry(contact.location),
+    buildHeaderEntry(contact.phone, contact.phone ? `tel:${contact.phone.replace(/\s+/g, '')}` : undefined),
+    buildHeaderEntry(contact.email, contact.email ? `mailto:${contact.email}` : undefined),
+  ].filter((entry): entry is HeaderContactEntry => entry !== null)
+  const primaryContactLine = primaryContactEntries.map((entry) => entry.label).join(' | ')
+
+  // Secondary row — linkedin / portfolio / website, display-form label with the real
+  // absolute URL as href. Deduplicate portfolio vs website when both point at the same
+  // place, and cap at the budget so the header doesn't grow past two rendered lines.
+  const secondaryRawEntries = [
+    { label: formatDisplayUrl(contact.linkedinUrl), href: ensureAbsoluteUrl(contact.linkedinUrl) },
+    {
+      label: formatDisplayUrl(contact.portfolioUrl || contact.websiteUrl),
+      href: ensureAbsoluteUrl(contact.portfolioUrl || contact.websiteUrl),
+    },
+    {
+      label:
+        contact.websiteUrl && contact.websiteUrl !== contact.portfolioUrl
+          ? formatDisplayUrl(contact.websiteUrl)
+          : '',
+      href:
+        contact.websiteUrl && contact.websiteUrl !== contact.portfolioUrl
+          ? ensureAbsoluteUrl(contact.websiteUrl)
+          : '',
+    },
   ]
-    .map(formatDisplayUrl)
-    .filter(Boolean)
+  const secondaryContactEntries: HeaderContactEntry[] = secondaryRawEntries
+    .filter((entry) => entry.label && entry.href)
     .slice(0, RESUME_BUDGET.secondaryContactLinkCount)
+  const secondaryContactLine =
+    secondaryContactEntries.length > 0
+      ? secondaryContactEntries.map((entry) => entry.label).join(' | ')
+      : undefined
 
   return {
     name: normalizeInlineText(contact.name),
     primaryContactLine,
-    secondaryContactLine: secondaryLinks.length > 0 ? secondaryLinks.join(' | ') : undefined,
+    secondaryContactLine,
+    primaryContactEntries,
+    secondaryContactEntries,
   }
 }
 
