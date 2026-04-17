@@ -25,6 +25,7 @@ import {
   listEvidenceForOperator,
 } from '@/lib/data/evidence-bank'
 import { hasSupabaseServerEnv } from '@/lib/env'
+import { createClient } from '@/lib/supabase/server'
 
 function loadEnvFile(filename: string) {
   const filepath = path.join(process.cwd(), filename)
@@ -50,6 +51,8 @@ interface Args {
   discardAll: boolean
   confirmIds: string[]
   discardIds: string[]
+  operatorSlug?: string
+  operatorId?: string
 }
 
 function parseArgs(argv: readonly string[]): Args {
@@ -62,9 +65,34 @@ function parseArgs(argv: readonly string[]): Args {
       args.confirmIds = arg.slice('--confirm='.length).split(',').map((s) => s.trim()).filter(Boolean)
     } else if (arg.startsWith('--discard=')) {
       args.discardIds = arg.slice('--discard='.length).split(',').map((s) => s.trim()).filter(Boolean)
+    } else if (arg.startsWith('--operator-slug=')) {
+      args.operatorSlug = arg.slice('--operator-slug='.length).trim()
+    } else if (arg.startsWith('--operator-id=')) {
+      args.operatorId = arg.slice('--operator-id='.length).trim()
     }
   }
   return args
+}
+
+async function resolveOperatorId(args: Args): Promise<{ operatorId: string; displayName: string } | null> {
+  if (args.operatorId || args.operatorSlug) {
+    const supabase = createClient()
+    let query = supabase.from('operators').select('id, display_name, slug').limit(1)
+    if (args.operatorId) query = query.eq('id', args.operatorId)
+    else if (args.operatorSlug) query = query.eq('slug', args.operatorSlug)
+    const { data, error } = await query.maybeSingle()
+    if (error || !data) return null
+    return {
+      operatorId: String((data as { id?: string }).id ?? ''),
+      displayName: String((data as { display_name?: string }).display_name ?? args.operatorSlug ?? args.operatorId ?? ''),
+    }
+  }
+  const operatorContext = await getActiveOperatorContext()
+  if (!operatorContext?.operator?.id) return null
+  return {
+    operatorId: operatorContext.operator.id,
+    displayName: operatorContext.operator.displayName,
+  }
 }
 
 async function main() {
@@ -73,14 +101,14 @@ async function main() {
     process.exit(1)
   }
 
-  const operatorContext = await getActiveOperatorContext()
-  if (!operatorContext?.operator?.id) {
-    console.error('No active operator selected.')
+  const args = parseArgs(process.argv.slice(2))
+  const target = await resolveOperatorId(args)
+  if (!target) {
+    console.error('No operator selected. Pass --operator-slug=<slug> or --operator-id=<uuid>, or sign in to set the active operator cookie.')
     process.exit(1)
   }
 
-  const args = parseArgs(process.argv.slice(2))
-  const allEntries = await listEvidenceForOperator(operatorContext.operator.id)
+  const allEntries = await listEvidenceForOperator(target.operatorId)
   const unconfirmed = allEntries.filter((entry) => !entry.confirmedAt && !entry.discardedAt)
 
   // Default: list unconfirmed entries when no action flags are given.
@@ -92,7 +120,7 @@ async function main() {
     args.discardIds.length > 0
 
   if (!hasAction) {
-    console.info(`Operator: ${operatorContext.operator.displayName}`)
+    console.info(`Operator: ${target.displayName}`)
     console.info(`Total entries: ${allEntries.length}  ·  unconfirmed: ${unconfirmed.length}  ·  confirmed: ${allEntries.filter((e) => e.confirmedAt).length}  ·  discarded: ${allEntries.filter((e) => e.discardedAt).length}`)
     console.info('')
     if (unconfirmed.length === 0) {

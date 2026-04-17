@@ -35,8 +35,33 @@ function loadEnvFile(filename: string) {
 loadEnvFile('.env.local')
 loadEnvFile('.env')
 
+interface EnrichArgs {
+  operatorSlug?: string
+  operatorId?: string
+  linkedinDir?: string
+}
+
+function parseArgs(argv: readonly string[]): EnrichArgs {
+  const args: EnrichArgs = {}
+  for (const arg of argv) {
+    if (arg.startsWith('--operator-slug=')) {
+      args.operatorSlug = arg.slice('--operator-slug='.length).trim()
+    } else if (arg.startsWith('--operator-id=')) {
+      args.operatorId = arg.slice('--operator-id='.length).trim()
+    } else if (arg.startsWith('--linkedin-dir=')) {
+      args.linkedinDir = arg.slice('--linkedin-dir='.length).trim()
+    }
+  }
+  return args
+}
+
 async function main() {
-  const result = await enrichActiveOperatorEvidence()
+  const args = parseArgs(process.argv.slice(2))
+  const result = await enrichActiveOperatorEvidence({
+    operatorIdOverride: args.operatorId,
+    operatorSlugOverride: args.operatorSlug,
+    linkedinExportDirectory: args.linkedinDir,
+  })
   console.info(`Enrichment for operator ${result.operatorId}:`)
   for (const source of result.sources) {
     const tag = `${source.sourceKind} @ ${source.sourceUrl || '(no url)'}`

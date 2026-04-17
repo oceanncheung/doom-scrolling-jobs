@@ -33,6 +33,7 @@
     "backfill:job-review-copy": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/backfill-job-review-copy.mts",
     "backfill:job-descriptions": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/backfill-job-descriptions.mts",
     "backfill:job-industries": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/backfill-job-industries.mts",
+    "backfill:jobs": "npm run backfill:job-descriptions && npm run backfill:job-industries",
     "enrich:operator-evidence": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/enrich-operator-evidence.mts",
     "review:evidence": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/review-operator-evidence.mts",
     "cleanup:packet-generation": "node --experimental-transform-types --loader ./scripts/alias-loader.mjs ./scripts/clear-packet-generation.mts"
