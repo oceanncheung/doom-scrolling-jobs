@@ -3,7 +3,7 @@ import 'server-only'
 import { generateOpenAIJson, canGenerateWithOpenAI } from '@/lib/ai/client'
 import type { ResumeVariantInput, ResumeVariantOutput } from '@/lib/ai/contracts'
 import { generateResumeVariantPrompt } from '@/lib/ai/prompts/generate-resume-variant'
-import { computeRelevanceHints } from '@/lib/ai/tasks/compute-relevance-hints'
+import { computeRelevanceHints, type RelevanceAnnotation, type RelevanceHint } from '@/lib/ai/tasks/compute-relevance-hints'
 import { verifyResumeVariant } from '@/lib/ai/tasks/verify-resume-variant'
 import type { ResumeExperienceRecord } from '@/lib/domain/types'
 import { getOpenAIEnv } from '@/lib/env'
@@ -141,14 +141,33 @@ export function computeTenureMonths(
 }
 
 /**
- * Floor bullet count for a role based on tenure. Longer tenure → more bullets. This is the
- * TARGET we pad up to from source material; the LLM may return more (up to MAX).
+ * Floor bullet count for a role. Relevance is the dominant signal — a high-relevance role is
+ * the candidate's anchor and should carry the full 5 bullets when source supports. Tenure is a
+ * secondary modifier for medium-relevance roles so very new side-gigs don't crowd out the
+ * main narrative. Low-relevance roles, if kept at all (see filterIrrelevantEntries), get the
+ * smallest allowable presence.
+ *
+ * This replaces the v4.1 pure-tenure target. Rationale: the user's anchor is often their most
+ * relevant role, not necessarily their longest — e.g., a candidate with 7 years at a
+ * consultancy and 2 years at a perfectly JD-matched current gig wants the JD-matched role
+ * densely described.
  */
-function targetBulletsForTenure(tenureMonths: number): number {
-  if (tenureMonths >= MONTHS_FOR_MAX_BULLETS) return MAX_HIGHLIGHTS_PER_ENTRY
-  if (tenureMonths >= MONTHS_FOR_FOUR_BULLETS) return 4
-  return MIN_HIGHLIGHTS_PER_ENTRY
+function targetBulletsForEntry(relevanceHint: RelevanceHint, tenureMonths: number): number {
+  if (relevanceHint === 'high') return MAX_HIGHLIGHTS_PER_ENTRY
+  if (relevanceHint === 'medium') {
+    if (tenureMonths >= MONTHS_FOR_MAX_BULLETS) return MAX_HIGHLIGHTS_PER_ENTRY
+    if (tenureMonths >= MONTHS_FOR_FOUR_BULLETS) return 4
+    return MIN_HIGHLIGHTS_PER_ENTRY
+  }
+  // 'low' — only reachable when the relevance filter kept the entry because dropping would
+  // violate MIN_EXPERIENCE_ENTRIES. Keep it compact.
+  return 2
 }
+
+// Minimum roles to always keep on a resume — the code-level relevance filter will never strip
+// below this count, even if every remaining role is 'low' relevance. A thin resume beats an
+// empty one.
+const MIN_EXPERIENCE_ENTRIES = 2
 
 // Soft-skill phrases banned from skillsSection. The prompt already instructs the model not to
 // emit these, but we strip them in code too so a single prompt regression can't leak them in.
@@ -180,20 +199,6 @@ const SOFT_SKILL_PATTERNS: RegExp[] = [
   /^(?:strong\s+)?work[-\s]ethic$/i,
 ]
 
-// Weak opener patterns that should not survive padding from source bullets. The prompt
-// instructs the LLM to rewrite these, but source-verbatim padding could still reintroduce
-// them. Bullets starting with any of these are skipped during padding.
-const WEAK_BULLET_PREFIXES: RegExp[] = [
-  /^responsible\s+for\b/i,
-  /^worked\s+on\b/i,
-  /^helped\b/i,
-  /^assisted\s+(?:with|in)\b/i,
-  /^involved\s+in\b/i,
-  /^participated\s+in\b/i,
-  /^supported(?:\s+the)?\s+team\b/i,
-  /^tasked\s+with\b/i,
-]
-
 // A soft-skill phrase inside a bullet is fine (demonstrated through work); a bullet that is
 // ENTIRELY a soft-skill claim is not. These match a whole-bullet soft-skill assertion.
 const WEAK_BULLET_BODY_PATTERNS: RegExp[] = [
@@ -203,13 +208,21 @@ const WEAK_BULLET_BODY_PATTERNS: RegExp[] = [
   /^detail[-\s]?oriented\b/i,
 ]
 
-const MIN_BULLET_LENGTH = 40
+// Minimum length for a source bullet to be usable as padding. Lowered from 40 to 20 chars —
+// the previous threshold was stripping legitimate short-but-real bullets like "Led rebrand of
+// Acme's B2C suite", starving roles of padding material. Genuinely fragmentary content (under
+// ~20 chars) still gets filtered.
+const MIN_BULLET_LENGTH = 20
 
-function isWeakSourceBullet(value: string) {
+// v4.2 note: we no longer filter source bullets by weak-prefix patterns ("Responsible for",
+// "Worked on", "Helped"). The renderer already rewrites those to stronger verbs
+// (see WEAK_BULLET_PREFIXES in lib/jobs/document-system.ts), so filtering them here starves
+// the padding step without improving the final output. The only content we refuse to surface
+// is whole-bullet soft-skill assertions (below) and tiny fragments.
+function isUnusableSourceBullet(value: string) {
   const normalized = cleanLine(value)
   if (!normalized) return true
   if (normalized.length < MIN_BULLET_LENGTH) return true
-  if (WEAK_BULLET_PREFIXES.some((pattern) => pattern.test(normalized))) return true
   if (WEAK_BULLET_BODY_PATTERNS.some((pattern) => pattern.test(normalized))) return true
   return false
 }
@@ -353,6 +366,7 @@ function dedupeHighlights(values: string[]) {
 function normalizeExperienceEntry(
   source: ResumeExperienceRecord,
   draft: Partial<ResumeExperienceRecord> | undefined,
+  relevanceHint: RelevanceHint,
 ): ResumeExperienceRecord {
   const summary = cleanLine(draft?.summary ?? source.summary)
   const draftHighlights = Array.isArray(draft?.highlights)
@@ -361,28 +375,24 @@ function normalizeExperienceEntry(
         .map((item) => cleanLine(item))
         .filter(Boolean)
     : source.highlights
-  // Pad up to a tenure-aware target with master-source bullets the LLM didn't already cover.
-  // Longer-tenure roles (2+ years) aim for 5 bullets; 1–2 years aim for 4; shorter roles aim
-  // for 3. We never fabricate — if the master itself has fewer bullets than the target, the
-  // role gets what the master has.
+  // Pad up to a relevance-aware target with master-source bullets the LLM didn't already cover.
+  // Relevance is the primary signal (high → 5, medium → 3–4, low → 2) with tenure as a
+  // secondary modifier for medium-relevance. We never fabricate — if the master itself has
+  // fewer bullets than the target, the role gets what the master has.
   //
-  // v4: filter out weak source bullets (too short, "Responsible for", soft-skill assertions)
-  // BEFORE padding, so padding can't reintroduce the exact phrasing the prompt tried to ban.
-  // If every candidate bullet is weak, we accept the LLM's count as-is — better to ship 2
-  // sharp bullets than 3 including a weak one.
-  //
-  // v4.1: tenure-aware floor. The user's anchor role (longest-held) was getting stuck at the
-  // 3-bullet floor even when the source had 5+ bullets — that made the most important role
-  // read as the sparsest. Now the floor scales with tenure.
+  // v4.2: relevance-aware target + looser source-bullet filter. The weak-prefix filter from
+  // v4 was stripping real source material the renderer would have rewritten to strong verbs,
+  // leaving the user's most important role sparsely described. Now padding uses all source
+  // bullets that aren't genuinely unusable (too short or whole-bullet soft-skill).
   const tenureMonths = computeTenureMonths(source)
-  const tenureFloor = targetBulletsForTenure(tenureMonths)
+  const target = targetBulletsForEntry(relevanceHint, tenureMonths)
   const sourceFallback = source.highlights
     .map((item) => cleanLine(item))
-    .filter((item) => Boolean(item) && !isWeakSourceBullet(item))
+    .filter((item) => Boolean(item) && !isUnusableSourceBullet(item))
   const padded = dedupeHighlights([...draftHighlights, ...sourceFallback])
   const targetCount = Math.min(
     MAX_HIGHLIGHTS_PER_ENTRY,
-    Math.max(draftHighlights.length, Math.min(tenureFloor, padded.length)),
+    Math.max(draftHighlights.length, Math.min(target, padded.length)),
   )
   const highlights = padded.slice(0, targetCount)
 
@@ -397,8 +407,70 @@ function normalizeExperienceEntry(
   }
 }
 
-function toSourceKey(entry: ResumeExperienceRecord) {
+function toSourceKey(entry: Pick<ResumeExperienceRecord, 'companyName' | 'roleTitle'>) {
   return `${entry.companyName}::${entry.roleTitle}`.toLowerCase()
+}
+
+/**
+ * Code-level Tier-D filter. The prompt asks the LLM to omit irrelevant roles, but the LLM
+ * sometimes keeps them as "credibility anchors" when they aren't credibility anchors — e.g.
+ * an executive-assistant role at a government agency on a senior graphic designer resume.
+ * This is the defense-in-depth layer: drop entries where every signal agrees the role is
+ * unrelated.
+ *
+ * Drop rule (must satisfy ALL):
+ *   - relevanceHint === 'low'
+ *   - titleSimilarity < 0.2 (title tokens share virtually nothing with the JD title after
+ *     stopwords, including seniority markers)
+ *   - keywordMatches === 0 (no JD skill keyword found in the role's source text)
+ *
+ * Safety net: never strip below MIN_EXPERIENCE_ENTRIES. A thin resume beats an empty one,
+ * and an early-career candidate with no JD-matched history would otherwise have nothing.
+ */
+export function filterIrrelevantEntries(
+  entries: ResumeExperienceRecord[],
+  relevanceByKey: Map<string, RelevanceAnnotation>,
+): { kept: ResumeExperienceRecord[]; dropped: Array<{ entry: ResumeExperienceRecord; reason: string }> } {
+  const keepers: ResumeExperienceRecord[] = []
+  const drops: Array<{ entry: ResumeExperienceRecord; reason: string }> = []
+
+  for (const entry of entries) {
+    const annotation = relevanceByKey.get(toSourceKey(entry))
+    const hint = annotation?.relevanceHint ?? 'low'
+    const titleSim = annotation?.titleSimilarity ?? 0
+    const keywords = annotation?.keywordMatches ?? 0
+
+    if (hint === 'low' && titleSim < 0.2 && keywords === 0) {
+      drops.push({
+        entry,
+        reason: `relevanceHint=low titleSimilarity=${titleSim.toFixed(2)} keywordMatches=0`,
+      })
+      continue
+    }
+    keepers.push(entry)
+  }
+
+  // Safety net: if the filter took us below the floor, reinstate the strongest-looking drops
+  // (highest titleSimilarity, then highest keywordMatches) until we hit the floor.
+  if (keepers.length < MIN_EXPERIENCE_ENTRIES && drops.length > 0) {
+    const needed = MIN_EXPERIENCE_ENTRIES - keepers.length
+    const rescueOrder = [...drops].sort((a, b) => {
+      const aAnn = relevanceByKey.get(toSourceKey(a.entry))
+      const bAnn = relevanceByKey.get(toSourceKey(b.entry))
+      const aScore = (aAnn?.titleSimilarity ?? 0) * 10 + (aAnn?.keywordMatches ?? 0)
+      const bScore = (bAnn?.titleSimilarity ?? 0) * 10 + (bAnn?.keywordMatches ?? 0)
+      return bScore - aScore
+    })
+    const rescued = rescueOrder.slice(0, needed).map((item) => item.entry)
+    keepers.push(...rescued)
+    const rescuedKeys = new Set(rescued.map(toSourceKey))
+    return {
+      kept: keepers,
+      dropped: drops.filter((item) => !rescuedKeys.has(toSourceKey(item.entry))),
+    }
+  }
+
+  return { kept: keepers, dropped: drops }
 }
 
 function asStringArray(value: unknown, max = 8) {
@@ -425,14 +497,21 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
     id: `experience_${index + 1}`,
     ...entry,
   }))
-  // v4: compute a cheap relevance hint per entry (keyword overlap + title similarity) and
-  // pass it to the LLM. The prompt says: use this to break ties, trust the source bullets
-  // over the hint when they disagree. This is a deterministic signal, not a filter — the
-  // model still decides what to keep or drop.
+  // v4: compute a cheap relevance hint per entry (keyword overlap + title similarity). Fed
+  // to the LLM as a tiebreaker AND used by the task-layer filter to drop Tier-D roles the
+  // LLM failed to omit. Two independent signals — the prompt reads it as advisory, the code
+  // uses it as a deterministic filter.
   const relevanceAnnotations = computeRelevanceHints(baseCatalog, input.job)
-  const annotationByKey = new Map(relevanceAnnotations.map((item) => [item.id, item] as const))
+  const annotationByCatalogId = new Map(relevanceAnnotations.map((item) => [item.id, item] as const))
+  // Key relevance by source-identity (company::role) too, so we can look it up from any
+  // ResumeExperienceRecord without needing the catalog id.
+  const relevanceBySourceKey = new Map<string, RelevanceAnnotation>()
+  for (const entry of baseCatalog) {
+    const annotation = annotationByCatalogId.get(entry.id)
+    if (annotation) relevanceBySourceKey.set(toSourceKey(entry), annotation)
+  }
   const experienceCatalog = baseCatalog.map((entry) => {
-    const annotation = annotationByKey.get(entry.id)
+    const annotation = annotationByCatalogId.get(entry.id)
     return {
       ...entry,
       relevanceHint: annotation?.relevanceHint ?? 'low',
@@ -440,6 +519,10 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
       titleSimilarity: annotation?.titleSimilarity ?? 0,
     }
   })
+
+  const relevanceHintFor = (entry: Pick<ResumeExperienceRecord, 'companyName' | 'roleTitle'>): RelevanceHint => {
+    return relevanceBySourceKey.get(toSourceKey(entry))?.relevanceHint ?? 'low'
+  }
   const user = [
     `Target role: ${input.job.title} at ${input.job.companyName}`,
     `Target job description: ${input.job.descriptionText}`,
@@ -472,12 +555,7 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
     .map((entry) => {
       const key = toSourceKey({
         companyName: cleanLine(entry?.companyName ?? ''),
-        endDate: '',
-        highlights: [],
-        locationLabel: '',
         roleTitle: cleanLine(entry?.roleTitle ?? ''),
-        startDate: '',
-        summary: '',
       })
       const source = sourceByKey.get(key)
 
@@ -485,27 +563,34 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
         return null
       }
 
-      return normalizeExperienceEntry(source, entry)
+      return normalizeExperienceEntry(source, entry, relevanceHintFor(source))
     })
     .filter((entry): entry is ResumeExperienceRecord => entry !== null)
 
   // Fallback when the LLM returned no usable entries: surface the candidate's most recent roles
   // verbatim so the rendered resume still reflects real source material. The renderer's page
   // fitter then trims as needed.
-  const preSort =
+  const preFilter =
     normalizedEntries.length > 0
       ? normalizedEntries
       : sourceExperience.length > 0
         ? sourceExperience
             .slice(0, MAX_EXPERIENCE_ENTRIES)
-            .map((entry) => normalizeExperienceEntry(entry, entry))
+            .map((entry) => normalizeExperienceEntry(entry, entry, relevanceHintFor(entry)))
         : []
+
+  // v4.2: code-level Tier-D filter. Drop entries the LLM left in despite having zero
+  // overlap with the JD. See filterIrrelevantEntries for the drop rule and safety net.
+  const { kept: relevantEntries, dropped: irrelevantDrops } = filterIrrelevantEntries(
+    preFilter,
+    relevanceBySourceKey,
+  )
 
   // v4.1: enforce reverse-chronological order in code. The prompt tells the LLM to return
   // entries in reverse-chron, but the LLM sometimes ignores that or sorts by "relevance" it
   // invented. Resume order is ALWAYS reverse-chronological by endDate (Present first) with
   // startDate as tiebreaker — it's not a judgment call.
-  const fallbackEntries = [...preSort].sort(compareEntriesByRecency)
+  const fallbackEntries = [...relevantEntries].sort(compareEntriesByRecency)
 
   // v4: filter skills against candidate's actual source before shipping. Soft skills (banned
   // by the prompt) and out-of-source tools get stripped. The prompt tells the model not to do
@@ -543,16 +628,24 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
   // content is stripped yet; once we've watched false-positive rate for a week, we can flip
   // numeric-claim stripping to strict mode.
   const verification = verifyResumeVariant(normalized, input.job, input.workspace)
-  if (verification.userFacingNote) {
-    normalized.changeSummaryForUser = [normalized.changeSummaryForUser, verification.userFacingNote]
-      .filter(Boolean)
-      .join(' · ')
+  const noteParts = [normalized.changeSummaryForUser, verification.userFacingNote]
+  if (irrelevantDrops.length > 0) {
+    const names = irrelevantDrops
+      .map(({ entry }) => `${entry.companyName} (${entry.roleTitle})`)
+      .join(', ')
+    noteParts.push(`Filtered ${irrelevantDrops.length} irrelevant role${irrelevantDrops.length === 1 ? '' : 's'}: ${names}`)
   }
+  normalized.changeSummaryForUser = noteParts.filter(Boolean).join(' · ')
   console.info('[resume-variant][verify]', {
     jobId: input.job.id,
     jobTitle: input.job.title,
     coverage: verification.coverage,
     unverifiedClaims: verification.unverifiedClaims,
+    irrelevantDrops: irrelevantDrops.map(({ entry, reason }) => ({
+      company: entry.companyName,
+      role: entry.roleTitle,
+      reason,
+    })),
   })
 
   return normalized

@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
 
-import { computeRelevanceHints } from '@/lib/ai/tasks/compute-relevance-hints'
+import { computeRelevanceHints, type RelevanceAnnotation } from '@/lib/ai/tasks/compute-relevance-hints'
 import {
   compareEntriesByRecency,
   computeTenureMonths,
+  filterIrrelevantEntries,
   filterSkillsToSource,
   parseResumeDateToMonths,
 } from '@/lib/ai/tasks/generate-resume-variant'
@@ -234,6 +235,185 @@ test('computeTenureMonths handles Present and unparseable', () => {
   // Present end should be >= today's month - startDate
   const montranLike = computeTenureMonths({ startDate: 'Jan 2020', endDate: 'Present' })
   assert.ok(montranLike >= 36, `Long-tenure Present role should show real tenure, got ${montranLike}`)
+})
+
+test('filterIrrelevantEntries drops zero-overlap roles but never below MIN floor', () => {
+  const montran: ResumeExperienceRecord = {
+    companyName: 'Montran',
+    roleTitle: 'Design & Digital Marketing Lead',
+    locationLabel: 'Remote',
+    startDate: '2024',
+    endDate: 'Present',
+    summary: '',
+    highlights: ['Led brand system across marketing deliverables', 'Designed product marketing visuals'],
+  }
+  const ha: ResumeExperienceRecord = {
+    companyName: 'Hospital Authority, HKSAR Government',
+    roleTitle: 'Executive Assistant, Internal Communications',
+    locationLabel: 'Hong Kong',
+    startDate: '2019',
+    endDate: '2020',
+    summary: '',
+    highlights: ['Coordinated internal communications scheduling'],
+  }
+  const relevance = new Map<string, RelevanceAnnotation>([
+    [
+      'montran::design & digital marketing lead',
+      { id: 'a', relevanceHint: 'high', keywordMatches: 3, keywordTotal: 5, titleSimilarity: 0.5 },
+    ],
+    [
+      'hospital authority, hksar government::executive assistant, internal communications',
+      { id: 'b', relevanceHint: 'low', keywordMatches: 0, keywordTotal: 5, titleSimilarity: 0 },
+    ],
+  ])
+  const result = filterIrrelevantEntries([montran, ha], relevance)
+  assert.equal(result.kept.length, 2, 'MIN floor keeps both when only 2 entries exist')
+  assert.equal(result.dropped.length, 0, 'MIN floor means HA stays as rescued Tier D')
+
+  // Now with more entries — HA should actually drop.
+  const mm = {
+    ...montran,
+    companyName: 'MM.S',
+    roleTitle: 'Founder / Fractional Creative Director',
+    startDate: '2019',
+  }
+  const rbc = {
+    ...montran,
+    companyName: 'RBC',
+    roleTitle: 'Creative Consultant / Senior Communication Designer',
+    startDate: '2021',
+    endDate: '2023',
+  }
+  const fuller = new Map<string, RelevanceAnnotation>([
+    ...relevance.entries(),
+    [
+      'mm.s::founder / fractional creative director',
+      { id: 'c', relevanceHint: 'high', keywordMatches: 4, keywordTotal: 5, titleSimilarity: 0.4 },
+    ],
+    [
+      'rbc::creative consultant / senior communication designer',
+      { id: 'd', relevanceHint: 'high', keywordMatches: 3, keywordTotal: 5, titleSimilarity: 0.5 },
+    ],
+  ])
+  const fullResult = filterIrrelevantEntries([montran, mm, rbc, ha], fuller)
+  assert.equal(fullResult.kept.length, 3, 'With 4 entries and 3 strong, HA should drop')
+  assert.ok(
+    !fullResult.kept.some((e) => e.companyName === 'Hospital Authority, HKSAR Government'),
+    'HA must not survive when 3+ relevant roles exist',
+  )
+  assert.equal(fullResult.dropped.length, 1)
+})
+
+test('real-shape end-to-end: HA buckets low, Montran/MM.S/RBC bucket high, HA drops', () => {
+  // Shapes taken verbatim from the real master (see supabase resume_master for this operator).
+  // This is the scenario the user actually hit — v4 must handle it correctly in code, not
+  // only via LLM compliance.
+  const entries: Array<ResumeExperienceRecord & { id: string }> = [
+    {
+      id: 'exp_1',
+      companyName: 'Montran',
+      roleTitle: 'Design & Digital Marketing Lead',
+      locationLabel: 'Remote',
+      startDate: '2024',
+      endDate: 'Present',
+      summary: '',
+      highlights: [
+        'Owned brand identity system for product marketing launches',
+        'Led design for executive presentations and investor decks',
+        'Shipped Figma design system components used across all customer-facing materials',
+      ],
+    },
+    {
+      id: 'exp_2',
+      companyName: 'MM.S',
+      roleTitle: 'Founder / Fractional Creative Director',
+      locationLabel: 'Remote',
+      startDate: '2019',
+      endDate: 'Present',
+      summary: '',
+      highlights: [
+        'Led brand identity engagements for B2B SaaS clients',
+        'Designed marketing sites and product UI across multiple launches',
+        'Directed visual identity rebrands including typography, colour, logo systems',
+      ],
+    },
+    {
+      id: 'exp_3',
+      companyName: 'RBC',
+      roleTitle: 'Creative Consultant / Senior Communication Designer',
+      locationLabel: 'Toronto',
+      startDate: '2021',
+      endDate: '2023',
+      summary: '',
+      highlights: ['Designed internal brand comms templates', 'Partnered with marketing on campaign visuals'],
+    },
+    {
+      id: 'exp_4',
+      companyName: 'Hospital Authority, HKSAR Government',
+      roleTitle: 'Executive Assistant, Internal Communications',
+      locationLabel: 'Hong Kong',
+      startDate: '2019',
+      endDate: '2020',
+      summary: '',
+      highlights: ['Coordinated scheduling for the internal communications department'],
+    },
+  ]
+  const job = {
+    title: 'Senior Graphic Designer',
+    skillsKeywords: ['Figma', 'Brand identity', 'Design systems', 'Typography', 'Marketing design'],
+    requirements: ['5+ years brand design', 'Fluent in Figma', 'Design system ownership'],
+    preferredQualifications: ['Agency or consultancy experience'],
+  } as unknown as RankedJobRecord
+
+  const hints = computeRelevanceHints(entries, job)
+  const byId = new Map(hints.map((hint) => [hint.id, hint] as const))
+  assert.equal(byId.get('exp_1')?.relevanceHint, 'high', 'Montran should bucket high')
+  assert.equal(byId.get('exp_2')?.relevanceHint, 'high', 'MM.S should bucket high')
+  // RBC has "Senior Communication Designer" — shares "designer" after seniority stopwords.
+  const rbcHint = byId.get('exp_3')?.relevanceHint
+  assert.ok(rbcHint === 'high' || rbcHint === 'medium', `RBC should bucket high or medium, got ${rbcHint}`)
+  assert.equal(byId.get('exp_4')?.relevanceHint, 'low', 'HA should bucket low')
+
+  // Now run through the filter: HA should drop because 3 strong roles exist.
+  const relevance = new Map(hints.map((h) => [`${entries.find((e) => e.id === h.id)!.companyName}::${entries.find((e) => e.id === h.id)!.roleTitle}`.toLowerCase(), h] as const))
+  const stripId = (entry: ResumeExperienceRecord & { id: string }): ResumeExperienceRecord => {
+    const copy = { ...entry } as ResumeExperienceRecord & { id?: string }
+    delete copy.id
+    return copy
+  }
+  const filtered = filterIrrelevantEntries(entries.map(stripId), relevance)
+  const keptNames = filtered.kept.map((entry) => entry.companyName)
+  assert.ok(!keptNames.includes('Hospital Authority, HKSAR Government'), `HA must drop; kept: ${keptNames.join(', ')}`)
+  assert.ok(filtered.kept.length >= 3, `At least Montran/MM.S/RBC kept; got ${filtered.kept.length}`)
+
+  // And the sort: reverse-chronological with Present roles first.
+  const sorted = [...filtered.kept].sort(compareEntriesByRecency)
+  assert.equal(sorted[0].endDate, 'Present', 'First role must be a Present role')
+  assert.equal(sorted[sorted.length - 1].endDate, '2023', 'Past role (RBC) ends up last')
+})
+
+test('seniority words no longer inflate title similarity', () => {
+  const entries = [
+    {
+      id: 'ea',
+      companyName: 'HA',
+      roleTitle: 'Senior Executive Assistant',
+      locationLabel: '',
+      startDate: '2019',
+      endDate: '2020',
+      summary: '',
+      highlights: ['Scheduled meetings', 'Coordinated travel'],
+    },
+  ]
+  const job = {
+    title: 'Senior Graphic Designer',
+    skillsKeywords: ['Figma', 'Design systems'],
+    requirements: ['Brand identity'],
+    preferredQualifications: [],
+  } as unknown as RankedJobRecord
+  const hints = computeRelevanceHints(entries, job)
+  assert.equal(hints[0].titleSimilarity, 0, 'Senior should not count as shared token')
+  assert.equal(hints[0].relevanceHint, 'low', 'Zero overlap should bucket low')
 })
 
 if (failures.length > 0) {

@@ -20,6 +20,12 @@ export interface RelevanceAnnotation {
 
 // Mirror of the small stopword set used elsewhere — kept local to avoid a shared-util sprawl
 // before the shape is stable.
+//
+// Seniority markers (senior/junior/lead/staff/etc.) are deliberately included as stopwords
+// because they create false title-similarity matches across unrelated domains — e.g.
+// "Senior Executive Assistant" vs "Senior Graphic Designer" would otherwise share "Senior"
+// and bucket as medium-similarity when they're actually unrelated. Domain tokens (designer,
+// engineer, marketing) are the real signal; seniority is noise for cross-role matching.
 const TITLE_STOPWORDS = new Set([
   'and',
   'or',
@@ -38,6 +44,18 @@ const TITLE_STOPWORDS = new Set([
   'ii',
   'iii',
   'iv',
+  // seniority and level markers — purely indicative of level, not domain
+  'senior',
+  'sr',
+  'junior',
+  'jr',
+  'lead',
+  'staff',
+  'principal',
+  'associate',
+  'intern',
+  'trainee',
+  'entry',
 ])
 
 function tokenize(value: string) {
@@ -57,20 +75,60 @@ function buildEntryHaystack(entry: ResumeExperienceRecord) {
     .replace(/\s+/g, ' ')
 }
 
+function escapeForRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function matchesWordInHaystack(word: string, haystack: string) {
+  // Word-boundary match with a tolerant boundary char class (treats punctuation and spaces
+  // as boundaries but preserves +, #, /, . as intra-word characters for tokens like "C++").
+  // Also accepts a trailing "s" to catch simple plurals (system↔systems) without a full
+  // stemmer — covers ~90% of the real cases cheaply.
+  const escaped = escapeForRegex(word)
+  const pattern = `(^|[^a-z0-9+#])${escaped}s?($|[^a-z0-9+#])`
+  return new RegExp(pattern, 'i').test(haystack)
+}
+
 function keywordAppears(keyword: string, haystack: string) {
   const token = keyword.toLowerCase().trim()
   if (!token) return false
-  const boundary = `(^|[^a-z0-9+#])${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^a-z0-9+#])`
-  return new RegExp(boundary, 'i').test(haystack)
+  // Multi-word keywords: require ALL words to appear somewhere in the haystack (not
+  // necessarily adjacent). "design systems" matches when the bullet says "shipped design
+  // system components" — we'd rather over-match than miss the real case.
+  const words = token.split(/\s+/).filter(Boolean)
+  if (words.length === 0) return false
+  return words.every((word) => matchesWordInHaystack(word, haystack))
 }
 
+// Shared prefix length that counts as a stem match. Tuned to catch designer/design,
+// engineer/engineering, marketer/marketing without over-matching (e.g. "design" and "designate"
+// share 6 chars but "designate" is rare enough in role titles that we accept the risk).
+const STEM_MATCH_PREFIX_LEN = 5
+
 function titleSimilarityScore(sourceTitle: string, jdTitle: string) {
-  const sourceTokens = new Set(tokenize(sourceTitle))
+  const sourceTokens = tokenize(sourceTitle)
   const jdTokens = tokenize(jdTitle)
   if (jdTokens.length === 0) return 0
   let matches = 0
-  for (const token of jdTokens) {
-    if (sourceTokens.has(token)) matches += 1
+  for (const jdToken of jdTokens) {
+    let matched = false
+    for (const sourceToken of sourceTokens) {
+      if (jdToken === sourceToken) {
+        matched = true
+        break
+      }
+      // Stem match: shared prefix. Catches designer↔design, engineer↔engineering,
+      // marketer↔marketing, etc. — the most common shape of title-vs-title overlap.
+      if (
+        jdToken.length >= STEM_MATCH_PREFIX_LEN &&
+        sourceToken.length >= STEM_MATCH_PREFIX_LEN &&
+        jdToken.slice(0, STEM_MATCH_PREFIX_LEN) === sourceToken.slice(0, STEM_MATCH_PREFIX_LEN)
+      ) {
+        matched = true
+        break
+      }
+    }
+    if (matched) matches += 1
   }
   return matches / jdTokens.length
 }
@@ -85,9 +143,13 @@ export function computeRelevanceHints(
   entries: Array<ResumeExperienceRecord & { id: string }>,
   job: Pick<RankedJobRecord, 'title' | 'skillsKeywords' | 'requirements' | 'preferredQualifications'>,
 ): RelevanceAnnotation[] {
+  // Relevance is measured against the curated skillsKeywords list ONLY. Requirements and
+  // preferredQualifications are full JD sentences — including them here creates noisy keywords
+  // like "5+ years", "fluent in", "agency experience" that water down the ratio. skillsKeywords
+  // has already been normalized at ingest time and represents the highest-signal terms.
   const keywordPool = Array.from(
     new Set(
-      [...job.skillsKeywords, ...job.requirements, ...job.preferredQualifications]
+      job.skillsKeywords
         .flatMap((line) =>
           line
             .toLowerCase()
@@ -95,8 +157,6 @@ export function computeRelevanceHints(
             .map((part) => part.trim()),
         )
         .filter((token) => token.length >= 3 && !TITLE_STOPWORDS.has(token))
-        // The broader requirements text is noisy; prefer canonical skillsKeywords first by
-        // keeping only short, skill-like phrases. Phrases over ~40 chars are full sentences.
         .filter((token) => token.length <= 40),
     ),
   )
