@@ -45,9 +45,12 @@ async function ensurePrepOpen(): Promise<{ restore: () => Promise<void> } | null
     return null
   }
 
+  // `shortlisted` (not `preparing`) so the prep-open overview renders the "Generate Materials"
+  // button label. `preparing` with no packet content swaps the label to "Continue generation"
+  // (see lib/jobs/job-overview-action-model.ts), which the smoke's marker regex wouldn't match.
   const { error: setError } = await supabase
     .from('job_scores')
-    .update({ workflow_status: 'preparing' })
+    .update({ workflow_status: 'shortlisted' })
     .eq('user_id', operatorId)
     .eq('job_id', jobId)
 
