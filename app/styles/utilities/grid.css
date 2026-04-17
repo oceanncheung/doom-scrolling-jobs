@@ -29,25 +29,40 @@
  * --------------------------------------------------------------------------- */
 
 /*
- * Base cell — right breathing room, no left inset. Safe to apply to any cell
- * in a grid where the container provides the page gutter; non-first cells
- * inherit this unchanged.
+ * Base cell — the single universal invariant the contract actually enforces:
+ *
+ *   padding-left: 0
+ *
+ * Text inside a `.u-grid-cell` aligns to the column grid line. When a button
+ * sits under that text in the same cell, button's left border and text's left
+ * edge land on the same vertical line — no half-pixel drift between headings
+ * and controls.
+ *
+ * IMPORTANT — breathing is NOT the utility's job. Different surfaces provide
+ * right-side breathing two different legitimate ways:
+ *   (a) grid-level `gap: Npx` (modern CSS; e.g. .packet-material-grid)
+ *   (b) cell-level padding-right (older pattern; e.g. the dashboard's
+ *       queue-rows.css:384 rule that uses `var(--queue-column-pad)` for
+ *       breakpoint-responsive breathing)
+ *
+ * The utility originally hardcoded `padding-right: var(--grid-gap-standard)`
+ * (16px) as a default, which broke the first case — applying `.u-grid-cell`
+ * to a gap-based grid would stack 16px of cell padding on top of the grid's
+ * own gap, doubling the breathing. Refined in Commit 4b to drop the default;
+ * surfaces that want cell-level breathing opt in via the --gap-* modifiers
+ * below. Pure `padding-left: 0` is safe to apply to any grid.
  */
 .u-grid-cell {
   padding-left: 0;
-  padding-right: var(--grid-gap-standard);
   box-sizing: border-box;
   min-width: 0;
 }
 
 /*
- * First-cell modifier — removes the right-breathing pad only when the cell is
- * the leftmost in the row AND the grid container is already providing the
- * left inset via its own page padding. Text inside this cell sits at the
- * container's inset, which is canonically `--grid-page-pad-*` in tokens.css.
- * Callers that want an explicit cell-level left-inset (for example, nested
- * grids that don't inherit from a padded container) can apply
- * `.u-grid-cell--first-inset` instead.
+ * First-cell modifier. padding-left stays 0 so the container's page padding
+ * provides the left inset (text never touches the container's left vertical
+ * edge). Kept as an explicit marker even though it matches the default, so
+ * a future change to the base can't silently break first-cell semantics.
  */
 .u-grid-cell--first {
   padding-left: 0;
@@ -73,11 +88,16 @@
 }
 
 /*
- * Spacing-tier modifiers. Default `.u-grid-cell` uses --grid-gap-standard
- * (16px). Use these when a surface needs a tighter or looser rhythm.
+ * Opt-in breathing modifiers. The base `.u-grid-cell` sets no padding-right;
+ * surfaces that need cell-level breathing (rather than grid-level gap) pick
+ * the tier that matches their rhythm. Tokens live in tokens.css.
  */
 .u-grid-cell--gap-tight {
   padding-right: var(--grid-gap-tight);
+}
+
+.u-grid-cell--gap-standard {
+  padding-right: var(--grid-gap-standard);
 }
 
 .u-grid-cell--gap-spacious {

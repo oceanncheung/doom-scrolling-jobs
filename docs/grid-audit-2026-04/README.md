@@ -84,7 +84,12 @@ TBD.
   - Mobile (375): identical across all 5 cells. Title `pl:0 pr:0 x:12 w:351 right:363`; meta cells `pl:0 pr:12`, last cell `right:363`.
 - **Pattern documented in the TSX** via a block comment above the grid so the next editor sees the contract named without having to trace the CSS.
 
-### Commit 4b-e — apply to remaining surfaces (planned)
+### Commit 4b — refine `.u-grid-cell` (drop default padding-right)
+- **Scope:** `app/styles/utilities/grid.css`. Dropped `padding-right: var(--grid-gap-standard)` from the base `.u-grid-cell` rule; the base now sets only `padding-left: 0` (plus `box-sizing` and `min-width`). Added a new opt-in modifier `.u-grid-cell--gap-standard` so surfaces that want cell-level 16px breathing can still get it by name.
+- **Motivation:** discovered while scoping 4c (packet-material-grid). That grid uses `gap: 24px` for breathing, with no cell-level padding. Applying the old `.u-grid-cell` would have stacked 16px of cell `padding-right` on top of the 24px gap, doubling the breathing — not pure annotation. The refined utility expresses only the universal invariant (column-line alignment via `padding-left: 0`); surfaces own breathing via `gap` or via opt-in `--gap-*` modifiers.
+- **Verification:** dashboard computed styles unchanged at both desktop (1747) and mobile (375). The surface rule at `queue-rows.css:384` (specificity 0,4,1) wins over the utility (0,1,0), so removing the utility's default `padding-right: 16px` has no effect on dashboard — exactly as predicted. All 5 cells' `pl`, `pr`, `x`, `w`, `right` identical vs post-4a.
+
+### Commits 4c-f — apply to remaining surfaces (planned)
 TBD — packet, profile, job flow, operators. Each as a separate sub-commit with its own stash/pop verification.
 
 ### Commit 4 — roll contract to remaining surfaces (planned)
