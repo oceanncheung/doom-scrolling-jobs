@@ -16,10 +16,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           # `npm run eval` uses `--experimental-transform-types` which first landed in Node 22.6.
           # Node 20 rejects the flag with `bad option` (exit 9) before the script loads.
@@ -33,13 +33,6 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run repo quality harness
-        # Advisory gate until the harness seeds its own packet fixture. `smoke-test-packet.mts`
-        # and `tests/ui-artifacts.spec.ts` both expect a specific job (defaultSmokeJobId in
-        # scripts/smoke-helpers.mts) to already be in a prep-open workflow state, but nothing in
-        # the repo seeds that. Failing eval here shouldn't block real deploys — the report is
-        # still uploaded as an artifact for review. Tighten back to `false` once the smoke
-        # sets up + tears down its own fixture state.
-        continue-on-error: true
         env:
           # Supabase credentials the harness needs to run the workflow-transition smoke.
           # `lib/env.ts` treats all three as required; add them as repo secrets in
@@ -51,7 +44,7 @@ jobs:
 
       - name: Upload harness artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: repo-quality-harness
           path: .codex-artifacts/eval/latest/
