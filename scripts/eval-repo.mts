@@ -338,7 +338,10 @@ function buildWorkflowSuccessSummary(commandName: CommandSpec['name'], stdout: s
 
 async function runCommand(layerName: EvalLayerName, spec: CommandSpec, extraEnv?: NodeJS.ProcessEnv) {
   const startedAt = Date.now()
-  const logPath = noReport ? null : path.join(logsRoot, `${layerName}-${spec.name}.log`)
+  // Sanitize the spec name — `check:ui-system` etc. would produce filenames containing a colon,
+  // which `actions/upload-artifact@v4` rejects (invalid on NTFS).
+  const logSafeName = spec.name.replace(/[^A-Za-z0-9._-]+/g, '-')
+  const logPath = noReport ? null : path.join(logsRoot, `${layerName}-${logSafeName}.log`)
   const quietWorkflowSuccess = !noReport && layerName === 'workflows'
 
   const result = await new Promise<CommandExecution>((resolve) => {
