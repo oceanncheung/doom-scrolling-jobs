@@ -2564,6 +2564,21 @@
   }
 
   /*
+   * Restore the right-edge black hairline on the last action slot. The bleed rule at the top
+   * of this block strips border-right-width on every button to allow flush-to-viewport-edge
+   * sharing; the last button (Regenerate in pair-right, Archive in triple-right) still
+   * needs an outer edge so the control band reads as a closed rectangle rather than an
+   * open cell on the right side. Matches the left-border treatment on slots 2/3 (see
+   * `.job-overview-actions--pair-right .screening-action-slot + .screening-action-slot .button`
+   * and the triple-right analogues above).
+   */
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot:last-child .button,
+  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:last-child .button {
+    border-right-width: 1px;
+    border-right-color: var(--line);
+  }
+
+  /*
    * Disabled buttons fade to opacity 0.35 (.button:disabled) which also fades their 1px top border.
    * With no left/right borders at mobile and no adjacent element above, the primary's top edge
    * becomes visually invisible when pending. Anchor a full-opacity hairline at the BAR level so
