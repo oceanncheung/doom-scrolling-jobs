@@ -81,6 +81,19 @@ export interface NormalizedJobRecord {
   salaryPeriod: CompensationPeriod
   postedAt?: string
   descriptionText: string
+  /**
+   * Full markdown description fetched from `sourceUrl` (via `fetchMarkdown`). Populated
+   * at ingest time when the canonical posting page is publicly fetchable. Much richer than
+   * feed-provided `descriptionText` — the difference between a one-sentence stub and the
+   * actual JD paragraphs. Undefined when the fetch never ran, failed, or returned empty.
+   * Downstream consumers should prefer this when present and substantially longer than
+   * `descriptionText`.
+   */
+  descriptionTextFetched?: string
+  /** When `descriptionTextFetched` was last refreshed. */
+  descriptionFetchedAt?: string
+  /** If the most recent fetch failed, stores the reason so diagnostics can surface it. */
+  descriptionFetchError?: string
   requirements: string[]
   preferredQualifications: string[]
   skillsKeywords: string[]

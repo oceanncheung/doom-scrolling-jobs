@@ -544,9 +544,21 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
   const relevanceHintFor = (entry: Pick<ResumeExperienceRecord, 'companyName' | 'roleTitle'>): RelevanceHint => {
     return relevanceBySourceKey.get(toSourceKey(entry))?.relevanceHint ?? 'low'
   }
+  // Prefer the full fetched description when it exists and is substantially richer than
+  // the feed stub. Many job feeds return a one-sentence summary (Grüns shipped as just
+  // "Senior Graphic Designer. Creates natural performance supplements. Design & UX.
+  // Senior. Remote"); the actual posting page has paragraphs of requirements, culture
+  // notes, and tool lists that materially change which of the candidate's experiences
+  // read as relevant. See lib/jobs/description-enrichment.ts for the fetch path.
+  const feedDescription = input.job.descriptionText ?? ''
+  const fetchedDescription = input.job.descriptionTextFetched ?? ''
+  const descriptionForPrompt =
+    fetchedDescription.length > feedDescription.length * 1.5 && fetchedDescription.length >= 400
+      ? fetchedDescription
+      : feedDescription
   const user = [
     `Target role: ${input.job.title} at ${input.job.companyName}`,
-    `Target job description: ${input.job.descriptionText}`,
+    `Target job description: ${descriptionForPrompt}`,
     `Requirements: ${input.job.requirements.join(' | ')}`,
     `Preferred qualifications: ${input.job.preferredQualifications.join(' | ')}`,
     `Skills keywords: ${input.job.skillsKeywords.join(' | ')}`,

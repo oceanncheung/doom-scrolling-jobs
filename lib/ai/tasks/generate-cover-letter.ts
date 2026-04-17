@@ -15,9 +15,18 @@ export async function generateCoverLetter(input: CoverLetterInput): Promise<Cove
   }
 
   const { packetModel } = getOpenAIEnv()
+  // Prefer the full fetched description when available (see generate-resume-variant.ts for
+  // rationale) — cover letters benefit especially from the richer text because the "why
+  // this role" paragraph needs company context the feed stub rarely carries.
+  const feedDescription = input.job.descriptionText ?? ''
+  const fetchedDescription = input.job.descriptionTextFetched ?? ''
+  const descriptionForPrompt =
+    fetchedDescription.length > feedDescription.length * 1.5 && fetchedDescription.length >= 400
+      ? fetchedDescription
+      : feedDescription
   const user = [
     `Target role: ${input.job.title} at ${input.job.companyName}`,
-    `Job description: ${input.job.descriptionText}`,
+    `Job description: ${descriptionForPrompt}`,
     `Requirements: ${input.job.requirements.join(' | ')}`,
     `Preferred qualifications: ${input.job.preferredQualifications.join(' | ')}`,
     `Profile headline: ${input.workspace.profile.headline}`,
