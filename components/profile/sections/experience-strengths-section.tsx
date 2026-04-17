@@ -94,8 +94,8 @@ export function ExperienceStrengthsSection({
   return (
     <DisclosureSection
       className="disclosure-experience"
-      label="Experience and strengths"
-      title="Review and refine the experience pulled from your resume."
+      label="Career record"
+      title="Editable history of your roles, schools, skills, and tools. Drawn on when tailoring both resumes and cover letters."
       unwrapBody
     >
       <SectionLockFrame lockedMessage={lockedMessage}>

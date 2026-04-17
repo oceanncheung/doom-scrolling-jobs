@@ -173,6 +173,7 @@ const seededPortfolioItems: OperatorPortfolioItemRecord[] = []
 
 const seededWorkspace: OperatorWorkspaceRecord = {
   confirmedEvidenceEntries: [],
+  pendingEvidenceEntries: [],
   coverLetterMaster: seededCoverLetterMaster,
   portfolioItems: seededPortfolioItems,
   profile: seededProfile,
@@ -281,9 +282,8 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
       .from('evidence_bank')
       .select('*')
       .eq('operator_id', operatorContext.operator.id)
-      .not('confirmed_at', 'is', null)
       .is('discarded_at', null)
-      .order('confirmed_at', { ascending: false }),
+      .order('created_at', { ascending: false }),
   ])
 
   if (profileResult.error || !profileResult.data) {
@@ -380,16 +380,19 @@ export async function getOperatorProfile(): Promise<OperatorProfileResult> {
     canonicalProfileReviewedAt: asString(profile.canonical_profile_reviewed_at) || undefined,
   }
 
-  const confirmedEvidenceEntries =
+  const allEvidence =
     evidenceResult.error || !Array.isArray(evidenceResult.data)
       ? []
       : (evidenceResult.data as Array<Record<string, unknown>>).map(rowToEvidenceBankRecord)
+  const confirmedEvidenceEntries = allEvidence.filter((entry) => Boolean(entry.confirmedAt))
+  const pendingEvidenceEntries = allEvidence.filter((entry) => !entry.confirmedAt)
 
   return {
     issue: issues.length > 0 ? issues.join(' ') : undefined,
     source: issues.length > 0 ? 'database-fallback' : 'database',
     workspace: {
       confirmedEvidenceEntries,
+      pendingEvidenceEntries,
       portfolioItems,
       profile: normalizedProfile,
       coverLetterMaster,

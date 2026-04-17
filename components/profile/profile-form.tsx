@@ -532,8 +532,10 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
               activeTab={activeCoverLetterTab}
               capabilityDisciplineTags={capabilityDisciplineTags}
               capabilityToolsTags={capabilityToolsTags}
+              confirmedEvidenceEntries={workspace.confirmedEvidenceEntries}
               createProofBankEntry={createCoverLetterProofBankEntry}
               keyDifferentiatorTags={keyDifferentiatorTags}
+              pendingEvidenceEntries={workspace.pendingEvidenceEntries}
               positioningPhilosophy={positioningPhilosophy}
               positioningReviewState={positioningReviewState}
               proofBankEntries={proofBankEntries}

@@ -3,6 +3,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 
 import type { CoverLetterProofBankEntryRecord } from '@/lib/domain/types'
+import type { EvidenceBankEntryRecord } from '@/lib/domain/evidence'
 
 import {
   AddRowButton,
@@ -12,6 +13,7 @@ import {
   SettingsTabPanel,
   SettingsTabShell,
 } from '@/components/profile/profile-form-controls'
+import { ProofPointsFromSources } from '@/components/profile/proof-points-from-sources'
 import { AutoSizeTextarea } from '@/components/ui/auto-size-textarea'
 import { BulletTextarea } from '@/components/ui/bullet-textarea'
 import { FieldLabelRow } from '@/components/ui/field-label-row'
@@ -24,9 +26,16 @@ interface CoverLetterStrategySectionProps {
   activeTab: CoverLetterStrategyTab | null
   capabilityDisciplineTags: string[]
   capabilityToolsTags: string[]
+  /** Evidence bank entries already confirmed by the operator — shown at the top of the
+   *  Proof points tab for reference. They feed both resume and cover-letter generation. */
+  confirmedEvidenceEntries: EvidenceBankEntryRecord[]
   createProofBankEntry: () => CoverLetterProofBankEntryRecord
   keyDifferentiatorTags: string[]
   lockedMessage?: string | null
+  /** Evidence bank entries extracted from the portfolio/personal-site but awaiting the
+   *  operator's review. Rendered at the top of the Proof points tab with confirm/discard
+   *  affordances. */
+  pendingEvidenceEntries: EvidenceBankEntryRecord[]
   positioningPhilosophy: string
   positioningReviewState: ReviewState
   proofBankEntries: CoverLetterProofBankEntryRecord[]
@@ -46,9 +55,11 @@ export function CoverLetterStrategySection({
   activeTab,
   capabilityDisciplineTags,
   capabilityToolsTags,
+  confirmedEvidenceEntries,
   createProofBankEntry,
   keyDifferentiatorTags,
   lockedMessage,
+  pendingEvidenceEntries,
   positioningPhilosophy,
   positioningReviewState,
   proofBankEntries,
@@ -66,8 +77,8 @@ export function CoverLetterStrategySection({
   return (
     <DisclosureSection
       className="disclosure-cover-letter"
-      label="Cover letter strategy"
-      title="Review and refine the material used in tailored cover letters."
+      label="Positioning"
+      title="How you frame your work and voice beyond what's on the resume. Drawn on when tailoring both resumes and cover letters."
       unwrapBody
     >
       <SectionLockFrame lockedMessage={lockedMessage}>
@@ -142,8 +153,12 @@ export function CoverLetterStrategySection({
           {activeTab === 'proofBank' ? (
             <SettingsTabPanel
               label="Proof points"
-              title="Reusable evidence for strong tailored letters"
+              title="Specific work, clients, and projects. Pulled from your portfolio link or added manually."
             >
+              <ProofPointsFromSources
+                confirmedEntries={confirmedEvidenceEntries}
+                pendingEntries={pendingEvidenceEntries}
+              />
               <div className="section-header">
                 <AddRowButton
                   label="Add proof point"

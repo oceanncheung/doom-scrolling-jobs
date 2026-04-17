@@ -370,10 +370,15 @@ export interface OperatorWorkspaceRecord {
   resumeMaster: ResumeMasterRecord
   status: ProfileWorkspaceStatusRecord
   /**
-   * Confirmed evidence_bank entries (Phase A enrichment, confirmed via Phase B flow or
-   * CLI). Populated by `getOperatorProfile`; the generator consumes only confirmed
-   * entries so unverified extraction results never reach a shipped resume.
-   * Empty array when the operator hasn't run enrichment yet or has nothing confirmed.
+   * Confirmed evidence_bank entries — fed into generation prompts because the operator
+   * has already reviewed them. Empty array when the operator hasn't run enrichment yet
+   * or has nothing confirmed.
    */
   confirmedEvidenceEntries: EvidenceBankEntryRecord[]
+  /**
+   * Evidence entries that have been extracted from a source but not yet confirmed or
+   * discarded. Surfaced in the /profile Proof points tab so the operator can review and
+   * act on them inline. Never fed into resume/cover-letter generation until confirmed.
+   */
+  pendingEvidenceEntries: EvidenceBankEntryRecord[]
 }
