@@ -89,8 +89,16 @@ TBD.
 - **Motivation:** discovered while scoping 4c (packet-material-grid). That grid uses `gap: 24px` for breathing, with no cell-level padding. Applying the old `.u-grid-cell` would have stacked 16px of cell `padding-right` on top of the 24px gap, doubling the breathing — not pure annotation. The refined utility expresses only the universal invariant (column-line alignment via `padding-left: 0`); surfaces own breathing via `gap` or via opt-in `--gap-*` modifiers.
 - **Verification:** dashboard computed styles unchanged at both desktop (1747) and mobile (375). The surface rule at `queue-rows.css:384` (specificity 0,4,1) wins over the utility (0,1,0), so removing the utility's default `padding-right: 16px` has no effect on dashboard — exactly as predicted. All 5 cells' `pl`, `pr`, `x`, `w`, `right` identical vs post-4a.
 
-### Commits 4c-f — apply to remaining surfaces (planned)
-TBD — packet, profile, job flow, operators. Each as a separate sub-commit with its own stash/pop verification.
+### Commit 4c — apply grid-cell contract to `.packet-material-grid`
+- **Scope:** [components/jobs/packet-materials-section.tsx:63](components/jobs/packet-materials-section.tsx). Four `<article className="packet-material-block">` cells (Resume summary, Resume changes, Cover letter summary, Cover letter changes; changes cells are conditional). First block → `u-grid-cell--first`, remaining three → `u-grid-cell`. Block comment above the grid names the contract.
+- **Not a Protected Surface** — packet-materials-section is not in AGENTS.md §Protected Surfaces.
+- **Pure annotation:** the refined Commit 4b utility sets only `padding-left: 0` which matches the packet-material-block default (no surface pl rule). Breathing is owned by `.packet-material-grid`'s `gap: 24px`. Utility's absence of padding-right means no doubling of gap-based breathing.
+- **Verification (bit-for-bit identical):**
+  - Desktop (1747): all 4 cells `pl:0 pr:0`, positions x:521 w:1177/1194 right:1698/1715 — identical pre-4c vs post-4c via stash/pop diff.
+  - Mobile (375): all 4 cells `pl:0 pr:0 x:12 w:339 right:351` — grid stacks vertically, gap 24px.
+
+### Commits 4d-f — apply to remaining surfaces (planned)
+TBD — profile, job flow, operators. Each as a separate sub-commit with its own stash/pop verification.
 
 ### Commit 4 — roll contract to remaining surfaces (planned)
 TBD.

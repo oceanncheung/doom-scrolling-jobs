@@ -60,8 +60,16 @@ export function PacketMaterialsSection({
           title="Review what will be sent."
         />
 
+        {/*
+         * .u-grid-cell contract (see app/styles/utilities/grid.css, Commits 3/4b):
+         * first block gets u-grid-cell--first, remaining blocks get u-grid-cell.
+         * Breathing between blocks is owned by .packet-material-grid's `gap: 24px`
+         * (packet-form.css:119), not cell-level padding — the refined utility's
+         * `padding-left: 0` matches the current default. Pure annotation; computed
+         * styles unchanged vs pre-4c.
+         */}
         <div className="packet-material-grid">
-          <article className="packet-material-block">
+          <article className="packet-material-block u-grid-cell--first">
             <div className="packet-material-heading">
               <p className="upload-slot-label">Resume summary</p>
             </div>
@@ -70,7 +78,7 @@ export function PacketMaterialsSection({
           </article>
 
           {!resumePending ? (
-            <article className="packet-material-block">
+            <article className="packet-material-block u-grid-cell">
               <div className="packet-material-heading">
                 <p className="upload-slot-label">Resume changes</p>
               </div>
@@ -78,7 +86,7 @@ export function PacketMaterialsSection({
             </article>
           ) : null}
 
-          <article className="packet-material-block">
+          <article className="packet-material-block u-grid-cell">
             <div className="packet-material-heading">
               <p className="upload-slot-label">Cover letter summary</p>
             </div>
@@ -87,7 +95,7 @@ export function PacketMaterialsSection({
           </article>
 
           {!coverLetterPending ? (
-            <article className="packet-material-block">
+            <article className="packet-material-block u-grid-cell">
               <div className="packet-material-heading">
                 <p className="upload-slot-label">Cover letter changes</p>
               </div>
