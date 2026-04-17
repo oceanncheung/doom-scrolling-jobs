@@ -1081,8 +1081,8 @@
    */
   .dashboard-workspace .queue-column .job-flow-section.detail-review-section::before,
   .dashboard-workspace .queue-column .job-flow-section.detail-review-section::after {
-    left: calc(-1 * var(--queue-column-pad));
-    right: calc(-1 * var(--queue-column-pad));
+    left: var(--edge-bleed-start);
+    right: var(--edge-bleed-start);
     width: auto;
   }
 
