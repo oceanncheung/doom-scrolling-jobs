@@ -78,6 +78,21 @@ export async function selectOperator(formData: FormData) {
     redirect('/')
   }
 
+  /*
+   * First-time sign-in: if the user's profile was never completed (canonical_profile_reviewed_at
+   * is null — the flag that `app/profile/actions.ts` sets when a profile save lands with valid
+   * source material and no blocking issues), send them to `/profile` to finish setup instead of
+   * dropping them on an empty dashboard. Once they've saved the profile once, this flag gets
+   * timestamped and subsequent sign-ins go straight to `/dashboard`.
+   */
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('canonical_profile_reviewed_at')
+    .eq('operator_id', operatorId)
+    .maybeSingle()
+
+  const isProfileComplete = Boolean(profile?.canonical_profile_reviewed_at)
+
   const cookieStore = await cookies()
   cookieStore.set(activeOperatorCookieName, operatorId, {
     httpOnly: false,
@@ -87,7 +102,7 @@ export async function selectOperator(formData: FormData) {
   })
 
   revalidatePath('/')
-  redirect('/dashboard')
+  redirect(isProfileComplete ? '/dashboard' : '/profile')
 }
 
 export async function clearActiveOperatorSelection() {
