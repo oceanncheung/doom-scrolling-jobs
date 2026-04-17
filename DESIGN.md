@@ -233,12 +233,12 @@ Implementation note:
 - No arbitrary values — every spacing declaration must map to this scale
 
 ### Grid & Container
-- 12-column CSS Grid
-- Max content width: 1280px, centered with auto margins
-- Column gutters: 24px
-- Page margin: 48px (desktop), 24px (tablet), 16px (mobile)
-- Content typically spans 8–10 columns for readable line lengths
-- Sidebar: 3–4 columns. Main content: 8–9 columns.
+- **Design-level intent:** 12-column grid as the conceptual reference (see `app/styles/utilities/grid.css` for the `.u-grid-cell` contract — first-cell left inset from container, non-first cells align to column line, last cell's right inset owned by container).
+- **Shipped reality:** surface-specific grids (2-col, 3-col, 4-col, 5-col — each declared per section). Column counts map to content density rather than a global 12-col rhythm. The `.u-grid-cell` contract applies regardless of column count.
+- Queue column right padding (`--queue-column-pad`): 32px desktop / 24px at ≤1440px / 16px tablet / 12px at ≤640px / 0 mobile right-bleed. Defined in `app/styles/shell.css` and `app/styles/responsive.css`.
+- Column gutters vary by surface: `--grid-gap-tight` (12px) / `--grid-gap-standard` (16px) / `--grid-gap-spacious` (24px) / `--grid-gap-section` (32px). Tokens in `app/styles/tokens.css`.
+- No strict max content width — content expands to fill the queue column; rail width is fixed at `--dashboard-rail-width`.
+- Content typically spans the full queue column width. Sidebar = `--dashboard-rail-width`; main content = remaining space (`minmax(0, 1fr)`).
 
 ### Layout Patterns
 
@@ -313,12 +313,16 @@ Implementation note:
 ## 8. Responsive Behavior
 
 ### Breakpoints
-| Name | Width | Key Changes |
-|------|-------|-------------|
-| Mobile | 320px | Single column, 16px margins, sidebar stacks above content |
-| Tablet | 768px | Two-panel layout begins, 24px margins |
-| Desktop | 1024px | Full 12-column grid, full nav visible |
-| Wide | 1280px | Max content width reached, centered |
+Five canonical seams used in `app/styles/responsive.css`. These are max-widths — a rule written as `@media (max-width: N)` targets widths ≤ that seam. Token names available in `app/styles/tokens.css`: `--bp-xs` / `-sm` / `-md` / `-lg` / `-xl`.
+
+| Seam | Max-width | Token | Key Changes |
+|------|-----------|-------|-------------|
+| xs (small mobile) | 390px | `--bp-xs` | Tightest gutters; compact control heights |
+| sm (mobile) | 640px | `--bp-sm` | Single-column stacks; action bars bleed to viewport edges |
+| md (tablet) | 900px | `--bp-md` | Sidebar rail collapses; packet and profile single-column |
+| lg (narrow desktop) | 1180px | `--bp-lg` | Two-panel workspace; jobs queue 4-col meta grid |
+| xl (standard desktop) | 1440px | `--bp-xl` | Jobs queue 5-col meta grid with tighter `--jobs-queue-col-gap` (12px) |
+| wide | 1441px+ | — | Full-width rail + queue column; `--queue-column-pad: 32px` |
 
 ### Touch Targets
 - Button height: 48px minimum

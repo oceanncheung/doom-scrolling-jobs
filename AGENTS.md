@@ -179,6 +179,26 @@ This refinement zone exists to improve implementation quality and maintainabilit
 - Queue-column hairlines must use the shared edge-bleed variables from `app/styles/controls.css` instead of reintroducing raw `calc(-1 * var(--queue-column-pad))` math in pseudo-element rules.
 - Treat UI cleanups as zero-diff by default. If a request is about a bug like centering or flush edges, fix the contract without redesigning the surrounding UI.
 
+## Grid-cell contract
+
+The site-wide grid contract lives in `app/styles/utilities/grid.css` (Commits 3–4 of the 2026-04 grid audit). The rule is simple:
+
+- First cell of a row: `padding-left: 0`. Container's page padding (typically `var(--queue-column-pad)`) provides the left inset. Do NOT set cell-level `padding-left` on the first cell.
+- Non-first cells: `padding-left: 0`. Text aligns to the invisible column grid line. Buttons below share the same left edge as text above — no half-pixel drift between headings and controls.
+- Breathing between cells: owned by the surface via `gap: var(--grid-gap-*)` on the grid container OR via `padding-right: Npx` on the cell. Never set a `padding-right` default on the utility itself (that would double-breathe any gap-based grid).
+- Last cell, when flush to viewport: `padding-right: 0`. Pair with the edge-flush contracts in `queue-rows.css` / `responsive.css` / `settings-fields.css` to zero the button's border at the viewport edge.
+
+Utility classes (opt-in annotation):
+- `.u-grid-cell` — non-first cell marker (`padding-left: 0`).
+- `.u-grid-cell--first` — first cell marker.
+- `.u-grid-cell--first-inset` — first cell for nested grids without a padded container.
+- `.u-grid-cell--last` — pairs with viewport-edge-flush.
+- `.u-grid-cell--gap-tight` / `--gap-standard` / `--gap-spacious` / `--gap-section` — opt-in cell-level `padding-right` for surfaces that don't use grid `gap`.
+
+The full inventory of grids + their contract status lives at `docs/grid-audit-2026-04/grid-inventory.md`. When adding a new grid anywhere, skim the inventory's "Adding a new grid" section at the bottom.
+
+Edge-flush is a separate contract — the viewport is not a painted container, so button clusters that bleed to the viewport edge must zero the viewport-adjacent borders and (where needed) anchor top hairlines at the bar level. Four named blocks currently own this concern; see the inventory doc for the list.
+
 ## Elevated controls (single pattern)
 
 **Additional filters** (`details.settings-action-disclosure`) and **Experience tabs** (`.settings-tab-shell`) share one layout contract—keep them in sync.

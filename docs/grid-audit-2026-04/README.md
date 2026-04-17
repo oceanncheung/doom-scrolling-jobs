@@ -118,5 +118,9 @@ TBD.
 ### Commit 4 — roll contract to remaining surfaces (planned)
 TBD.
 
-### Commit 5 — docs sync (planned)
-TBD.
+### Commit 5 — docs sync (DESIGN.md breakpoints + grid inventory + AGENTS.md pointer)
+- **`DESIGN.md` §Grid & Container:** replaced the stale "12-column CSS Grid, 1280px max, 24/48/24/16px margins" description with the shipped reality: surface-specific grid column counts (2/3/4/5-col per density), `--queue-column-pad` token scale (32/24/16/12/0), and `--grid-gap-*` tier tokens (12/16/24/32). Points at `app/styles/utilities/grid.css` for the `.u-grid-cell` contract.
+- **`DESIGN.md` §Breakpoints:** replaced stale 320/768/1024/1280 table with the actual five seams used in `responsive.css`: 390/640/900/1180/1440 + wide (1441+), with the `--bp-xs` / `-sm` / `-md` / `-lg` / `-xl` token names from `tokens.css`.
+- **`docs/grid-audit-2026-04/grid-inventory.md`** (new): canonical reference listing every grid container across the site, grouped by page, with contract status (ANNOTATED / INHERENT / PROTECTED). Also documents the four edge-flush blocks (jobs-queue, packet overview, profile generate-action, action-bar top hairline) and a short "Adding a new grid" checklist at the bottom.
+- **`AGENTS.md` §Grid-cell contract** (new section): added alongside the existing "Shared control + hairline contract" section. States the contract rule in four bullets, lists the utility classes, and points at the inventory doc.
+- **No code changes.** This is the final commit of the grid audit series — pure documentation sync so future contributors find the contract via grep on AGENTS.md or DESIGN.md.
