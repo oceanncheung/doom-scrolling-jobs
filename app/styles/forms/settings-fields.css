@@ -1224,11 +1224,20 @@
   border-radius: 0;
   color: var(--text);
   cursor: pointer;
-  transition: opacity 200ms ease, color 200ms ease;
+  transition: color 200ms ease;
 }
 
-.field-source-action:hover:not(:disabled) {
-  opacity: 0.55;
+.field-source-action__icon {
+  /* Default stroke matches the icon's JSX attribute. Kept explicit so the hover rule
+   * below can override it cleanly (CSS stroke-width beats SVG presentation attributes). */
+  stroke-width: 1.15;
+  transition: stroke-width 150ms ease;
+}
+
+/* Thicker stroke on hover so the icon obviously "presses in" rather than just fading —
+ * the old opacity-drop was too subtle, read as dimming rather than hover feedback. */
+.field-source-action:hover:not(:disabled) .field-source-action__icon {
+  stroke-width: 2;
 }
 
 .field-source-action:focus-visible {

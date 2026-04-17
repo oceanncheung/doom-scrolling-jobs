@@ -273,16 +273,78 @@ export async function enrichActiveOperatorEvidence(
 }
 
 /**
- * Append extracted evidence entries as proof_bank rows on cover_letter_master. Deduplicates
- * by case-insensitive label — if a proof_bank entry already exists with the same label,
- * we skip it (user's edits stay intact; a re-pull never clobbers their work). Returns the
- * count of NEW entries actually added to proof_bank.
+ * Merge extracted evidence entries into cover_letter_master.proof_bank using a canonical
+ * company-name key so "Montran" (from a portfolio case study) collapses into "Montran
+ * (In-House, Creative Director — Fintech/Payments Infrastructure)" (from the resume).
+ *
+ * Two responsibilities per run:
+ *   (a) collapse any existing duplicates in proof_bank itself. If two proof_bank rows
+ *       share a canonical key (e.g. operator pulled once before this dedup logic shipped),
+ *       they get folded into one — user-authored label + context wins, bullets are union.
+ *   (b) fold each new extraction into the matching proof_bank row when one exists, or
+ *       append as a fresh row when it doesn't.
+ *
+ * Returns how many conceptually-new proof points landed (appended rows + new bullets on
+ * merged rows combined).
  */
+
+interface ProofBankRow {
+  label?: string
+  context?: string
+  bullets?: string[]
+}
+
+interface NormalizedProofRow {
+  label: string
+  context: string
+  bullets: string[]
+  key: string
+}
+
+function canonicalizeCompanyKey(label: string): string {
+  // Strip parenthetical / em-dash / bracket descriptions — keep the primary company name.
+  // Handles: "Montran (In-House, …)" → "Montran", "MM.S — Independent Studio" → "MM.S".
+  // Also strip common corporate suffixes that add drift without changing identity.
+  const primary = label.split(/[(\[—–-]/)[0]?.trim() ?? ''
+  const stripped = primary.replace(/\b(?:Inc|LLC|Ltd|Co|Corp|Corporation|AG|SA|GmbH)\.?$/i, '').trim()
+  return stripped
+    .toLowerCase()
+    .replace(/[^a-z0-9.\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeRow(row: ProofBankRow): NormalizedProofRow | null {
+  const label = String(row?.label ?? '').trim()
+  if (!label) return null
+  return {
+    label,
+    context: String(row?.context ?? ''),
+    bullets: Array.isArray(row?.bullets)
+      ? row.bullets.filter((b): b is string => typeof b === 'string').map((b) => b.trim()).filter(Boolean)
+      : [],
+    key: canonicalizeCompanyKey(label),
+  }
+}
+
+function dedupBullets(existing: string[], incoming: string[]): { merged: string[]; added: number } {
+  const seen = new Set(existing.map((b) => b.toLowerCase().replace(/\s+/g, ' ').trim()))
+  const merged = [...existing]
+  let added = 0
+  for (const bullet of incoming) {
+    const key = bullet.toLowerCase().replace(/\s+/g, ' ').trim()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    merged.push(bullet)
+    added += 1
+  }
+  return { merged, added }
+}
+
 async function mergeExtractedIntoProofBank(
   operatorId: string,
   extracted: EvidenceBankEntryRecord[],
 ): Promise<number> {
-  if (extracted.length === 0) return 0
   const supabase = createClient()
   const { data, error } = await supabase
     .from('cover_letter_master')
@@ -291,31 +353,70 @@ async function mergeExtractedIntoProofBank(
     .maybeSingle()
   if (error || !data) return 0
 
-  const existing = Array.isArray((data as { proof_bank?: unknown }).proof_bank)
-    ? ((data as { proof_bank: Array<{ label?: string; context?: string; bullets?: string[] }> }).proof_bank)
+  const rawRows: ProofBankRow[] = Array.isArray((data as { proof_bank?: unknown }).proof_bank)
+    ? ((data as { proof_bank: ProofBankRow[] }).proof_bank)
     : []
-  const existingLabels = new Set(existing.map((row) => String(row?.label ?? '').trim().toLowerCase()).filter(Boolean))
 
-  const additions: Array<{ label: string; context: string; bullets: string[] }> = []
+  // Pass (a): collapse any existing duplicates. Walk the proof_bank, grouping by
+  // canonical key. The first occurrence of each key wins its label+context (user-authored
+  // rows tend to come first, and we prefer preserving operator text over extracted text);
+  // subsequent occurrences' bullets get merged in. Rows with an empty label are dropped.
+  const groupedByKey = new Map<string, NormalizedProofRow>()
+  const orderedKeys: string[] = []
+  for (const raw of rawRows) {
+    const normalized = normalizeRow(raw)
+    if (!normalized) continue
+    const existing = groupedByKey.get(normalized.key)
+    if (!existing) {
+      groupedByKey.set(normalized.key, normalized)
+      orderedKeys.push(normalized.key)
+      continue
+    }
+    // Same canonical company — merge bullets. Keep existing label/context (first-win).
+    const { merged } = dedupBullets(existing.bullets, normalized.bullets)
+    existing.bullets = merged
+  }
+
+  let conceptuallyNew = 0
+
+  // Pass (b): fold each extraction into the matching group or append as new.
   for (const entry of extracted) {
     const label = (entry.clientName || entry.summary || '').trim()
     if (!label) continue
-    const key = label.toLowerCase()
-    if (existingLabels.has(key)) continue
-    existingLabels.add(key)
-    additions.push({
+    const key = canonicalizeCompanyKey(label)
+    if (!key) continue
+
+    const matching = groupedByKey.get(key)
+    if (matching) {
+      // Merge extracted bullets into the existing row. Don't touch label or context —
+      // user-authored framing wins. Only the bullet list grows.
+      const { merged, added } = dedupBullets(matching.bullets, entry.proofPoints)
+      matching.bullets = merged
+      conceptuallyNew += added
+      continue
+    }
+
+    // No existing match — append as a new proof_bank row.
+    const newRow: NormalizedProofRow = {
       label,
       context: entry.summary || '',
-      bullets: entry.proofPoints,
-    })
+      bullets: [...entry.proofPoints],
+      key,
+    }
+    groupedByKey.set(key, newRow)
+    orderedKeys.push(key)
+    conceptuallyNew += 1
   }
 
-  if (additions.length === 0) return 0
+  const persistedRows = orderedKeys
+    .map((key) => groupedByKey.get(key))
+    .filter((row): row is NormalizedProofRow => row !== undefined)
+    .map((row) => ({ label: row.label, context: row.context, bullets: row.bullets }))
 
   const { error: updateError } = await supabase
     .from('cover_letter_master')
-    .update({ proof_bank: [...existing, ...additions] })
+    .update({ proof_bank: persistedRows })
     .eq('operator_id', operatorId)
   if (updateError) return 0
-  return additions.length
+  return conceptuallyNew
 }
