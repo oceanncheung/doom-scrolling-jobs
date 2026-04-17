@@ -37,15 +37,22 @@ jobs:
         # only runs the diff on each push. This replaces manual `supabase/migrations/*.sql`
         # application — once a new migration file is committed, the next push to main applies
         # it before eval + deploy so the schema is in sync with the code that depends on it.
+        shell: bash
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
+          set -euo pipefail
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          : "${SUPABASE_DB_URL:?SUPABASE_DB_URL secret is missing}"
+          echo "DB host (masked check): $(echo "$SUPABASE_DB_URL" | sed -E 's#^(postgres(ql)?://)[^@]+@#\1***@#' | cut -c1-80)..."
+          echo "Verifying connection..."
+          psql "$SUPABASE_DB_URL" -c 'select now()' >/dev/null
+          echo "Connection OK. Diffing migrations..."
           applied=0
           skipped=0
           for f in supabase/migrations/*.sql; do
             name="$(basename "$f")"
-            is_applied="$(psql "$SUPABASE_DB_URL" -tA -c "select 1 from public._applied_migrations where filename='$name'" 2>/dev/null)"
+            is_applied="$(psql "$SUPABASE_DB_URL" -tA -c "select 1 from public._applied_migrations where filename='$name'")"
             if [ -z "$is_applied" ]; then
               echo "→ Applying $name..."
               psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
