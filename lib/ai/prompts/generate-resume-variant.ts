@@ -105,11 +105,17 @@ SKILLS (skillsSection)
 - NEVER include soft skills as entries. Banned from skillsSection: Communication, Leadership, Teamwork, Collaboration, Problem-solving, Time management, Adaptability, Creativity, Work ethic, Attention to detail, Critical thinking, Organization, Self-motivated, Fast learner, Detail-oriented. Soft skills are demonstrated through experience bullets, never listed.
 - Skills must trace back to the candidate's source (toolsPlatforms, resume skills, core expertise, or profile skills). Do not add a JD-named tool to the skills list unless the candidate's source also lists it.
 
+AUXILIARY CONTEXT — TEMPLATE-OWNED FIELDS (do not duplicate into bullets)
+The user prompt includes additional reference fields — certifications, languages, additional information, education, hand-curated portfolio items, achievement bank — that the rendered DOCX template surfaces in their own dedicated sections directly from the candidate's master record. You are not responsible for emitting them in the schema. Two rules:
+- REFERENCE STRATEGICALLY: when the JD explicitly values one of these (bilingual candidate, PMP-required, named credential), lead the summary with it. A one-line reference in the summary or a skills entry is appropriate; a full rewrite of the bullet list around it is not.
+- NEVER DUPLICATE: do not re-state a certification, a language, or an education entry inside an experience bullet. The template renders these separately and a repeat reads as padding to both the hiring manager and the ATS keyword counter.
+The candidate's hand-curated portfolio items, preferred industries, and target roles are informational — use them to decide which experience entries to lean into (Tier A vs B vs C) when the JD aligns with a curated project or industry the candidate named.
+
 OUTPUT
 - Return valid JSON matching the schema exactly. No commentary, no markdown.
 - "changeSummaryForUser": one short sentence explaining what you tailored for this role.
 - "tailoringRationale": one short sentence explaining why this version fits the JD.
 - "highlightedRequirements": 3–5 of the JD's most important requirements that the candidate's experience covers.
 - If no allowed source experience entries are provided, return an empty experienceEntries array.`,
-  version: 'resume-variant-v4',
+  version: 'resume-variant-v5',
 } as const

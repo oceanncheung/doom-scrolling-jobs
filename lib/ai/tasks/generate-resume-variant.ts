@@ -5,12 +5,41 @@ import type { ResumeVariantInput, ResumeVariantOutput } from '@/lib/ai/contracts
 import { generateResumeVariantPrompt } from '@/lib/ai/prompts/generate-resume-variant'
 import { computeRelevanceHints, type RelevanceAnnotation, type RelevanceHint } from '@/lib/ai/tasks/compute-relevance-hints'
 import { verifyResumeVariant } from '@/lib/ai/tasks/verify-resume-variant'
-import type { ResumeExperienceRecord } from '@/lib/domain/types'
+import type { OperatorPortfolioItemRecord, ResumeAchievementRecord, ResumeEducationRecord, ResumeExperienceRecord } from '@/lib/domain/types'
 import { getOpenAIEnv } from '@/lib/env'
 import { formatEvidenceForPrompt, selectRelevantEvidenceForJob } from '@/lib/jobs/evidence-matching'
 
 function cleanLine(value: string) {
   return value.replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Compact portfolio-item line for the LLM prompt. Parallels formatEvidenceForPrompt — we
+ * want the model to see every hand-curated portfolio entry as structured signal (not as
+ * free text), so it can weight which experience entries to lean into when the JD aligns
+ * with a specific curated project. Only active items pass through.
+ */
+export function formatPortfolioItemForPrompt(item: OperatorPortfolioItemRecord): string {
+  const parts: string[] = []
+  if (item.title) parts.push(item.title)
+  if (item.projectType) parts.push(`type: ${item.projectType}`)
+  if (item.summary) parts.push(`summary: ${item.summary}`)
+  if (item.industryTags.length > 0) parts.push(`industry: ${item.industryTags.join(', ')}`)
+  if (item.skillsTags.length > 0) parts.push(`skills: ${item.skillsTags.join(', ')}`)
+  if (item.outcomeMetrics.length > 0) parts.push(`outcomes: ${item.outcomeMetrics.join(' | ')}`)
+  return parts.join(' · ')
+}
+
+function formatEducationForPrompt(entry: ResumeEducationRecord): string {
+  const credentialField = [entry.credential, entry.fieldOfStudy].filter(Boolean).join(' in ')
+  const dates = [entry.startDate, entry.endDate].filter(Boolean).join(' – ')
+  const base = [credentialField, entry.schoolName].filter(Boolean).join(' — ')
+  return [base, dates].filter(Boolean).join(' (') + (dates ? ')' : '')
+}
+
+function formatAchievementForPrompt(entry: ResumeAchievementRecord): string {
+  const head = [entry.category, entry.title].filter(Boolean).join(': ')
+  return [head, entry.detail].filter(Boolean).join(' — ')
 }
 
 // Caps here are deliberately generous — the rendered DOCX is the authoritative size budget
@@ -577,6 +606,22 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
     : 'unclassified'
   const evidenceLines = relevantEvidence.entries.map(formatEvidenceForPrompt)
 
+  // Additional reference context — not part of the generated schema (the DOCX template
+  // renders education, certifications, languages, and additional information verbatim from
+  // the master record), but the LLM needs to see them so the tailored summary + bullets
+  // can REFERENCE them strategically when the JD asks for them. Example: a "bilingual
+  // candidates preferred" JD should nudge the summary toward the candidate's languages
+  // list; a PMP-required JD should let the summary lead with that cert. Conversely, these
+  // fields must NEVER be duplicated into experienceEntries bullets — the template surfaces
+  // them separately and a repeated mention reads as padding.
+  const activePortfolio = input.workspace.portfolioItems.filter((item) => item.isActive)
+  const portfolioLines = activePortfolio.map(formatPortfolioItemForPrompt)
+  const educationLines = input.workspace.resumeMaster.educationEntries.map(formatEducationForPrompt).filter(Boolean)
+  const achievementLines = input.workspace.resumeMaster.achievementBank.map(formatAchievementForPrompt).filter(Boolean)
+  const resumeLanguages = input.workspace.resumeMaster.languages
+  const profileLanguages = input.workspace.profile.languages
+  const combinedLanguages = resumeLanguages.length > 0 ? resumeLanguages : profileLanguages
+
   const user = [
     `Target role: ${input.job.title} at ${input.job.companyName}`,
     `Target job industry: ${industryTagLine}`,
@@ -587,7 +632,14 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
     evidenceLines.length > 0
       ? `Confirmed industry-relevant work from the candidate's portfolio / web presence (use as extra proof points; already verified by the candidate — do not invent beyond what is listed here): ${evidenceLines.join(' || ')}`
       : 'Confirmed industry-relevant work from the candidate: (none matched this JD)',
+    portfolioLines.length > 0
+      ? `Hand-curated portfolio items (supplementary proof of scope + industries the candidate owns; may inform which experience entries you lean into, but do not copy into experience bullets — the DOCX template renders portfolio separately): ${portfolioLines.join(' || ')}`
+      : 'Hand-curated portfolio items: (none)',
     `Profile headline: ${input.workspace.profile.headline}`,
+    `Profile target roles (candidate's own stated targets): ${input.workspace.profile.targetRoles.join(' | ') || '(none)'}`,
+    `Profile allowed adjacent roles: ${input.workspace.profile.allowedAdjacentRoles.join(' | ') || '(none)'}`,
+    `Profile preferred industries: ${input.workspace.profile.industriesPreferred.join(' | ') || '(none)'}`,
+    `Profile work authorization notes: ${input.workspace.profile.workAuthorizationNotes || '(none)'}`,
     `Base resume title: ${input.workspace.resumeMaster.baseTitle}`,
     `Base resume summary: ${input.workspace.resumeMaster.summaryText}`,
     `Impact highlights: ${input.workspace.resumeMaster.selectedImpactHighlights.join(' | ')}`,
@@ -596,6 +648,11 @@ export async function generateResumeVariant(input: ResumeVariantInput): Promise<
     `Profile skills: ${input.workspace.profile.skills.join(' | ')}`,
     `Resume skills: ${input.workspace.resumeMaster.skillsSection.join(' | ')}`,
     `Resume tools and platforms: ${input.workspace.resumeMaster.toolsPlatforms.join(' | ')}`,
+    `Resume certifications (template renders these verbatim — reference in summary only if the JD explicitly calls for them): ${input.workspace.resumeMaster.certifications.join(' | ') || '(none)'}`,
+    `Resume languages (template renders separately — reference in summary only when the JD values bilingual / multilingual candidates): ${combinedLanguages.join(' | ') || '(none)'}`,
+    `Resume additional information (template renders separately — awards, credentials, memberships; may be referenced in summary when JD-relevant): ${input.workspace.resumeMaster.additionalInformation.join(' | ') || '(none)'}`,
+    `Resume achievement bank (named strong proof points — pair with experience entries to inform which bullets to emphasize): ${achievementLines.join(' || ') || '(none)'}`,
+    `Education: ${educationLines.join(' || ') || '(none)'}`,
     `Allowed source experience entries (reuse facts only): ${JSON.stringify(experienceCatalog)}`,
   ].join('\n')
 

@@ -3,6 +3,7 @@ import 'server-only'
 import { generateOpenAIJson, canGenerateWithOpenAI } from '@/lib/ai/client'
 import type { CoverLetterInput, CoverLetterOutput } from '@/lib/ai/contracts'
 import { generateCoverLetterPrompt } from '@/lib/ai/prompts/generate-cover-letter'
+import { formatPortfolioItemForPrompt } from '@/lib/ai/tasks/generate-resume-variant'
 import { getOpenAIEnv } from '@/lib/env'
 import { formatEvidenceForPrompt, selectRelevantEvidenceForJob } from '@/lib/jobs/evidence-matching'
 
@@ -42,6 +43,16 @@ export async function generateCoverLetter(input: CoverLetterInput): Promise<Cove
       }`
     : 'unclassified'
   const evidenceLines = relevantEvidence.entries.map(formatEvidenceForPrompt)
+  const portfolioLines = input.workspace.portfolioItems
+    .filter((item) => item.isActive)
+    .map(formatPortfolioItemForPrompt)
+  // Prefer resume-side language/cert lists because they're the ones the DOCX renders and
+  // are usually the more curated of the two; fall back to the profile field so we surface
+  // a list even when the user has only populated one side.
+  const languages =
+    input.workspace.resumeMaster.languages.length > 0
+      ? input.workspace.resumeMaster.languages
+      : input.workspace.profile.languages
 
   const user = [
     `Target role: ${input.job.title} at ${input.job.companyName}`,
@@ -51,12 +62,22 @@ export async function generateCoverLetter(input: CoverLetterInput): Promise<Cove
     evidenceLines.length > 0
       ? `Confirmed industry-relevant work from the candidate (use as factual anchor points when relevant; do not embellish beyond what is listed): ${evidenceLines.join(' || ')}`
       : '',
+    portfolioLines.length > 0
+      ? `Hand-curated portfolio items (named client work the candidate has chosen to surface — prefer these when a "why this company" anchor would otherwise rely on generic claims): ${portfolioLines.join(' || ')}`
+      : '',
     `Preferred qualifications: ${input.job.preferredQualifications.join(' | ')}`,
     `Profile headline: ${input.workspace.profile.headline}`,
     `Profile summary: ${input.workspace.profile.bioSummary}`,
+    `Profile target roles: ${input.workspace.profile.targetRoles.join(' | ') || '(none)'}`,
+    `Profile preferred industries: ${input.workspace.profile.industriesPreferred.join(' | ') || '(none)'}`,
+    `Profile allowed adjacent roles: ${input.workspace.profile.allowedAdjacentRoles.join(' | ') || '(none)'}`,
+    `Profile work authorization notes (reference only when the JD asks about visa / sponsorship / location): ${input.workspace.profile.workAuthorizationNotes || '(none)'}`,
     `Resume headline: ${input.resumeVariant.headline}`,
     `Resume summary: ${input.resumeVariant.summary}`,
     `Resume change summary: ${input.resumeVariant.changeSummaryForUser}`,
+    `Candidate languages (reference only when the JD values bilingual / multilingual candidates): ${languages.join(' | ') || '(none)'}`,
+    `Candidate certifications (reference only when the JD names a matching credential): ${input.workspace.resumeMaster.certifications.join(' | ') || '(none)'}`,
+    `Candidate additional information (awards, memberships, press — reference when JD-aligned): ${input.workspace.resumeMaster.additionalInformation.join(' | ') || '(none)'}`,
     `Portfolio primary URL: ${input.workspace.profile.portfolioPrimaryUrl}`,
     `Cover-letter positioning: ${input.workspace.coverLetterMaster.positioningPhilosophy}`,
     `Cover-letter proof bank: ${JSON.stringify(input.workspace.coverLetterMaster.proofBank)}`,
