@@ -60,8 +60,9 @@ For the flaky set, ALWAYS verify via computed-style diff across stash/unstash of
 - **Verification:** triple-right computed styles at 375px identical before/after the consolidation (stash/pop diff). Pair-right wasn't visible on the test job (requires pre-packet-generation state), but the cascade math is deterministic: pair-right slot 2 now matches triple-right slot 3's computed values for the shared properties (border-top + border-left), because they share the same selector-list rule.
 - **Rule count:** 3 restoration rules (2 from 2a + 1 pair-right) → 3 rules (but now each is a shared-selector rule where applicable). Declaration count dropped from 7 to 5 — border-top is declared once for three slots, border-left once for two slots.
 
-### Commit 2c — profile settings edge-flush consolidation (planned)
-TBD.
+### Commit 2c — profile generate-action edge-flush cleanup
+- **Scope:** `forms/settings-fields.css` — the `.upload-slot-chip-btn--action` rule (the "Generate profile" / "Profile generated" chip). Added a "PROFILE GENERATE-ACTION EDGE-FLUSH CONTRACT" block comment documenting why the chip has `border-right: 0` (bleeds through the settings section's right padding to the viewport edge). Removed three declarations that were exact duplicates of what the preceding `border: 1px solid var(--text)` shorthand already set: `border-left-width: 1px;`, `border-top-width: 1px;`, and `border-color: var(--text);`. Kept `border-right-width: 0` and `border-bottom: none` — those actually override the shorthand and are real behavior.
+- **Verification:** computed-style diff on the action chip at both desktop (1747) and mobile (375) shows identical border widths and colors in clean vs pilot states (stash/pop both times). At desktop the chip is `bl:1 br:0 bt:1 bb:0` flush to viewport right (rect.right=1747); at mobile `bl:0 br:0 bt:1 bb:0` spanning full viewport (x:0, w:375, right:375). No pixel difference.
 
 ### Commit 2d — misc edge-flush cleanup (planned)
 TBD.

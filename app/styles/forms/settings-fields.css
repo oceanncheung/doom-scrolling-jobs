@@ -155,6 +155,17 @@
   margin-left: calc(-1 * var(--adjacent-control-overlap));
 }
 
+/* =============================================================================
+ * PROFILE GENERATE-ACTION EDGE-FLUSH CONTRACT
+ * =============================================================================
+ * The .upload-slot-chip-btn--action chip ("Generate profile" / "Profile
+ * generated") sits at the right end of the source-uploads row. That row bleeds
+ * through the settings-section right padding (see .settings-source-uploads-row
+ * --materials bleed math at line ~51) so the chip's right border would paint a
+ * 1px line flush against the viewport edge — violates "edge of viewport = no
+ * border." Strip the right border; the bottom is `none` so the chip's bottom
+ * line is inherited from the section's own hairline rather than drawn twice.
+ * --------------------------------------------------------------------------- */
 .settings-main .settings-source-uploads-row--materials > .upload-slot-chip-btn--action {
   position: relative;
   z-index: 0;
@@ -167,11 +178,8 @@
   background: var(--text);
   color: var(--bg);
   border: 1px solid var(--text);
-  border-left-width: 1px;
-  border-top-width: 1px;
-  border-right-width: 0;
-  border-bottom: none;
-  border-color: var(--text);
+  border-right-width: 0; /* edge-flush: viewport owns the right edge */
+  border-bottom: none;   /* seam-sharing: section hairline draws the bottom */
 }
 
 .settings-main .settings-source-uploads-row--materials .upload-slot-chip-btn--action:hover:not(:disabled),
