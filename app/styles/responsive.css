@@ -2537,6 +2537,17 @@
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(2) .button {
     border-top-width: 1px;
     border-top-color: var(--line);
+    /*
+     * Regenerate | Archive seam: give Regenerate its OWN right border rather than relying on
+     * Archive's restored left border. Regenerate carries z-index: 2 (the `:has(nth-child(3))`
+     * protection rule in queue-rows.css) so its own right edge stays painted on top of Archive
+     * in the 1px overlap — even when Regenerate's hover fill (surface-soft-hover) would
+     * otherwise mask the z:0 border drawn by Archive behind it. Both slots still carry their
+     * side (Regenerate right + Archive left, each 1px) so whichever is hovered, the seam
+     * stays visible. The 1px margin-left overlap collapses them into a single painted line.
+     */
+    border-right-width: 1px;
+    border-right-color: var(--line);
   }
 
   .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:nth-child(3) .button {
@@ -2564,19 +2575,13 @@
   }
 
   /*
-   * Restore the right-edge black hairline on the last action slot. The bleed rule at the top
-   * of this block strips border-right-width on every button to allow flush-to-viewport-edge
-   * sharing; the last button (Regenerate in pair-right, Archive in triple-right) still
-   * needs an outer edge so the control band reads as a closed rectangle rather than an
-   * open cell on the right side. Matches the left-border treatment on slots 2/3 (see
-   * `.job-overview-actions--pair-right .screening-action-slot + .screening-action-slot .button`
-   * and the triple-right analogues above).
+   * Last-slot right edge stays at 0 — the wrap bleeds through the queue-column's right
+   * padding to the viewport edge at ≤900px, so a painted 1px right border would sit flush
+   * against the viewport and violate the "edge of viewport = no border" editorial contract.
+   * A previous revision restored the right border "so the rectangle reads closed," but the
+   * viewport itself IS the edge; a painted line there is redundant and reads as a line glued
+   * to the screen. Keep the bleed rule's border-right-width: 0 from line ~2549.
    */
-  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--pair-right .screening-action-slot:last-child .button,
-  .dashboard-workspace .queue-column .job-flow-prep-overview-wrap .screening-actions-bar.job-overview-actions.job-overview-actions--triple-right .screening-action-slot:last-child .button {
-    border-right-width: 1px;
-    border-right-color: var(--line);
-  }
 
   /*
    * Disabled buttons fade to opacity 0.35 (.button:disabled) which also fades their 1px top border.
