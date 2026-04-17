@@ -13,7 +13,7 @@ import {
   SettingsTabPanel,
   SettingsTabShell,
 } from '@/components/profile/profile-form-controls'
-import { ProofPointsFromSources } from '@/components/profile/proof-points-from-sources'
+import { PendingProofPointCard } from '@/components/profile/pending-proof-point-card'
 import { AutoSizeTextarea } from '@/components/ui/auto-size-textarea'
 import { BulletTextarea } from '@/components/ui/bullet-textarea'
 import { FieldLabelRow } from '@/components/ui/field-label-row'
@@ -155,10 +155,6 @@ export function CoverLetterStrategySection({
               label="Proof points"
               title="Specific work, clients, and projects. Pulled from your portfolio link or added manually."
             >
-              <ProofPointsFromSources
-                confirmedEntries={confirmedEvidenceEntries}
-                pendingEntries={pendingEvidenceEntries}
-              />
               <div className="section-header">
                 <AddRowButton
                   label="Add proof point"
@@ -168,6 +164,20 @@ export function CoverLetterStrategySection({
                 />
               </div>
               <div className="repeat-list">
+                {pendingEvidenceEntries.map((entry, index) => (
+                  <PendingProofPointCard
+                    entry={entry}
+                    indexNumber={proofBankEntries.length + index + 1}
+                    key={entry.id}
+                  />
+                ))}
+                {confirmedEvidenceEntries.map((entry, index) => (
+                  <PendingProofPointCard
+                    entry={entry}
+                    indexNumber={proofBankEntries.length + pendingEvidenceEntries.length + index + 1}
+                    key={entry.id}
+                  />
+                ))}
                 {proofBankEntries.map((entry, index) => (
                   <article className="repeat-card" key={`${entry.label}-${index}`}>
                     <div className="repeat-card-header">
