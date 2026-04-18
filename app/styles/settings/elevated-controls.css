@@ -230,39 +230,12 @@
   background: var(--bg);
 }
 
-/*
- * Toolbar hairline, edge-to-edge, split into three parts:
- *   - ::before covers the left padding gap (between shell-left and first tab)
- *   - ::after  covers the right padding gap (between last tab and shell-right)
- *   - each inactive tab carries its own `border-bottom` for the stretch under
- *     the tab row itself
- *
- * Why split? Previously this was one shell-wide ::after + a compensating mask
- * on the active chip (bottom: -1px, height: 2px) to cover the segment under
- * the active chip. On iOS Safari the scroll track's `overflow-y: hidden`
- * clips anything extending below the track's bottom — including the mask's
- * lower half — so the hairline visibly punched through under the active
- * chip. The per-tab-border approach lets the active chip simply drop its
- * border-bottom to blend into the panel, no mask required.
- */
-.settings-tab-toolbar-shell::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: var(--queue-column-pad);
-  height: 1px;
-  background: var(--line);
-  pointer-events: none;
-  z-index: 1;
-}
-
 .settings-tab-toolbar-shell::after {
   content: '';
   position: absolute;
+  left: 0;
   right: 0;
   bottom: 0;
-  width: var(--settings-section-pad-right);
   height: 1px;
   background: var(--line);
   pointer-events: none;
@@ -437,15 +410,16 @@
   z-index: 2;
 }
 
-/*
- * Active chip no longer needs a mask — the shell-wide hairline is now drawn
- * as two edge pseudos on `.settings-tab-toolbar-shell` plus per-tab
- * border-bottom. Nothing passes under the active chip that would need
- * hiding, so the pseudo-element is retained empty to preserve specificity
- * without painting anything.
- */
 .settings-tab-shell.has-selection .settings-tab-button.is-active::after {
-  content: none;
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--surface-soft);
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* Open disclosure chip: grey fill with L/T/R borders only; bottom hairline is toolbar inset shadow. */
@@ -476,11 +450,11 @@
 }
 
 .settings-tab-shell.has-selection .settings-tab-button:not(.is-active) {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
 }
 
 .settings-tab-shell:not(.has-selection) .settings-tab-button {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
 }
 
 .settings-tab-shell.has-selection .settings-tab-button.is-active:hover {
