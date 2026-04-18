@@ -526,32 +526,36 @@ main.jobs-index .queue-list .screening-summary-grid > .screening-cell:not(.scree
 }
 
 /*
- * Action-bar top hairline — anchor-at-bar-level.
+ * Action-bar top hairline — anchor-at-SLOT-level (not bar-level).
  *
- * Bug motivating this block: on mobile the screening-actions-bar bleeds to
- * both viewport edges (see JOBS-QUEUE EDGE-FLUSH CONTRACT above), which
- * strips the buttons' border-left and border-right. Only the top border
- * remains as the visual separator from the row above. When the user clicks
- * a primary button (Save → "Saving…", Apply → "Applying…"), React sets it
- * disabled; .screening-actions-bar .button:disabled fades opacity to 0.4.
- * The button's own 1px top border fades with it, so on a solid-black primary
- * fill the faded top border is visually indistinguishable from the faded
- * background — the top hairline looks gone.
+ * Bug motivating this block: when the user clicks a primary (Save → "Saving…",
+ * Apply → "Applying…"), React sets it disabled and
+ * `.screening-actions-bar .button:disabled` fades opacity to 0.4. The
+ * button's own 1px top border fades with it, so on a solid-black primary
+ * the faded top border is visually indistinguishable from the faded
+ * background — the top hairline looks gone. Mobile also strips border-left
+ * and border-right via the bleed rule above, leaving the top as the only
+ * visual separator from the row above.
  *
- * Matches the same fix already in place for the packet overview wrap at
- * responsive.css ~line 2587 (its Apply | Regenerate | Archive bar had the
- * same problem). A pseudo-element at the bar level paints a full-width 1px
- * black rule at z-index: 2; the overlay isn't affected by any individual
- * button's opacity, so the top hairline stays solid in every state (rest /
- * hover / pending / disabled).
+ * Earlier iteration (2fdd190) put the pseudo-element on the bar itself, but
+ * the bar is a 5-col grid at desktop — the empty columns 1-3 sit ABOVE
+ * empty space, not above any button. A bar-wide ::before painted ~481px
+ * to the LEFT of where SAVE starts, creating a dangling line ("extra line
+ * extending above the save/skip button"). Scope the overlay to each action
+ * slot instead: slot width = button width at every breakpoint; adjacent
+ * slots' overlays touch at the seam forming one continuous line above the
+ * button cluster, with zero overhang into empty grid columns.
+ *
+ * The overlay is a sibling of the button (not a descendant), so the
+ * button's opacity doesn't fade it. Hairline stays solid in every state.
  * --------------------------------------------------------------------------- */
-main.jobs-index .queue-list .screening-actions-bar,
-main.jobs-index .queue-list .stage-actions-bar {
+main.jobs-index .queue-list .screening-actions-bar .screening-action-slot,
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot {
   position: relative;
 }
 
-main.jobs-index .queue-list .screening-actions-bar::before,
-main.jobs-index .queue-list .stage-actions-bar::before {
+main.jobs-index .queue-list .screening-actions-bar .screening-action-slot::before,
+main.jobs-index .queue-list .stage-actions-bar .stage-action-slot::before {
   content: '';
   position: absolute;
   top: 0;
