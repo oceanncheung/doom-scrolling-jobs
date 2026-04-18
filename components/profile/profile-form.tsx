@@ -480,20 +480,23 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
       />
 
       {/*
-       * Visible error/success banner for the save action. Previously this message was
-       * only read in useEffect deps and never rendered — any server-action failure
-       * (missing resume_master row, PDF parse crash, OpenAI env missing, etc.)
-       * returned silently and the user had no way to know what went wrong. Rendering
-       * it here, right below the Source Documents + Generate Profile row, means
-       * failures are surfaced where the user is already looking.
+       * Visible ERROR banner for the save action. Previously the message was never
+       * rendered, so silent failures (PDF parse crash, missing DB row, OpenAI env
+       * missing, etc.) left the user with no signal — exactly the pattern behind the
+       * Alvis 2026-04-18 debug where Generate Profile appeared to do nothing. We
+       * keep the error banner as a diagnostic surface for any future regression of
+       * that shape.
+       *
+       * Success messages are intentionally suppressed — the save action returns a
+       * verbose info-dump ("… saved with N experience entries and M portfolio
+       * items. Profile is now approved for ranking.") that reads as noise when the
+       * user already sees the data populated. For generate-profile the
+       * window.location.reload() in the useEffect above is the user-visible "it
+       * worked" signal; for regular saves the disappearance of unsaved-changes
+       * flagging is enough.
        */}
-      {actionState.message && actionState.status !== 'idle' ? (
-        <p
-          className={`action-note ${
-            actionState.status === 'error' ? 'action-note-error' : 'action-note-success'
-          }`}
-          role={actionState.status === 'error' ? 'alert' : 'status'}
-        >
+      {actionState.message && actionState.status === 'error' ? (
+        <p className="action-note action-note-error" role="alert">
           {actionState.message}
         </p>
       ) : null}
