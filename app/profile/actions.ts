@@ -1153,16 +1153,28 @@ export async function saveOperatorProfile(
 
   let rankingRefreshNote = ''
 
-  try {
-    const rankingRefresh = await rescorePersistedImportedJobs()
+  // Only rescore the imported-jobs pool when the profile has been materially
+  // regenerated. A regular Save Profile tweak (phone number, a headline edit,
+  // etc.) doesn't meaningfully change ranking inputs, and rescoring every job
+  // on every save was taking 60-95 seconds for users with a populated pool —
+  // enough to trip Cloud Run's request timeout and show the user a
+  // "page couldn't load" browser error. Scoped to generate-profile intent so
+  // the heavy work still runs when it's actually needed.
+  //
+  // TODO: move rescore to a background job (Supabase cron / scheduled task)
+  // so even the generate-profile path doesn't block the save response.
+  if (isGenerateProfileIntent) {
+    try {
+      const rankingRefresh = await rescorePersistedImportedJobs()
 
-    if (rankingRefresh.issue) {
-      rankingRefreshNote = ` Queue refresh note: ${rankingRefresh.issue}`
+      if (rankingRefresh.issue) {
+        rankingRefreshNote = ` Queue refresh note: ${rankingRefresh.issue}`
+      }
+    } catch (error) {
+      rankingRefreshNote = ` Queue refresh note: ${
+        error instanceof Error ? error.message : 'ranking refresh could not complete'
+      }`
     }
-  } catch (error) {
-    rankingRefreshNote = ` Queue refresh note: ${
-      error instanceof Error ? error.message : 'ranking refresh could not complete'
-    }`
   }
 
   revalidatePath('/')

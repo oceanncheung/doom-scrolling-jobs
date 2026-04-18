@@ -71,7 +71,7 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
   const lastHandledSuccessKeyRef = useRef<string | null>(null)
   const baselineFormSnapshotRef = useRef<Map<string, string> | null>(null)
   const { applicationTitleTags, setApplicationTitleTags } = useProfileApplicationTitles()
-  const { requestSaveButtonFlash, setHasUnsavedChanges } = useProfileSaveButtonAttention()
+  const { requestSaveButtonFlash, setHasUnsavedChanges, setIsSavePending } = useProfileSaveButtonAttention()
   const { setReviewIndicatorsVisible } = useProfileReviewIndicators()
   const initialFormState = createProfileFormInitialState(workspace)
   const initialDraftState = getProfileFormDraftState({
@@ -306,6 +306,19 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
       window.cancelAnimationFrame(frame)
     }
   }, [serializeCurrentForm, setHasUnsavedChanges])
+
+  // Forward useActionState's in-flight flag to the save button context so the
+  // Save Profile button (rendered in a separate subtree in ProfileSettingsRail)
+  // can swap its label to "Saving…" and go disabled-grey the moment the user
+  // clicks. Only propagate when the submission is a regular save — the
+  // generate-profile path already has its own pending state on the Source
+  // Documents row's Generate button, and doubling up would confuse the user
+  // with two simultaneous "saving" affordances.
+  useEffect(() => {
+    const isRegularSave =
+      isActionPending && (lastSubmitIntent === null || lastSubmitIntent === 'save')
+    setIsSavePending(isRegularSave)
+  }, [isActionPending, lastSubmitIntent, setIsSavePending])
 
   useEffect(() => {
     const handlePotentialFormChange = (event: Event) => {
