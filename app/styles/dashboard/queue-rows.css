@@ -526,41 +526,29 @@ main.jobs-index .queue-list .screening-summary-grid > .screening-cell:not(.scree
 }
 
 /*
- * Action-bar top hairline — anchor-at-bar-level.
+ * Dashboard queue action bars — no top hairline.
  *
- * Bug motivating this block: on mobile the screening-actions-bar bleeds to
- * both viewport edges (see JOBS-QUEUE EDGE-FLUSH CONTRACT above), which
- * strips the buttons' border-left and border-right. Only the top border
- * remains as the visual separator from the row above. When the user clicks
- * a primary button (Save → "Saving…", Apply → "Applying…"), React sets it
- * disabled; .screening-actions-bar .button:disabled fades opacity to 0.4.
- * The button's own 1px top border fades with it, so on a solid-black primary
- * fill the faded top border is visually indistinguishable from the faded
- * background — the top hairline looks gone.
+ * Earlier iteration painted a top rule above each SAVE/SKIP (Apply/Archive)
+ * bar, partly via the button's own border-top and partly via a bar-level
+ * ::before overlay that anchored the line against button opacity fades in
+ * pending states. User feedback: that top line reads as extra visual weight
+ * — the content should flow directly into the button cluster with only the
+ * bottom row-separator hairline below it. Strip both:
+ *   1. The button's border-top-width (scoped to jobs-index queue lists so
+ *      other .screening-actions-bar instances — e.g. packet-page
+ *      .job-overview-actions variants — are unaffected).
+ *   2. The bar-level ::before overlay (removed entirely; no longer needed).
  *
- * Matches the same fix already in place for the packet overview wrap at
- * responsive.css ~line 2587 (its Apply | Regenerate | Archive bar had the
- * same problem). A pseudo-element at the bar level paints a full-width 1px
- * black rule at z-index: 2; the overlay isn't affected by any individual
- * button's opacity, so the top hairline stays solid in every state (rest /
- * hover / pending / disabled).
+ * Row separator below the bar is still provided by the button's
+ * border-bottom + the .screening-row::after / .stage-row::after rule at
+ * queue-rows.css:47. Saving-state visibility is now governed by the button's
+ * own border-bottom rather than a border-top (the opacity-fade issue only
+ * manifested at the top because that was the only edge shared between the
+ * button and the row above).
  * --------------------------------------------------------------------------- */
-main.jobs-index .queue-list .screening-actions-bar,
-main.jobs-index .queue-list .stage-actions-bar {
-  position: relative;
-}
-
-main.jobs-index .queue-list .screening-actions-bar::before,
-main.jobs-index .queue-list .stage-actions-bar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--line);
-  pointer-events: none;
-  z-index: 2;
+main.jobs-index .queue-list .screening-actions-bar .button,
+main.jobs-index .queue-list .stage-actions-bar .button {
+  border-top-width: 0;
 }
 
 .screening-actions-cluster {
