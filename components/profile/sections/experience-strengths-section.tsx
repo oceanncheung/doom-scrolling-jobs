@@ -517,6 +517,7 @@ export function ExperienceStrengthsSection({
                 <label className="field">
                   <span>URL</span>
                   <input
+                    inputMode="url"
                     name="portfolioUrl"
                     onChange={(event) => {
                       setPortfolioItems((current) =>
@@ -527,7 +528,7 @@ export function ExperienceStrengthsSection({
                         ),
                       )
                     }}
-                    type="url"
+                    type="text"
                     value={item.url}
                   />
                 </label>

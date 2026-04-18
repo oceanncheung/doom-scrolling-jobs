@@ -39,6 +39,7 @@ import {
 } from '@/lib/profile/master-assets'
 import { normalizeMatchingPreferences } from '@/lib/profile/matching-preferences'
 import { createClient } from '@/lib/supabase/server'
+import { normalizeWebUrl } from '@/lib/url/normalize-web-url'
 
 export type ProfileActionState = ActionState
 
@@ -367,7 +368,9 @@ function parsePortfolioItems(formData: FormData): ParseResult<OperatorPortfolioI
     const item: OperatorPortfolioItemRecord = {
       id: ids[index] ?? '',
       title: titles[index] ?? '',
-      url: urls[index] ?? '',
+      // Auto-prefix `https://` when the user types a bare domain (e.g. "mysite.com")
+      // so the field accepts modern-lazy input without forcing the scheme.
+      url: normalizeWebUrl(urls[index] ?? '') ?? '',
       projectType: projectTypes[index] ?? '',
       roleLabel: roleLabels[index] ?? '',
       summary: summaries[index] ?? '',
@@ -482,7 +485,7 @@ export async function saveOperatorProfile(
   const coverLetterPositioningPhilosophy =
     asOptionalText(formData.get('coverLetterPositioningPhilosophy')) ?? ''
   const derivedPortfolioPrimaryUrl =
-    asOptionalText(formData.get('portfolioPrimaryUrl')) ??
+    normalizeWebUrl(asOptionalText(formData.get('portfolioPrimaryUrl'))) ??
     portfolioItems.find((item) => item.isPrimary && item.isActive)?.url ??
     portfolioItems.find((item) => item.isActive)?.url ??
     null
@@ -761,7 +764,7 @@ export async function saveOperatorProfile(
     base_title: headline || generatedResumeMaster.baseTitle || existingResumeMaster.baseTitle,
     contact_snapshot: {
       email: operatorContext.operator.email,
-      linkedinUrl: asOptionalText(formData.get('linkedinUrl')) ?? existingResumeMaster.contactSnapshot.linkedinUrl,
+      linkedinUrl: normalizeWebUrl(asOptionalText(formData.get('linkedinUrl'))) ?? existingResumeMaster.contactSnapshot.linkedinUrl,
       location: locationLabel || existingResumeMaster.contactSnapshot.location,
       name: resolvedDisplayName,
       phone: phoneNumber || existingResumeMaster.contactSnapshot.phone,
@@ -769,7 +772,7 @@ export async function saveOperatorProfile(
         derivedPortfolioPrimaryUrl ??
         existingResumeMaster.contactSnapshot.portfolioUrl,
       websiteUrl:
-        asOptionalText(formData.get('personalSiteUrl')) ??
+        normalizeWebUrl(asOptionalText(formData.get('personalSiteUrl'))) ??
         existingResumeMaster.contactSnapshot.websiteUrl,
     },
     core_expertise:
@@ -1001,9 +1004,9 @@ export async function saveOperatorProfile(
     languages: dedupeList(languages),
     work_authorization_notes: '',
     portfolio_primary_url: derivedPortfolioPrimaryUrl,
-    linkedin_url: asOptionalText(formData.get('linkedinUrl')),
+    linkedin_url: normalizeWebUrl(asOptionalText(formData.get('linkedinUrl'))),
     phone_number: phoneNumber,
-    personal_site_url: asOptionalText(formData.get('personalSiteUrl')),
+    personal_site_url: normalizeWebUrl(asOptionalText(formData.get('personalSiteUrl'))),
     bio_summary: bioSummary || null,
     experience_summary: baseResumeMaster.experienceEntries,
     education_summary: baseResumeMaster.educationEntries,
@@ -1031,9 +1034,9 @@ export async function saveOperatorProfile(
     certifications: baseResumeMaster.certifications,
     languages: baseResumeMaster.languages,
     links: {
-      linkedin: asOptionalText(formData.get('linkedinUrl')),
+      linkedin: normalizeWebUrl(asOptionalText(formData.get('linkedinUrl'))),
       portfolio: derivedPortfolioPrimaryUrl,
-      website: asOptionalText(formData.get('personalSiteUrl')),
+      website: normalizeWebUrl(asOptionalText(formData.get('personalSiteUrl'))),
     },
     raw_source_text: baseResumeMaster.rawSourceText || null,
     rendered_markdown: baseResumeMaster.renderedMarkdown || null,
@@ -1310,7 +1313,10 @@ export async function saveAndRefreshProfileSourceAction(
   if (!sourceKind) {
     return { message: 'Missing or invalid source kind.', status: 'error' }
   }
-  const url = asTextValue(formData.get('url'))
+  // Normalize so a user pasting "google.com" gets stored (and re-fetched) as
+  // "https://google.com" — no need to type the scheme manually. See
+  // lib/url/normalize-web-url.ts for the full rule set.
+  const url = normalizeWebUrl(asTextValue(formData.get('url'))) ?? ''
 
   const operatorContext = await getActiveOperatorContext()
   if (!operatorContext?.operator?.id || !operatorContext.profileId) {

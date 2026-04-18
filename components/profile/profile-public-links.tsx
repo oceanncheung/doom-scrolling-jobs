@@ -112,11 +112,16 @@ function SourceField({
           defaultValue={savedUrl}
           disabled={locked}
           form={formId}
+          inputMode="url"
           name={name}
           placeholder={placeholder}
           readOnly={locked}
           ref={inputRef}
-          type="url"
+          // text (not "url") so the browser accepts bare domains like
+          // "google.com" — the backend normalizer adds the scheme (see
+          // lib/url/normalize-web-url.ts). inputMode=url still surfaces a
+          // URL-friendly keyboard on mobile.
+          type="text"
           onKeyDown={(event) => {
             if (event.key !== 'Enter' || locked) return
             event.preventDefault()
@@ -169,9 +174,10 @@ export function ProfilePublicLinks({
         <input
           defaultValue={initialLinkedinUrl}
           form={formId}
+          inputMode="url"
           name="linkedinUrl"
-          placeholder="https://linkedin.com/in/your-name"
-          type="url"
+          placeholder="linkedin.com/in/your-name"
+          type="text"
         />
       </label>
     </div>
