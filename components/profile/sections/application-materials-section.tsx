@@ -29,11 +29,13 @@ export function ApplicationMaterialsSection({
   // and after the profile has been generated (pre-existing conditions).
   const isGenerateDisabled =
     isGenerateProfilePending || !hasResumeInput || isProfileGeneratedCurrent
-  const generateButtonLabel = isGenerateProfilePending
-    ? 'Generating profile…'
-    : isProfileGeneratedCurrent
-      ? 'Profile generated'
-      : 'Generate profile'
+  // While the generate action is in flight, the label is rendered below as a
+  // fragment so we can append animated dots (.button-loading-dots in
+  // controls.css). The non-pending branches stay as plain strings so they
+  // don't allocate a fragment when there's nothing to animate.
+  const generateButtonLabel = isGenerateProfilePending ? null : isProfileGeneratedCurrent
+    ? 'Profile generated'
+    : 'Generate profile'
 
   return (
     <section
@@ -88,7 +90,15 @@ export function ApplicationMaterialsSection({
           type="submit"
           value="generate-profile"
         >
-          <span>{generateButtonLabel}</span>
+          <span>
+            {isGenerateProfilePending ? (
+              <>
+                Generating profile<span className="button-loading-dots" aria-hidden="true" />
+              </>
+            ) : (
+              generateButtonLabel
+            )}
+          </span>
         </button>
       </div>
     </section>
