@@ -75,37 +75,6 @@
   opacity: 1;
 }
 
-/*
- * Animated trailing dots for button labels during long-running actions
- * (Save Profile, Generate Profile). Cycles . → .. → ... → . at ~1.2s so the
- * user has a constant signal that work is happening during the 1–60s OpenAI
- * + Supabase round trip. The fixed 1ch width keeps the button from jiggling
- * as the dot count changes; text-align:left anchors the dots flush against
- * the label. Reduced-motion users get a static "..." instead of the loop.
- */
-.button-loading-dots {
-  display: inline-block;
-  width: 1ch;
-  text-align: left;
-}
-
-.button-loading-dots::after {
-  content: "...";
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .button-loading-dots::after {
-    content: ".";
-    animation: button-loading-dots-cycle 1.2s infinite;
-  }
-
-  @keyframes button-loading-dots-cycle {
-    0%, 33%      { content: "."; }
-    33.01%, 66%  { content: ".."; }
-    66.01%, 100% { content: "..."; }
-  }
-}
-
 .button.button-secondary,
 .button.button-ghost {
   border-color: var(--line);

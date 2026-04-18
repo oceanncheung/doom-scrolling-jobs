@@ -11,12 +11,12 @@ export function ProfileSaveButton({ formId }: { formId: string }) {
         ? ' is-attention-flash-b'
         : ' is-attention-flash-a'
 
-  // While the save action is in flight, swap the label to "Saving" + animated
-  // dots (see .button-loading-dots in controls.css) and force disabled so the
-  // user can't double-submit and immediately sees the click registered.
-  // Disabled also engages the .button-primary:disabled treatment so the
-  // button goes visually grey — matches the user's ask for "button should
-  // immediately turn to grey" on click.
+  // While the save action is in flight, swap the label to "Saving…" and force
+  // disabled so the user can't double-submit and immediately sees the click
+  // registered. Disabled also engages the .button-primary:disabled treatment
+  // so the button goes visually grey — matches the user's ask for "button
+  // should immediately turn to grey" on click.
+  const label = isSavePending ? 'Saving…' : 'Save Profile'
   const disabled = isSavePending || !hasUnsavedChanges
 
   return (
@@ -26,13 +26,7 @@ export function ProfileSaveButton({ formId }: { formId: string }) {
       form={formId}
       type="submit"
     >
-      {isSavePending ? (
-        <>
-          Saving<span className="button-loading-dots" aria-hidden="true" />
-        </>
-      ) : (
-        'Save Profile'
-      )}
+      {label}
     </button>
   )
 }
