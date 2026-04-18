@@ -4,6 +4,7 @@ import { FileUploadSlot } from '@/components/settings/file-upload-slot'
 import { SectionHeading } from '@/components/ui/section-heading'
 
 interface ApplicationMaterialsSectionProps {
+  isGenerateProfilePending: boolean
   isProfileGeneratedCurrent: boolean
   standalone: boolean
   setSourceCoverLetterFileName: (value: string | null) => void
@@ -13,6 +14,7 @@ interface ApplicationMaterialsSectionProps {
 }
 
 export function ApplicationMaterialsSection({
+  isGenerateProfilePending,
   isProfileGeneratedCurrent,
   standalone,
   setSourceCoverLetterFileName,
@@ -21,8 +23,17 @@ export function ApplicationMaterialsSection({
   sourceResumeFileName,
 }: ApplicationMaterialsSectionProps) {
   const hasResumeInput = Boolean(sourceResumeFileName)
-  const isGenerateDisabled = !hasResumeInput || isProfileGeneratedCurrent
-  const generateButtonLabel = isProfileGeneratedCurrent ? 'Profile generated' : 'Generate profile'
+  // Disable the button while the generate action is in flight — prevents double-submit
+  // spam and avoids the "click does nothing" confusion that had Alvis giving up after
+  // 60s of silent OpenAI processing. Also remain disabled when no resume is uploaded
+  // and after the profile has been generated (pre-existing conditions).
+  const isGenerateDisabled =
+    isGenerateProfilePending || !hasResumeInput || isProfileGeneratedCurrent
+  const generateButtonLabel = isGenerateProfilePending
+    ? 'Generating profile…'
+    : isProfileGeneratedCurrent
+      ? 'Profile generated'
+      : 'Generate profile'
 
   return (
     <section

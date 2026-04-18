@@ -55,9 +55,18 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ workspace }: ProfileFormProps) {
-  const [actionState, formAction] = useActionState(saveOperatorProfile, initialState)
+  // isPending from useActionState is true while the server action is in flight. We
+  // forward it + the last-submit intent down to ApplicationMaterialsSection so the
+  // Generate Profile button can show "Generating profile…" during the ~30-60 second
+  // OpenAI call. Without this, the button looks identical during the entire action
+  // and users (reasonably) conclude nothing is happening and give up.
+  const [actionState, formAction, isActionPending] = useActionState(saveOperatorProfile, initialState)
   const formRef = useRef<HTMLFormElement>(null)
   const lastSubmitIntentRef = useRef<string | null>(null)
+  // Parallel state copy of lastSubmitIntentRef so render-time reads (e.g. for deriving
+  // `isGenerateProfilePending` prop) don't trip react-hooks/refs. The ref stays for
+  // listeners that must read the latest value synchronously without re-rendering.
+  const [lastSubmitIntent, setLastSubmitIntent] = useState<string | null>(null)
   const dirtyCheckFrameRef = useRef<number | null>(null)
   const lastHandledSuccessKeyRef = useRef<string | null>(null)
   const baselineFormSnapshotRef = useRef<Map<string, string> | null>(null)
@@ -402,10 +411,12 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
           submitter instanceof HTMLButtonElement &&
           submitter.name === 'intent' &&
           submitter.value === 'generate-profile'
-        lastSubmitIntentRef.current =
+        const nextIntent =
           submitter instanceof HTMLButtonElement && submitter.value
             ? submitter.value
             : null
+        lastSubmitIntentRef.current = nextIntent
+        setLastSubmitIntent(nextIntent)
 
         setReviewIndicatorsVisible(!isGenerateIntent)
       }}
@@ -437,6 +448,9 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
       />
 
       <ApplicationMaterialsSection
+        isGenerateProfilePending={
+          isActionPending && lastSubmitIntent === 'generate-profile'
+        }
         isProfileGeneratedCurrent={isProfileGeneratedCurrent}
         standalone={!hasGeneratedDraft}
         setSourceCoverLetterFileName={(value) => {
