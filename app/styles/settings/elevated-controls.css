@@ -776,7 +776,22 @@
  */
 @supports (-webkit-touch-callout: none) {
   .settings-tab-toolbar-track {
-    padding-bottom: 2px;
-    margin-bottom: -2px;
+    padding-bottom: 4px;
+    margin-bottom: -4px;
+  }
+
+  /*
+   * Widen the active-chip mask on iOS so it absorbs any subpixel drift in
+   * how the button's bottom edge aligns with the shell's hairline. The
+   * desktop geometry (bottom: -1px / height: 2px) is 1px inside + 1px
+   * below the button; iOS Safari appears to leave a sliver uncovered even
+   * with 2px of padding-bottom headroom, so extend both the overshoot and
+   * the mask thickness. The mask's background matches the active chip's
+   * grey fill, so the extra pixels read as a seamless continuation of the
+   * chip into the panel below.
+   */
+  .settings-tab-shell.has-selection .settings-tab-button.is-active::after {
+    bottom: -2px;
+    height: 4px;
   }
 }
