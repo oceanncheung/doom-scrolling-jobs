@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { execFile as execFileCallback } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { extname, join } from 'node:path'
@@ -14,6 +15,17 @@ const MAX_EXTRACTED_TEXT_LENGTH = 80_000
 type PdfParseConstructor = (typeof import('pdf-parse'))['PDFParse']
 
 let pdfParseConstructorPromise: Promise<PdfParseConstructor> | null = null
+
+// Use createRequire so the pdf-parse load is a CJS require() at Node runtime, not an
+// ES `await import(...)` that Next.js/Turbopack tries to statically analyze. Earlier
+// iterations used `await import(pathToFileURL(path).href)` which triggered
+// "Cannot find module as expression is too dynamic" because the path is built from
+// process.cwd() + concatenated strings — Turbopack can't resolve it at bundle time and
+// returns that error at runtime. createRequire hands the resolution off to Node's CJS
+// loader, which doesn't care about bundle-time analysis. Paired with
+// `serverExternalPackages: ['pdf-parse']` in next.config.ts so Next doesn't bundle
+// pdf-parse's CJS/worker files at all.
+const requireFromModule = createRequire(import.meta.url)
 
 function normalizeExtractedText(value: string) {
   return value
@@ -49,7 +61,7 @@ async function loadPdfParseConstructor() {
         'pdf.worker.mjs',
       )
 
-      const pdfParseRuntime = (await import(pathToFileURL(pdfParseEntryPath).href)) as typeof import('pdf-parse')
+      const pdfParseRuntime = requireFromModule(pdfParseEntryPath) as typeof import('pdf-parse')
       const PDFParse = pdfParseRuntime.PDFParse
 
       if (typeof PDFParse !== 'function') {
