@@ -230,19 +230,16 @@
   background: var(--bg);
 }
 
-/*
- * Toolbar seam: each inactive tab carries its own `border-bottom` (see the
- * rule further down) so the hairline spans ONLY the tab row's actual width.
- * Previously this was a shell-wide ::after line, but at narrow viewports the
- * shell is 100% width while the tab scroll content overflows horizontally —
- * the continuous line then extended past the tab row's visible edges and
- * read as a stray underline under the active tab. Per-tab borders keep the
- * seam flush with the tab widths at any viewport, and the active tab can
- * simply drop its border-bottom to blend into the panel below without
- * needing a compensating mask.
- */
 .settings-tab-toolbar-shell::after {
-  content: none;
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .settings-tab-toolbar::after {
@@ -413,12 +410,16 @@
   z-index: 2;
 }
 
-/*
- * No mask needed now that the shell-wide hairline is gone — the active tab
- * simply drops its border-bottom to flow into the panel.
- */
 .settings-tab-shell.has-selection .settings-tab-button.is-active::after {
-  content: none;
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--surface-soft);
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* Open disclosure chip: grey fill with L/T/R borders only; bottom hairline is toolbar inset shadow. */
@@ -449,7 +450,7 @@
 }
 
 .settings-tab-shell.has-selection .settings-tab-button:not(.is-active) {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
 }
 
 .settings-tab-shell:not(.has-selection) .settings-tab-button {
