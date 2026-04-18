@@ -110,11 +110,18 @@ function SourceField({
       >
         <input
           defaultValue={savedUrl}
-          disabled={locked}
           form={formId}
           inputMode="url"
           name={name}
           placeholder={placeholder}
+          // readOnly (not disabled!) when locked. Disabled inputs get STRIPPED
+          // from form submission per the HTML spec — so if the main Save
+          // Profile button fires while this field is in its locked state, the
+          // URL isn't in formData and derivedPortfolioPrimaryUrl falls back to
+          // null, wiping the saved column on the next upsert. readOnly keeps
+          // the value in formData while still blocking edits; the locked-vs-
+          // editable visual treatment comes from the [readonly] CSS selector
+          // in the design system rather than the disabled attribute.
           readOnly={locked}
           ref={inputRef}
           // text (not "url") so the browser accepts bare domains like
