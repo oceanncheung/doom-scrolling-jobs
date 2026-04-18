@@ -57,12 +57,21 @@ export function SettingsTabButton({
     const maxScrollLeft = Math.max(0, track.scrollWidth - track.clientWidth)
     if (maxScrollLeft === 0) return
 
+    // Offset the scroll target by the toolbar's padding-left so the clicked
+    // tab's LEFT BORDER lands where the first tab's left border naturally
+    // sits on fresh load — i.e. flush with the main content's left edge,
+    // not flush with the scroll track's edge. Without this offset, the
+    // clicked tab's text (not its border) ends up at the track's left
+    // edge because the button's internal padding pushes the label inward.
+    const toolbar = track.querySelector('.settings-tab-toolbar') as HTMLElement | null
+    const toolbarPaddingLeft = toolbar
+      ? parseFloat(getComputedStyle(toolbar).paddingLeft) || 0
+      : 0
+
     const trackRect = track.getBoundingClientRect()
     const btnRect = btn.getBoundingClientRect()
-    const target = Math.min(
-      btnRect.left - trackRect.left + track.scrollLeft,
-      maxScrollLeft,
-    )
+    const rawTarget = btnRect.left - trackRect.left + track.scrollLeft - toolbarPaddingLeft
+    const target = Math.max(0, Math.min(rawTarget, maxScrollLeft))
     track.scrollTo({ left: target, behavior: 'smooth' })
   }
 
