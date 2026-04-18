@@ -557,6 +557,16 @@ export async function saveOperatorProfile(
       }),
     ])
   } catch (error) {
+    // Log so Cloud Run surfaces the actual parse failure (filename, stack) in logs —
+    // the user-facing message is intentionally generic, but the server log needs the
+    // full context for triage.
+    console.error('[saveOperatorProfile] document parse failed', {
+      operatorId: operatorContext.operator.id,
+      resumeFileName: sourceResumeFileName,
+      coverLetterFileName: sourceCoverLetterFileName,
+      portfolioFileName: portfolioPdfFileName,
+      error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+    })
     return {
       message:
         error instanceof Error
@@ -684,6 +694,17 @@ export async function saveOperatorProfile(
       certifications = certifications.length > 0 ? certifications : generatedResumeMaster.certifications
       languages = fillBlankList(languages, generatedResumeMaster.languages)
     } catch (error) {
+      // Surface canonical-generation failures in Cloud Run logs with the operator context
+      // so we can distinguish "OpenAI upstream flaky" from "specific operator's data has
+      // a problem that crashes the generator." User-facing message stays concise.
+      console.error('[saveOperatorProfile] generateCanonicalSources failed', {
+        operatorId: operatorContext.operator.id,
+        resumeFileName: sourceResumeFileName,
+        coverLetterFileName: sourceCoverLetterFileName,
+        resumeTextLength: parsedRawResumeDocument.parsedText?.length ?? 0,
+        coverLetterTextLength: parsedRawCoverLetterDocument.parsedText?.length ?? 0,
+        error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+      })
       return {
         message:
           error instanceof Error

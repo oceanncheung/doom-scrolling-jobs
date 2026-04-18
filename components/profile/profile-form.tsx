@@ -467,6 +467,25 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
         sourceResumeFileName={sourceResumeFileName}
       />
 
+      {/*
+       * Visible error/success banner for the save action. Previously this message was
+       * only read in useEffect deps and never rendered — any server-action failure
+       * (missing resume_master row, PDF parse crash, OpenAI env missing, etc.)
+       * returned silently and the user had no way to know what went wrong. Rendering
+       * it here, right below the Source Documents + Generate Profile row, means
+       * failures are surfaced where the user is already looking.
+       */}
+      {actionState.message && actionState.status !== 'idle' ? (
+        <p
+          className={`action-note ${
+            actionState.status === 'error' ? 'action-note-error' : 'action-note-success'
+          }`}
+          role={actionState.status === 'error' ? 'alert' : 'status'}
+        >
+          {actionState.message}
+        </p>
+      ) : null}
+
       {hasGeneratedDraft ? (
         <>
           <JobTargetsSection

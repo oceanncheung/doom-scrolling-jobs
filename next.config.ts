@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
   // so we allow the common local and Cursor dev origins here.
   allowedDevOrigins: localDevOrigins,
   output: 'standalone',
+  // pdf-parse ships a CJS bundle + worker files and is loaded via a dynamic
+  // `await import(...)` in lib/files/extract-uploaded-document-text.ts (path built from
+  // process.cwd()). Next.js/Turbopack's static bundler can't analyze that dynamic path
+  // and throws "Cannot find module as expression is too dynamic" at runtime — which
+  // surfaced as a 1-second fast-fail on Generate Profile with no visible error (see
+  // Alvis repro 2026-04-18). Marking pdf-parse as an external package keeps its CJS
+  // resolution at Node runtime, not at bundle time.
+  serverExternalPackages: ['pdf-parse'],
   experimental: {
     serverActions: {
       // Profile generation accepts resume + cover letter + portfolio PDF uploads via
