@@ -753,34 +753,41 @@
 
 /*
  * iOS Safari (iPhone + iPad) override — fall back from the shell-wide
- * hairline + active-tab mask to a track-level background hairline. iOS
- * Safari's scroll track strictly clips the mask's lower pixel (overflow-y:
- * hidden on .settings-tab-toolbar-track), which leaks the hairline under
- * the active chip. Desktop browsers don't have this clipping behavior, so
- * they keep the original rendering untouched above.
- *
- * Approach: paint the hairline as the track's own `background-image`
- * (1px gradient at its bottom). The track background:
- *   - scrolls with the tabs, so overscroll-exposed blank space inside
- *     the track also shows the line (no "bald" patch after elastic drag)
- *   - is covered by the active chip's opaque grey fill (the button box
- *     sits above the track background), giving the seamless panel-flow
- *   - shows through inactive tab chips (transparent background) so the
- *     hairline is visible under closed tabs without any per-tab border
+ * hairline + active-tab mask to edge-pseudo + per-tab borders. iOS Safari's
+ * scroll track strictly clips the mask's lower pixel (overflow-y: hidden on
+ * .settings-tab-toolbar-track), which leaks the hairline under the active
+ * chip. Desktop browsers don't have this clipping behavior, so they keep
+ * the original rendering untouched above.
  *
  * `@supports (-webkit-touch-callout: none)` is an iOS-only feature detect
  * (Safari/Chrome/Firefox all use WebKit on iOS). It does NOT match macOS
  * Safari, so desktop stays on the original code path verbatim.
  */
 @supports (-webkit-touch-callout: none) {
-  .settings-tab-toolbar-track {
-    background-image: linear-gradient(to top, var(--line) 1px, transparent 1px);
-    background-repeat: no-repeat;
-    background-position: bottom;
-    background-size: 100% 100%;
+  .settings-tab-toolbar-shell::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: var(--queue-column-pad);
+    height: 1px;
+    background: var(--line);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .settings-tab-toolbar-shell::after {
+    /* Shrink the existing full-width hairline to the right-edge padding only */
+    left: auto;
+    width: var(--settings-section-pad-right);
   }
 
   .settings-tab-shell.has-selection .settings-tab-button.is-active::after {
     content: none;
+  }
+
+  .settings-tab-shell.has-selection .settings-tab-button:not(.is-active),
+  .settings-tab-shell:not(.has-selection) .settings-tab-button {
+    border-bottom: 1px solid var(--line);
   }
 }
