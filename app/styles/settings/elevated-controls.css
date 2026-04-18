@@ -781,17 +781,25 @@
   }
 
   /*
-   * Widen the active-chip mask on iOS so it absorbs any subpixel drift in
-   * how the button's bottom edge aligns with the shell's hairline. The
-   * desktop geometry (bottom: -1px / height: 2px) is 1px inside + 1px
-   * below the button; iOS Safari appears to leave a sliver uncovered even
-   * with 2px of padding-bottom headroom, so extend both the overshoot and
-   * the mask thickness. The mask's background matches the active chip's
-   * grey fill, so the extra pixels read as a seamless continuation of the
-   * chip into the panel below.
+   * Simpler iOS-only mechanism than the mask: give the active chip a grey
+   * `border-bottom` in the same colour as the panel below. The border sits
+   * at the button's own border-box edge as part of its own rendering —
+   * nothing to be clipped by the scroll track's overflow, no subpixel
+   * dependence on how the button aligns with the shell hairline, no mask
+   * pseudo required. Visually the border continues the chip's grey fill
+   * into the seam so the shell::after hairline under the chip is masked
+   * by a same-coloured band and reads as a clean panel flow.
+   *
+   * box-sizing on the button is `border-box` (base rule), so the added
+   * 1px border is absorbed from the content area — the chip's outer
+   * dimensions don't change, siblings don't stretch, nothing shifts.
    */
+  .settings-tab-shell.has-selection .settings-tab-button.is-active {
+    border-bottom: 1px solid var(--surface-soft);
+  }
+
+  /* Mask pseudo no longer carries the load — retire it on iOS. */
   .settings-tab-shell.has-selection .settings-tab-button.is-active::after {
-    bottom: -2px;
-    height: 4px;
+    content: none;
   }
 }
