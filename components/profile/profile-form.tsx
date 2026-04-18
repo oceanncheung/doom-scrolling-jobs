@@ -348,6 +348,18 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
       })
       setHasSourceChangesSinceGeneration(false)
       lastSubmitIntentRef.current = null
+
+      // Force a full page reload after successful Generate Profile so the form
+      // re-mounts against the freshly-saved workspace. The server action already
+      // called revalidatePath + refresh() to bust Next.js's data cache — but
+      // our form's inputs use `defaultValue` (uncontrolled), which only reads
+      // its value on mount. Without a reload, the user sees the success banner
+      // but the inputs keep their empty DOM values and the generated fields
+      // look like they didn't populate (see Alvis repro 2026-04-18). A hard
+      // reload is the least-invasive fix; moving every input to controlled
+      // `value` + `onChange` would touch hundreds of fields across ~15 section
+      // components and carry much higher regression risk.
+      window.location.reload()
     })
 
     return () => {
