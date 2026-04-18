@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useMemo, useRef, useState } from 'react'
 
 import type {
@@ -61,6 +62,7 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
   // OpenAI call. Without this, the button looks identical during the entire action
   // and users (reasonably) conclude nothing is happening and give up.
   const [actionState, formAction, isActionPending] = useActionState(saveOperatorProfile, initialState)
+  const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
   const lastSubmitIntentRef = useRef<string | null>(null)
   // Parallel state copy of lastSubmitIntentRef so render-time reads (e.g. for deriving
@@ -393,15 +395,28 @@ export function ProfileForm({ workspace }: ProfileFormProps) {
 
     lastHandledSuccessKeyRef.current = successKey
 
+    // Capture intent at effect-fire time — the generate-profile useEffect clears
+    // the ref before reloading, so reading it inside the rAF callback would race.
+    const intentAtFireTime = lastSubmitIntentRef.current
+
     const frame = window.requestAnimationFrame(() => {
       baselineFormSnapshotRef.current = serializeCurrentForm()
       setHasUnsavedChanges(false)
+
+      // For regular saves, soft-refresh so fresh workspace data flows down to
+      // components that hold their own internal state (e.g. ProfilePublicLinks'
+      // SourceField, whose `savedUrl`/`isEditing` only re-sync when `initialUrl`
+      // changes). The generate-profile path owns its own window.location.reload()
+      // — skip router.refresh() there since it would be interrupted anyway.
+      if (intentAtFireTime !== 'generate-profile') {
+        router.refresh()
+      }
     })
 
     return () => {
       window.cancelAnimationFrame(frame)
     }
-  }, [actionState.message, actionState.status, serializeCurrentForm, setHasUnsavedChanges])
+  }, [actionState.message, actionState.status, router, serializeCurrentForm, setHasUnsavedChanges])
 
   useEffect(
     () => () => {

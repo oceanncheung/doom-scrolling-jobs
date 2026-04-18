@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useRef, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 
 import {
   refreshProfileSourceAction,
@@ -89,6 +89,20 @@ function SourceField({
       : undefined
 
   const inputRef = useRef<HTMLInputElement | null>(null)
+
+  // After a successful main-form save, ProfileForm calls router.refresh() so
+  // the server sends down a fresh `initialUrl`. Mirror that into local state
+  // + the uncontrolled input's DOM value — without this, the field stays in
+  // its "empty + editable" pre-save state even though the URL is persisted,
+  // because useState is only seeded on mount and <input defaultValue> is
+  // write-once.
+  useEffect(() => {
+    setSavedUrl(initialUrl)
+    setIsEditing(!initialUrl)
+    if (inputRef.current) {
+      inputRef.current.value = initialUrl
+    }
+  }, [initialUrl])
 
   return (
     <label className="field">
