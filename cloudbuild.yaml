@@ -4,6 +4,10 @@ substitutions:
   _AR_REPO: cloud-run-source-deploy
 
 steps:
+  - name: node:22
+    entrypoint: node
+    args: [scripts/check-private-cloud-run.mjs]
+
   - name: gcr.io/cloud-builders/docker
     args:
       - build
@@ -40,7 +44,7 @@ steps:
       - gen2
       - --timeout
       - "300"
-      - --no-invoker-iam-check
+      - --invoker-iam-check
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$SHORT_SHA
