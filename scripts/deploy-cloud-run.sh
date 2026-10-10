@@ -5,11 +5,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+node scripts/check-private-cloud-run.mjs
+
 SERVICE_NAME="${SERVICE_NAME:-doomscrollingjobs-web}"
 REGION="${REGION:-northamerica-northeast1}"
 PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null || true)}"
 ENV_SOURCE_FILE="${ENV_SOURCE_FILE:-.env.local}"
-DISABLE_INVOKER_IAM_CHECK="${DISABLE_INVOKER_IAM_CHECK:-true}"
 
 if ! command -v gcloud >/dev/null 2>&1; then
   echo "gcloud is required to deploy to Cloud Run." >&2
@@ -76,11 +77,6 @@ const yaml = orderedKeys
 fs.writeFileSync(process.env.ENV_FILE, `${yaml}\n`)
 NODE
 
-access_flag="--no-invoker-iam-check"
-if [[ "$DISABLE_INVOKER_IAM_CHECK" != "true" ]]; then
-  access_flag="--invoker-iam-check"
-fi
-
 gcloud run deploy "$SERVICE_NAME" \
   --project "$PROJECT_ID" \
   --region "$REGION" \
@@ -92,7 +88,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --min-instances 0 \
   --execution-environment gen2 \
   --timeout 300 \
-  "$access_flag" \
+  --invoker-iam-check \
   --env-vars-file "$TMP_ENV_FILE"
 
 SERVICE_URL="$(gcloud run services describe "$SERVICE_NAME" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"

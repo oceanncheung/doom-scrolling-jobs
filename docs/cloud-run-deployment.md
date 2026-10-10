@@ -6,9 +6,13 @@ This app can deploy to Google Cloud Run directly from source. The deployment flo
 
 - Service name: `doomscrollingjobs-web`
 - Region: `northamerica-northeast1`
-- Access: public by default (`--no-invoker-iam-check`)
+- Access: private, requiring IAM authentication (`--invoker-iam-check`)
 
-This project’s Google Cloud org policy blocks `allUsers` IAM bindings, so the public path uses Cloud Run with invoker IAM checks disabled instead of `--allow-unauthenticated`.
+All three deployment paths explicitly require IAM authentication. They run
+`node scripts/check-private-cloud-run.mjs` before deployment work. The local
+script has no public-access override; the former `DISABLE_INVOKER_IAM_CHECK`
+variable no longer changes access. Public exposure requires a separately
+reviewed change. See [the security record](security-data-api.md).
 
 ## Prerequisites
 
@@ -36,14 +40,7 @@ Optional overrides:
 ```bash
 SERVICE_NAME=doomscrollingjobs-web \
 REGION=northamerica-northeast1 \
-DISABLE_INVOKER_IAM_CHECK=true \
 npm run deploy:cloud-run
-```
-
-If you want to keep the service private:
-
-```bash
-DISABLE_INVOKER_IAM_CHECK=false npm run deploy:cloud-run
 ```
 
 ## After deploy
@@ -52,6 +49,10 @@ The script prints:
 
 - the service URL
 - the health URL at `/api/health`
+
+Anonymous browser requests, including health requests, receive HTTP 403.
+Use an authorized identity token or an authenticated Cloud Run proxy for access.
+IAM authentication does not add an application login screen or operator ownership.
 
 ## GitHub-backed deploys
 
